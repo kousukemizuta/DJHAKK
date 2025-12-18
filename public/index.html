@@ -1,0 +1,1940 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DJHAKK</title>
+    <meta name="description" content="アーティストとイベントをつなぐマッチングプラットフォーム">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+    <style>
+        :root {
+            --primary: #FF6B00;
+            --primary-light: #FF8533;
+            --bg: #0D0D1A;
+            --surface: #1A1A2E;
+            --card: #252538;
+            --card-hover: #2D2D45;
+            --text: #FFFFFF;
+            --text2: #A0A0B8;
+            --text3: #6B6B80;
+            --border: #3A3A50;
+            --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+            --r-sm: 8px;
+            --r-md: 12px;
+            --r-lg: 16px;
+            --r-xl: 24px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans JP', 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; }
+        
+        /* Layout */
+        .container { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; min-height: 100vh; }
+        
+        /* Screens */
+        .screen { display: none; flex-direction: column; flex: 1; padding: 16px; padding-bottom: 80px; }
+        .screen.active { display: flex; }
+        
+        /* Header */
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; margin-bottom: 24px; gap: 16px; }
+        .header-logo { height: 40px; width: 40px; object-fit: contain; cursor: pointer; border-radius: 8px; flex-shrink: 0; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer; overflow: hidden; flex-shrink: 0; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Navigation */
+        .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; transition: color 0.2s; font-size: 11px; }
+        .nav-item.active, .nav-item:hover { color: var(--primary); }
+        .nav-icon { font-size: 20px; }
+        .nav-create { position: relative; top: -20px; }
+        .nav-plus { width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); }
+        
+        /* Buttons */
+        .btn { padding: 12px 24px; border-radius: var(--r-lg); font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; font-size: 14px; }
+        .btn-p { background: var(--gradient); color: white; }
+        .btn-p:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255,107,0,0.4); }
+        .btn-s { background: var(--card); color: var(--text); }
+        .btn-sm { padding: 8px 16px; font-size: 12px; }
+        .btn-lg { width: 100%; padding: 16px; font-size: 16px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* Inputs */
+        .input { width: 100%; padding: 14px 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text); font-size: 16px; }
+        .input:focus { outline: none; border-color: var(--primary); }
+        .input-group { margin-bottom: 16px; }
+        .label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text2); font-size: 14px; }
+        textarea.input { resize: vertical; min-height: 100px; }
+        
+        /* Cards - Horizontal Layout */
+        .card { background: var(--card); border-radius: var(--r-xl); overflow: hidden; cursor: pointer; transition: all 0.3s; margin-bottom: 16px; display: flex; flex-direction: row; }
+        .card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        .card-img { width: 120px; min-width: 120px; height: 160px; object-fit: cover; }
+        .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .card-title { font-size: 15px; font-weight: 700; margin: 4px 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        @media (min-width: 480px) {
+            .card-img { width: 140px; min-width: 140px; height: 180px; }
+            .card-title { font-size: 16px; }
+        }
+        
+        /* Badges */
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .badge.a { background: rgba(255,107,0,0.2); color: #FF6B00; }
+        .badge.b { background: rgba(0,217,255,0.2); color: #00D9FF; }
+        .badge.c { background: rgba(157,78,221,0.2); color: #9D4EDD; }
+        
+        /* Delete Button */
+        .delete-event-btn { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,71,87,0.9); border: none; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; z-index: 10; transition: transform 0.2s, background 0.2s; }
+        .delete-event-btn:hover { transform: scale(1.1); background: #FF4757; }
+        
+        /* Share Buttons */
+        .share-btns { display: flex; gap: 4px; }
+        .share-btns .share-btn { width: 24px; height: 24px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; transition: transform 0.2s, opacity 0.2s; }
+        .share-btns .share-btn:hover { transform: scale(1.1); }
+        .share-btns .share-btn.x { background: #000; color: white; }
+        .share-btns .share-btn.ig { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: white; }
+        .share-btns .share-btn.ig svg { width: 12px; height: 12px; fill: white; }
+        .share-btns .share-btn.copy { background: var(--surface); color: var(--text2); }
+        .share-btns .share-btn.native { background: var(--primary); color: white; }
+        
+        /* Meta */
+        .meta { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+        .meta-item { display: flex; align-items: center; gap: 6px; color: var(--text2); font-size: 12px; }
+        .meta-item span:first-child { font-size: 11px; }
+        
+        /* Organizer - Compact */
+        .organizer { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .organizer.in-card { padding: 0; background: transparent; margin-bottom: 0; }
+        .org-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 11px; overflow: hidden; cursor: pointer; flex-shrink: 0; }
+        .org-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .org-name { font-weight: 500; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .dm-btn { background: var(--card); border: none; padding: 8px 12px; border-radius: var(--r-sm); cursor: pointer; font-size: 12px; color: var(--text); }
+        
+        /* Artists */
+        .artists { margin-top: 4px; }
+        .artists-row { display: flex; gap: 4px; flex-wrap: wrap; }
+        .artist-av { width: 24px; height: 24px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; overflow: hidden; cursor: pointer; }
+        .artist-av img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Price */
+        .card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 8px; }
+        .price { font-weight: 700; font-size: 14px; }
+        .price.a { color: #FF6B00; }
+        .price.b { color: #00D9FF; }
+        .slots { font-size: 11px; color: var(--text3); }
+        .price-info { display: flex; align-items: center; gap: 6px; }
+        
+        /* Region Divider */
+        .region-div { display: flex; align-items: center; margin: 24px 0 16px; gap: 12px; }
+        .region-name { color: var(--text2); font-weight: 600; font-size: 14px; }
+        .region-div::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+        
+        /* Detail Screen */
+        .detail-head { position: relative; display: flex; justify-content: center; padding: 16px; background: var(--surface); }
+        .detail-img { width: 200px; height: 267px; object-fit: cover; border-radius: var(--r-lg); }
+        .detail-back { position: absolute; top: 16px; left: 16px; width: 40px; height: 40px; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; }
+        .detail-body { padding: 20px; }
+        .detail-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px; }
+        .detail-title { font-size: 24px; font-weight: 700; margin: 8px 0 16px; }
+        .section { margin-top: 24px; }
+        .section-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text2); }
+        .desc { color: var(--text2); white-space: pre-wrap; }
+        
+        /* Slots */
+        .slots-list { display: flex; flex-direction: column; gap: 8px; }
+        .slot { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: var(--card); border-radius: var(--r-md); cursor: pointer; }
+        .slot:hover { background: var(--card-hover); }
+        .slot.booked { opacity: 0.6; cursor: default; }
+        .slot-time { font-weight: 500; }
+        .slot-price { color: var(--primary); font-weight: 600; }
+        
+        /* Welcome */
+        .welcome-screen { flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
+        .welcome-logo { width: 100px; height: 100px; margin-bottom: 24px; border-radius: 20px; }
+        .welcome-title { font-size: 32px; font-weight: 700; margin-bottom: 8px; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .welcome-sub { color: var(--text2); margin-bottom: 40px; }
+        .welcome-btns { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 300px; }
+        
+        /* Auth */
+        .auth-head { text-align: center; margin-bottom: 32px; }
+        .auth-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        .auth-sub { color: var(--text2); }
+        .auth-error { color: #ff4444; font-size: 14px; margin-top: 8px; min-height: 20px; }
+        .auth-link { color: var(--primary); cursor: pointer; margin-top: 16px; display: block; text-align: center; }
+        
+        /* Create Screen */
+        .create-head { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+        .back { cursor: pointer; font-size: 24px; }
+        .title { font-size: 20px; font-weight: 700; }
+        
+        /* Type Selector */
+        .type-sel { display: flex; gap: 8px; margin-bottom: 24px; }
+        .type-opt { flex: 1; padding: 16px 8px; background: var(--card); border-radius: var(--r-md); text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+        .type-opt.active { border-color: var(--primary); background: rgba(255,107,0,0.1); }
+        .type-label { font-weight: 600; font-size: 13px; }
+        .type-desc { font-size: 11px; color: var(--text3); margin-top: 4px; }
+        
+        /* Image Upload */
+        .img-upload { width: 180px; height: 240px; border: 2px dashed var(--border); border-radius: var(--r-lg); display: flex; align-items: center; justify-content: center; cursor: pointer; margin: 0 auto 12px; overflow: hidden; position: relative; }
+        .img-upload.has-image { border-style: solid; border-color: var(--primary); }
+        .img-placeholder { text-align: center; color: var(--text3); }
+        .img-hint { text-align: center; font-size: 11px; color: var(--text3); margin-bottom: 16px; }
+        .crop-container { display: none; width: 100%; height: 100%; overflow: hidden; position: relative; touch-action: none; }
+        .crop-image { position: absolute; cursor: move; user-select: none; -webkit-user-drag: none; touch-action: none; }
+        .crop-controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px; }
+        .crop-slider { flex: 1; height: 6px; border-radius: 3px; background: var(--card); -webkit-appearance: none; }
+        .crop-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; }
+        
+        /* Slot Row */
+        .slot-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+        .slot-row input { flex: 1; }
+        .slot-row span { color: var(--text3); }
+        
+        /* Profile */
+        .profile-head { text-align: center; padding: 20px 0; }
+        .profile-av { width: 100px; height: 100px; border-radius: 50%; background: var(--gradient); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700; overflow: hidden; cursor: pointer; }
+        .profile-av img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-name { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+        .profile-email { color: var(--text2); font-size: 14px; }
+        .profile-bio { color: var(--text2); margin-top: 12px; white-space: pre-wrap; }
+        .profile-sns { display: flex; justify-content: center; gap: 12px; margin-top: 12px; }
+        .sns-link { font-size: 20px; text-decoration: none; }
+        .contact-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
+        .contact-link { background: var(--card); padding: 8px 12px; border-radius: var(--r-sm); font-size: 12px; text-decoration: none; color: var(--text); }
+        
+        /* Menu */
+        .menu { margin-top: 24px; }
+        .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--card); border-radius: var(--r-md); margin-bottom: 8px; cursor: pointer; }
+        .menu-left { display: flex; align-items: center; gap: 12px; }
+        .menu-icon { font-size: 20px; }
+        
+        /* DM */
+        .dm-list { display: flex; flex-direction: column; gap: 8px; }
+        .dm-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--card); border-radius: var(--r-md); cursor: pointer; }
+        .dm-av { width: 48px; height: 48px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-weight: 600; overflow: hidden; }
+        .dm-av img { width: 100%; height: 100%; object-fit: cover; }
+        .dm-info { flex: 1; }
+        .dm-name { font-weight: 600; }
+        .dm-preview { font-size: 13px; color: var(--text3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        /* Chat */
+        .chat-wrap { flex: 1; display: flex; flex-direction: column; padding-bottom: 0; }
+        .chat-msgs { flex: 1; overflow-y: auto; padding: 16px 0; display: flex; flex-direction: column; gap: 8px; }
+        .chat-msg { max-width: 80%; }
+        .chat-msg.sent { align-self: flex-end; }
+        .chat-bubble { padding: 12px 16px; background: var(--card); border-radius: var(--r-lg); }
+        .chat-msg.sent .chat-bubble { background: var(--gradient); }
+        .chat-input-area { display: flex; gap: 8px; padding: 12px 0; position: sticky; bottom: 0; background: var(--bg); }
+        .chat-input { flex: 1; }
+        .chat-send { width: 48px; height: 48px; border-radius: 50%; background: var(--gradient); border: none; color: white; font-size: 20px; cursor: pointer; }
+        
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-box { background: var(--surface); border-radius: var(--r-xl); width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
+        .modal-head { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border); }
+        .modal-title { font-size: 18px; font-weight: 600; }
+        .modal-close { background: none; border: none; font-size: 24px; color: var(--text); cursor: pointer; }
+        .modal-body { padding: 20px; }
+        
+        /* Empty */
+        .empty { text-align: center; padding: 60px 20px; color: var(--text3); }
+        .empty-icon { font-size: 48px; margin-bottom: 16px; }
+        .empty-title { font-size: 18px; color: var(--text2); }
+        
+        /* Loading */
+        .loading { display: flex; justify-content: center; padding: 40px; }
+        .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Toast */
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; transition: all 0.3s; z-index: 300; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.error { background: #ff4444; }
+        
+        /* Filter */
+        .filter-btn { background: var(--card); color: var(--text2); }
+        .filter-btn.active { background: var(--gradient); color: white; }
+        
+        /* Google Button */
+        .btn-google { background: white; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-google:hover { background: #f5f5f5; }
+        .btn-google svg { width: 20px; height: 20px; }
+        .auth-divider { display: flex; align-items: center; margin: 20px 0; gap: 12px; color: var(--text3); font-size: 13px; }
+        .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+        
+        /* Debug */
+        .debug { position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; font-size: 10px; color: #0f0; max-width: 200px; display: none; z-index: 999; }
+    </style>
+</head>
+<body>
+    <div class="debug" id="debug"></div>
+    <div class="container">
+            <!-- Welcome -->
+            <div id="welcomeScreen" class="screen welcome-screen active">
+                <img id="welcomeLogo" class="welcome-logo" alt="DJHAKK">
+                
+                <div class="welcome-btns">
+                    <button class="btn btn-p btn-lg" onclick="go('loginScreen')">ログイン</button>
+                    <button class="btn btn-s btn-lg" onclick="go('signupScreen')">新規登録</button>
+                    <div class="auth-divider">または</div>
+                    <button type="button" class="btn btn-google btn-lg" onclick="loginWithGoogle()">
+                        <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                        Googleで続ける
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Login -->
+            <div id="loginScreen" class="screen">
+                <div class="create-head"><div class="back" onclick="go('welcomeScreen')">←</div></div>
+                <div class="auth-head"><h1 class="auth-title">ログイン</h1><p class="auth-sub">アカウントにサインイン</p></div>
+                <button type="button" class="btn btn-google btn-lg" onclick="loginWithGoogle()">
+                    <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Googleでログイン
+                </button>
+                <div class="auth-divider">または</div>
+                <form onsubmit="login(event)">
+                    <div class="input-group"><label class="label">メールアドレス</label><input type="email" class="input" id="loginEmail" required></div>
+                    <div class="input-group"><label class="label">パスワード</label><input type="password" class="input" id="loginPassword" required></div>
+                    <div class="auth-error" id="loginError"></div>
+                    <button type="submit" class="btn btn-p btn-lg">ログイン</button>
+                </form>
+                <span class="auth-link" onclick="go('signupScreen')">アカウントを作成</span>
+            </div>
+            
+            <!-- Signup -->
+            <div id="signupScreen" class="screen">
+                <div class="create-head"><div class="back" onclick="go('welcomeScreen')">←</div></div>
+                <div class="auth-head"><h1 class="auth-title">新規登録</h1><p class="auth-sub">アカウントを作成</p></div>
+                <button type="button" class="btn btn-google btn-lg" onclick="loginWithGoogle()">
+                    <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Googleで登録
+                </button>
+                <div class="auth-divider">または</div>
+                <form onsubmit="signup(event)">
+                    <div class="input-group"><label class="label">名前</label><input type="text" class="input" id="signupName" required></div>
+                    <div class="input-group"><label class="label">メールアドレス</label><input type="email" class="input" id="signupEmail" required></div>
+                    <div class="input-group"><label class="label">パスワード</label><input type="password" class="input" id="signupPassword" required minlength="6"></div>
+                    <div class="input-group"><label class="label">パスワード確認</label><input type="password" class="input" id="signupPasswordConfirm" required></div>
+                    <div class="auth-error" id="signupError"></div>
+                    <button type="submit" class="btn btn-p btn-lg">登録</button>
+                </form>
+                <span class="auth-link" onclick="go('loginScreen')">すでにアカウントをお持ちの方</span>
+            </div>
+            
+            <!-- Main -->
+            <div id="mainScreen" class="screen">
+                <header class="header">
+                    <img alt="DJHAKK" class="header-logo" onclick="go('mainScreen')">
+                    <div class="avatar" onclick="go('profileScreen')"></div>
+                </header>
+                <div id="eventList"></div>
+                <nav class="nav">
+                    <div class="nav-item active" onclick="go('mainScreen')"><span class="nav-icon">🏠</span><span>Home</span></div>
+                    <div class="nav-item" onclick="go('searchScreen')"><span class="nav-icon">🔍</span><span>Search</span></div>
+                    <div class="nav-item nav-create" onclick="go('createScreen')"><div class="nav-plus">+</div></div>
+                    <div class="nav-item" onclick="go('dmScreen')"><span class="nav-icon">💬</span><span>DM</span></div>
+                    <div class="nav-item" onclick="go('profileScreen')"><span class="nav-icon">👤</span><span>Profile</span></div>
+                </nav>
+            </div>
+            
+            <!-- Search -->
+            <div id="searchScreen" class="screen">
+                <header class="header">
+                    <img alt="DJHAKK" class="header-logo" onclick="go('mainScreen')">
+                    <div class="avatar" onclick="go('profileScreen')"></div>
+                </header>
+                <input type="text" class="input" id="searchInput" placeholder="イベントを検索..." oninput="search()">
+                <div style="display:flex;gap:8px;margin:16px 0">
+                    <button class="btn btn-sm filter-btn active" onclick="filterType('all',this)">すべて</button>
+                    <button class="btn btn-sm filter-btn" onclick="filterType('A',this)">枠販売</button>
+                    <button class="btn btn-sm filter-btn" onclick="filterType('B',this)">ギャラ</button>
+                    <button class="btn btn-sm filter-btn" onclick="filterType('C',this)">情報</button>
+                </div>
+                <div id="searchResults"></div>
+                <nav class="nav">
+                    <div class="nav-item" onclick="go('mainScreen')"><span class="nav-icon">🏠</span><span>Home</span></div>
+                    <div class="nav-item active" onclick="go('searchScreen')"><span class="nav-icon">🔍</span><span>Search</span></div>
+                    <div class="nav-item nav-create" onclick="go('createScreen')"><div class="nav-plus">+</div></div>
+                    <div class="nav-item" onclick="go('dmScreen')"><span class="nav-icon">💬</span><span>DM</span></div>
+                    <div class="nav-item" onclick="go('profileScreen')"><span class="nav-icon">👤</span><span>Profile</span></div>
+                </nav>
+            </div>
+            
+            <!-- Create -->
+            <div id="createScreen" class="screen">
+                <div class="create-head"><div class="back" onclick="goBack()">←</div><h1 class="title">イベント作成</h1></div>
+                <form id="createForm">
+                    <div class="type-sel">
+                        <div class="type-opt active" data-type="A" onclick="selType('A')"><div class="type-label">枠販売</div><div class="type-desc">アーティストが枠を購入</div></div>
+                        <div class="type-opt" data-type="B" onclick="selType('B')"><div class="type-label">ギャラ</div><div class="type-desc">アーティストに報酬</div></div>
+                        <div class="type-opt" data-type="C" onclick="selType('C')"><div class="type-label">情報</div><div class="type-desc">告知のみ</div></div>
+                    </div>
+                    <label class="img-upload" id="imgUpload">
+                        <input type="file" accept="image/*" hidden onchange="loadCropImage(event)">
+                        <div class="img-placeholder" id="imgPlaceholder"><div style="font-size:32px">📷</div><div>画像をアップロード</div></div>
+                        <div class="crop-container" id="cropContainer"><img class="crop-image" id="cropImage"></div>
+                    </label>
+                    <div class="img-hint">※ホーム画面と同じサイズでプレビュー</div>
+                    <div class="crop-controls" id="cropControls" style="display:none">
+                        <span style="font-size:11px;color:var(--text3)">10%</span>
+                        <input type="range" class="crop-slider" id="cropSlider" min="10" max="200" value="100" oninput="updateCropScale()">
+                        <span style="font-size:11px;color:var(--text3)">200%</span>
+                        <span style="font-size:12px;color:var(--primary);min-width:40px;text-align:center" id="scaleDisplay">100%</span>
+                        <button type="button" class="btn btn-sm btn-s" onclick="resetCrop()">リセット</button>
+                    </div>
+                    <div class="img-hint" id="pinchHint" style="display:none">📱 スマホ: 2本指で拡大縮小</div>
+                    <div class="input-group"><label class="label">タイトル</label><input type="text" class="input" id="eventTitle" required></div>
+                    <div class="input-group"><label class="label">日時</label><input type="datetime-local" class="input" id="eventDate" required></div>
+                    <div class="input-group"><label class="label">場所</label><input type="text" class="input" id="eventVenue" required></div>
+                    <div class="input-group">
+                        <label class="label">地域</label>
+                        <select class="input" id="eventRegion" onchange="toggleOther()">
+                            <option value="tokyo">東京</option>
+                            <option value="osaka">大阪</option>
+                            <option value="nagoya">名古屋</option>
+                            <option value="fukuoka">福岡</option>
+                            <option value="other">その他</option>
+                        </select>
+                        <input type="text" class="input" id="otherRegion" placeholder="地域名" style="margin-top:8px;display:none">
+                    </div>
+                    <div class="input-group"><label class="label">説明</label><textarea class="input" id="eventDesc"></textarea></div>
+                    <div id="typeAFields">
+                        <div class="input-group"><label class="label">時間枠</label><div id="slotsBox"></div><button type="button" class="btn btn-sm btn-s" onclick="addSlot()" style="margin-top:8px">＋ 枠を追加</button></div>
+                    </div>
+                    <div id="typeBFields" style="display:none">
+                        <div class="input-group"><label class="label">ギャラ (円)</label><input type="number" class="input" id="gigFee" value="0"></div>
+                        <div class="input-group"><label class="label">募集人数</label><input type="number" class="input" id="gigCap" value="1" min="1"></div>
+                    </div>
+                    <button type="button" class="btn btn-p btn-lg" style="margin-top:24px" onclick="submitNewEvent()">イベントを作成</button>
+                </form>
+            </div>
+            
+            <!-- Detail -->
+            <div id="detailScreen" class="screen" style="padding:0;padding-bottom:20px">
+                <div class="detail-head">
+                    <img class="detail-img" id="detailImage">
+                    <div class="detail-back" onclick="goBack()">←</div>
+                </div>
+                <div class="detail-body">
+                    <div class="detail-header">
+                        <span class="badge" id="detailBadge"></span>
+                        <div class="share-btns" id="detailShareBtns"></div>
+                    </div>
+                    <h1 class="detail-title" id="detailTitle"></h1>
+                    <div class="meta">
+                        <div class="meta-item"><span>📅</span><span id="detailDate"></span></div>
+                        <div class="meta-item"><span>📍</span><span id="detailVenue"></span></div>
+                    </div>
+                    <div class="organizer" id="detailOrg">
+                        <div class="org-avatar" id="detailOrgAv" onclick="viewProfile(curEvent?.organizerId)"></div>
+                        <span class="org-name" id="detailOrgName" onclick="viewProfile(curEvent?.organizerId)"></span>
+                        <button class="dm-btn" onclick="startDM(curEvent?.organizerId)">💬 DM</button>
+                    </div>
+                    <div class="section"><h3 class="section-title">説明</h3><p class="desc" id="detailDesc"></p></div>
+                    <div class="section" id="slotsSection" style="display:none"><h3 class="section-title">時間枠</h3><div class="slots-list" id="slotsList"></div></div>
+                    <div class="section" id="gigSection" style="display:none">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <div><div class="price b" id="detailFee"></div><div class="slots" id="detailCap"></div></div>
+                            <button class="btn btn-p btn-sm" id="applyBtn" onclick="applyGig()">応募する</button>
+                        </div>
+                    </div>
+                    <div class="section" id="artistsSection"><h3 class="section-title">出演者</h3><div class="artists" id="detailArtists"></div></div>
+                    <div class="section" id="appSection" style="display:none"><h3 class="section-title">応募者（承認待ち）</h3><div id="appList"></div></div>
+                </div>
+            </div>
+            
+            <!-- DM List -->
+            <div id="dmScreen" class="screen">
+                <header class="header">
+                    <img alt="DJHAKK" class="header-logo" onclick="go('mainScreen')">
+                    <div class="avatar" onclick="go('profileScreen')"></div>
+                </header>
+                <h2 style="font-size:20px;font-weight:700;margin-bottom:20px">Messages</h2>
+                <div class="dm-list" id="dmList"></div>
+                <nav class="nav">
+                    <div class="nav-item" onclick="go('mainScreen')"><span class="nav-icon">🏠</span><span>Home</span></div>
+                    <div class="nav-item" onclick="go('searchScreen')"><span class="nav-icon">🔍</span><span>Search</span></div>
+                    <div class="nav-item nav-create" onclick="go('createScreen')"><div class="nav-plus">+</div></div>
+                    <div class="nav-item active" onclick="go('dmScreen')"><span class="nav-icon">💬</span><span>DM</span></div>
+                    <div class="nav-item" onclick="go('profileScreen')"><span class="nav-icon">👤</span><span>Profile</span></div>
+                </nav>
+            </div>
+            
+            <!-- Chat -->
+            <div id="chatScreen" class="screen" style="padding-bottom:0">
+                <div class="create-head"><div class="back" onclick="goBack()">←</div><h1 class="title" id="chatName">Chat</h1></div>
+                <div class="chat-wrap">
+                    <div class="chat-msgs" id="chatMsgs"></div>
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="メッセージを入力...">
+                        <button class="chat-send" onclick="sendMsg()">→</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Profile -->
+            <div id="profileScreen" class="screen">
+                <div class="create-head"><div class="back" onclick="go('mainScreen')">←</div><h1 class="title">Profile</h1></div>
+                <div class="profile-head">
+                    <div class="profile-av" id="profileAv" onclick="openEdit()"></div>
+                    <h2 class="profile-name" id="profileName">User</h2>
+                    <p class="profile-email" id="profileEmail"></p>
+                    <p class="profile-bio" id="profileBio"></p>
+                    <div class="profile-sns" id="profileSns"></div>
+                    <div class="contact-links" id="profileContacts"></div>
+                </div>
+                <div class="menu">
+                    <div class="menu-item" onclick="openEdit()"><div class="menu-left"><div class="menu-icon">✏️</div><span>プロフィール編集</span></div><span>→</span></div>
+                    <div class="menu-item" onclick="go('myEventsScreen')"><div class="menu-left"><div class="menu-icon">📅</div><span>マイイベント</span></div><span>→</span></div>
+                    <div class="menu-item" onclick="logout()"><div class="menu-left"><div class="menu-icon">🚪</div><span>ログアウト</span></div><span>→</span></div>
+                </div>
+                <nav class="nav">
+                    <div class="nav-item" onclick="go('mainScreen')"><span class="nav-icon">🏠</span><span>Home</span></div>
+                    <div class="nav-item" onclick="go('searchScreen')"><span class="nav-icon">🔍</span><span>Search</span></div>
+                    <div class="nav-item nav-create" onclick="go('createScreen')"><div class="nav-plus">+</div></div>
+                    <div class="nav-item" onclick="go('dmScreen')"><span class="nav-icon">💬</span><span>DM</span></div>
+                    <div class="nav-item active" onclick="go('profileScreen')"><span class="nav-icon">👤</span><span>Profile</span></div>
+                </nav>
+            </div>
+            
+            <!-- User Profile -->
+            <div id="userProfileScreen" class="screen">
+                <div class="create-head"><div class="back" onclick="goBack()">←</div><h1 class="title">Profile</h1></div>
+                <div class="profile-head">
+                    <div class="profile-av" id="viewAv"></div>
+                    <h2 class="profile-name" id="viewName">User</h2>
+                    <p class="profile-bio" id="viewBio"></p>
+                    <div class="profile-sns" id="viewSns"></div>
+                    <div class="contact-links" id="viewContacts"></div>
+                    <button class="dm-btn" style="margin-top:16px" onclick="startDM(viewUserId)">💬 メッセージを送る</button>
+                </div>
+            </div>
+            
+            <!-- My Events -->
+            <div id="myEventsScreen" class="screen">
+                <div class="create-head"><div class="back" onclick="go('profileScreen')">←</div><h1 class="title">My Events</h1></div>
+                <div id="myEventsList"></div>
+            </div>
+    </div>
+    
+    <!-- Modals -->
+    <div class="modal" id="slotModal">
+        <div class="modal-box">
+            <div class="modal-head"><h2 class="modal-title">枠を予約</h2><button class="modal-close" onclick="closeModal('slotModal')">×</button></div>
+            <div class="modal-body">
+                <p id="slotInfo" style="margin-bottom:20px"></p>
+                <button class="btn btn-p btn-lg" onclick="confirmSlot()">予約する</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="editModal">
+        <div class="modal-box">
+            <div class="modal-head"><h2 class="modal-title">プロフィール編集</h2><button class="modal-close" onclick="closeModal('editModal')">×</button></div>
+            <div class="modal-body">
+                <form onsubmit="saveProfile(event)">
+                    <div style="text-align:center;margin-bottom:20px">
+                        <label style="cursor:pointer">
+                            <div class="profile-av" id="editAv" style="margin:0 auto"></div>
+                            <input type="file" accept="image/*" hidden onchange="prevProfImg(event)">
+                            <div style="color:var(--primary);font-size:12px;margin-top:8px">写真を変更</div>
+                        </label>
+                    </div>
+                    <div class="input-group"><label class="label">名前</label><input type="text" class="input" id="editName"></div>
+                    <div class="input-group"><label class="label">自己紹介</label><textarea class="input" id="editBio"></textarea></div>
+                    <div class="input-group"><label class="label">連絡先 (メール/LINE ID)</label><input type="text" class="input" id="editEmail" placeholder="メールまたはLINE ID"></div>
+                    <div class="input-group"><label class="label">電話番号</label><input type="tel" class="input" id="editPhone" placeholder="090-1234-5678"></div>
+                    <div class="input-group"><label class="label">SNS URL 1</label><input type="url" class="input" id="editSns1" placeholder="https://"></div>
+                    <div class="input-group"><label class="label">SNS URL 2</label><input type="url" class="input" id="editSns2" placeholder="https://"></div>
+                    <div class="input-group"><label class="label">SNS URL 3</label><input type="url" class="input" id="editSns3" placeholder="https://"></div>
+                    <button type="submit" class="btn btn-p btn-lg">保存</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+    
+    <script>
+    // ========================================
+    // Configuration
+    // ========================================
+    const APP_URL = location.origin;
+    const firebaseConfig = {
+        apiKey: "AIzaSyBKj-PY2vvHC_VzxUdO2urbClDjuKuslhc",
+        authDomain: "djhakk-app.firebaseapp.com",
+        projectId: "djhakk-app",
+        storageBucket: "djhakk-app.firebasestorage.app",
+        messagingSenderId: "1084468016344",
+        appId: "1:1084468016344:web:32a5bf22439912ac2b53ad",
+        measurementId: "G-72CS9X84GN"
+    };
+    
+    // ========================================
+    // Initialize Firebase
+    // ========================================
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+    
+    // ========================================
+    // Global State
+    // ========================================
+    let user = null;
+    let userData = {};
+    let allEvents = [];
+    let curEvent = null;
+    let curFilter = 'all';
+    let screenHistory = [];
+    let selSlotIdx = null;
+    let profImg = null;
+    let viewUserId = null;
+    let curChatId = null;
+    let chatUnsub = null;
+    let evType = 'A';
+    let slotCnt = 0;
+    
+    // Crop state
+    let cropImg = null;
+    let cropScale = 1;
+    let cropX = 0;
+    let cropY = 0;
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let containerW = 0;
+    let containerH = 0;
+    
+    // Instagram icon SVG
+    const igIcon = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`;
+    
+    // ========================================
+    // Utility Functions
+    // ========================================
+    const $ = id => document.getElementById(id);
+    
+    function log(msg) {
+        console.log('[DJHAKK]', msg);
+        // Debug display (uncomment to enable)
+        // $('debug').style.display = 'block';
+        // $('debug').innerHTML = msg + '<br>' + $('debug').innerHTML;
+    }
+    
+    function toast(msg, type = 'success') {
+        const t = $('toast');
+        t.textContent = msg;
+        t.className = 'toast ' + type + ' show';
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+    
+    function closeModal(id) {
+        $(id).classList.remove('active');
+    }
+    
+    // ========================================
+    // Setup Functions
+    // ========================================
+    // DJHAKK Logo - External File References
+    // ========================================
+    function setupLogo() {
+        // Set logo for all header logos (white version for dark theme)
+        document.querySelectorAll('.header-logo').forEach(el => el.src = 'logo.png');
+        
+        // Set welcome logo (white version for dark theme)
+        const welcomeLogo = $('welcomeLogo');
+        if (welcomeLogo) welcomeLogo.src = 'logo.png';
+        
+        // favicon and apple-touch-icon are set via link tags in <head>
+    }
+
+    
+    // ========================================
+    // Navigation
+    // ========================================
+    function go(id) {
+        const cur = document.querySelector('.screen.active')?.id;
+        
+        // Save history (exclude auth screens when logged in)
+        if (cur && cur !== id) {
+            const skipHistory = ['welcomeScreen', 'loginScreen', 'signupScreen'];
+            if (!skipHistory.includes(cur) || !user) {
+                if (screenHistory[screenHistory.length - 1] !== cur) {
+                    screenHistory.push(cur);
+                }
+            }
+        }
+        
+        // Limit history
+        if (screenHistory.length > 20) screenHistory.shift();
+        
+        // Switch screen
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        $(id).classList.add('active');
+        window.scrollTo(0, 0);
+        
+        // Load data for specific screens
+        if (id === 'mainScreen') loadEvents();
+        if (id === 'searchScreen') loadSearch();
+        if (id === 'myEventsScreen') loadMyEvents();
+        if (id === 'dmScreen') loadDMs();
+    }
+    
+    function goBack() {
+        const cur = document.querySelector('.screen.active')?.id;
+        
+        // Detail/Chat screens always go back to main
+        if (['detailScreen', 'chatScreen'].includes(cur)) {
+            screenHistory = [];
+            go('mainScreen');
+            return;
+        }
+        
+        // Pop from history
+        while (screenHistory.length > 0) {
+            const prev = screenHistory.pop();
+            // Skip auth screens if logged in
+            if (user && ['welcomeScreen', 'loginScreen', 'signupScreen'].includes(prev)) continue;
+            // Skip detail/chat
+            if (['detailScreen', 'chatScreen'].includes(prev)) continue;
+            go(prev);
+            return;
+        }
+        
+        // Default
+        go(user ? 'mainScreen' : 'welcomeScreen');
+    }
+    
+    // ========================================
+    // Authentication
+    // ========================================
+    auth.onAuthStateChanged(async u => {
+        user = u;
+        log('Auth state: ' + (u ? u.email : 'not logged in'));
+        
+        if (u) {
+            try {
+                const doc = await db.collection('users').doc(u.uid).get();
+                userData = doc.exists ? doc.data() : {};
+            } catch (e) {
+                log('Error loading user data: ' + e.message);
+                userData = {};
+            }
+            updateUI();
+            const cur = document.querySelector('.screen.active');
+            if (['welcomeScreen', 'loginScreen', 'signupScreen'].includes(cur?.id)) {
+                go('mainScreen');
+            }
+        } else {
+            userData = {};
+            go('welcomeScreen');
+        }
+    });
+    
+    async function login(e) {
+        e.preventDefault();
+        $('loginError').textContent = '';
+        try {
+            await auth.signInWithEmailAndPassword($('loginEmail').value, $('loginPassword').value);
+            toast('ログインしました');
+        } catch (err) {
+            $('loginError').textContent = err.message;
+        }
+    }
+    
+    async function signup(e) {
+        e.preventDefault();
+        $('signupError').textContent = '';
+        
+        if ($('signupPassword').value !== $('signupPasswordConfirm').value) {
+            $('signupError').textContent = 'パスワードが一致しません';
+            return;
+        }
+        
+        try {
+            const name = $('signupName').value;
+            const cred = await auth.createUserWithEmailAndPassword($('signupEmail').value, $('signupPassword').value);
+            await cred.user.updateProfile({ displayName: name });
+            await db.collection('users').doc(cred.user.uid).set({
+                displayName: name,
+                email: cred.user.email,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            toast('アカウントを作成しました');
+        } catch (err) {
+            $('signupError').textContent = err.message;
+        }
+    }
+    
+    async function logout() {
+        await auth.signOut();
+        screenHistory = [];
+        toast('ログアウトしました');
+    }
+    
+    async function loginWithGoogle() {
+        try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            const result = await auth.signInWithPopup(provider);
+            const u = result.user;
+            
+            // Check if user document exists, if not create one
+            const userDoc = await db.collection('users').doc(u.uid).get();
+            if (!userDoc.exists) {
+                await db.collection('users').doc(u.uid).set({
+                    displayName: u.displayName || 'User',
+                    email: u.email,
+                    photoURL: u.photoURL || null,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+            
+            toast('ログインしました');
+        } catch (err) {
+            if (err.code !== 'auth/popup-closed-by-user') {
+                toast('エラー: ' + err.message, 'error');
+            }
+        }
+    }
+    
+    function updateUI() {
+        const init = (user?.displayName || user?.email || 'U')[0].toUpperCase();
+        document.querySelectorAll('.avatar').forEach(el => {
+            el.innerHTML = userData.photoURL ? `<img src="${userData.photoURL}">` : init;
+        });
+        $('profileAv').innerHTML = userData.photoURL ? `<img src="${userData.photoURL}">` : init;
+        $('profileName').textContent = user?.displayName || 'User';
+        $('profileEmail').textContent = user?.email || '';
+        $('profileBio').textContent = userData.bio || '';
+        renderContacts(userData.contactEmail, userData.contactPhone, 'profileContacts');
+        renderSns([userData.sns1, userData.sns2, userData.sns3], 'profileSns');
+    }
+    
+    function renderContacts(emailOrLine, phone, containerId) {
+        const container = $(containerId);
+        container.innerHTML = '';
+        if (emailOrLine) {
+            if (emailOrLine.includes('@')) {
+                container.innerHTML += `<a href="mailto:${emailOrLine}" class="contact-link">📧 ${emailOrLine}</a>`;
+            } else {
+                container.innerHTML += `<a href="https://line.me/ti/p/${emailOrLine}" target="_blank" class="contact-link">💬 ${emailOrLine}</a>`;
+            }
+        }
+        if (phone) {
+            const cleanPhone = phone.replace(/[-\s]/g, '');
+            container.innerHTML += `<a href="tel:${cleanPhone}" class="contact-link">📞 ${phone}</a>`;
+        }
+    }
+    
+    function renderSns(urls, containerId) {
+        const container = $(containerId);
+        container.innerHTML = '';
+        const igIcon = '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>';
+        urls.filter(Boolean).forEach(url => {
+            let icon = '🔗';
+            if (url.includes('twitter') || url.includes('x.com')) icon = '𝕏';
+            else if (url.includes('instagram')) icon = igIcon;
+            container.innerHTML += `<a href="${url}" target="_blank" class="sns-link">${icon}</a>`;
+        });
+    }
+    
+    // ========================================
+    // Image Handling
+    // ========================================
+    // Storage用：高画質で画像を処理（圧縮を軽減）
+    function compressImage(file, maxWidth = 1200, quality = 0.9) {
+        return new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    if (w > maxWidth) { h = (h * maxWidth) / w; w = maxWidth; }
+                    canvas.width = w;
+                    canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    canvas.toBlob(blob => resolve(blob), 'image/jpeg', quality);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    
+    // StorageにアップロードしてURLを取得
+    async function uploadImageToStorage(blob, path) {
+        const ref = storage.ref().child(path);
+        await ref.put(blob);
+        return await ref.getDownloadURL();
+    }
+    
+    function loadCropImage(e) {
+        const f = e.target.files[0];
+        if (!f) return;
+        
+        const reader = new FileReader();
+        reader.onload = ev => {
+            cropImg = new Image();
+            cropImg.onload = () => {
+                const container = $('cropContainer');
+                const img = $('cropImage');
+                const upload = $('imgUpload');
+                
+                img.src = ev.target.result;
+                container.style.display = 'block';
+                $('imgPlaceholder').style.display = 'none';
+                upload.classList.add('has-image');
+                $('cropControls').style.display = 'flex';
+                
+                // Show pinch hint on touch devices
+                if ('ontouchstart' in window) {
+                    $('pinchHint').style.display = 'block';
+                }
+                
+                containerW = container.offsetWidth || 180;
+                containerH = container.offsetHeight || 240;
+                cropScale = 1;
+                cropX = 0;
+                cropY = 0;
+                $('cropSlider').value = 100;
+                $('scaleDisplay').textContent = '100%';
+                updateCropPosition();
+                
+                img.onmousedown = startDrag;
+                img.ontouchstart = handleTouchStart;
+            };
+            cropImg.src = ev.target.result;
+        };
+        reader.readAsDataURL(f);
+    }
+    
+    // Pinch zoom variables
+    let initialPinchDistance = 0;
+    let initialScale = 1;
+    
+    function handleTouchStart(e) {
+        if (e.touches.length === 2) {
+            // Pinch zoom start
+            e.preventDefault();
+            initialPinchDistance = getPinchDistance(e.touches);
+            initialScale = cropScale;
+        } else if (e.touches.length === 1) {
+            // Single finger drag
+            startDrag(e);
+        }
+        
+        document.ontouchmove = handleTouchMove;
+        document.ontouchend = handleTouchEnd;
+    }
+    
+    function handleTouchMove(e) {
+        if (e.touches.length === 2) {
+            // Pinch zoom
+            e.preventDefault();
+            const currentDistance = getPinchDistance(e.touches);
+            const scale = (currentDistance / initialPinchDistance) * initialScale;
+            cropScale = Math.max(0.1, Math.min(2, scale)); // 10% to 200%
+            syncSliderToScale();
+            updateCropPosition();
+        } else if (e.touches.length === 1 && isDragging) {
+            // Single finger drag
+            drag(e);
+        }
+    }
+    
+    function handleTouchEnd(e) {
+        if (e.touches.length === 0) {
+            stopDrag();
+            initialPinchDistance = 0;
+        }
+    }
+    
+    function getPinchDistance(touches) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+    
+    function updateCropScale() {
+        cropScale = $('cropSlider').value / 100;
+        $('scaleDisplay').textContent = Math.round(cropScale * 100) + '%';
+        updateCropPosition();
+    }
+    
+    function syncSliderToScale() {
+        const sliderValue = Math.round(cropScale * 100);
+        $('cropSlider').value = Math.max(10, Math.min(200, sliderValue));
+        $('scaleDisplay').textContent = sliderValue + '%';
+    }
+    
+    function updateCropPosition() {
+        const img = $('cropImage');
+        const container = $('cropContainer');
+        if (!cropImg) return;
+        
+        containerW = container.offsetWidth || 180;
+        containerH = container.offsetHeight || 240;
+        
+        const aspectRatio = cropImg.width / cropImg.height;
+        let imgW, imgH;
+        
+        if (aspectRatio > containerW / containerH) {
+            imgH = containerH;
+            imgW = imgH * aspectRatio;
+        } else {
+            imgW = containerW;
+            imgH = imgW / aspectRatio;
+        }
+        
+        imgW *= cropScale;
+        imgH *= cropScale;
+        
+        img.style.width = imgW + 'px';
+        img.style.height = imgH + 'px';
+        img.style.left = cropX + 'px';
+        img.style.top = cropY + 'px';
+    }
+    
+    function startDrag(e) {
+        e.preventDefault();
+        isDragging = true;
+        const touch = e.touches ? e.touches[0] : e;
+        dragStartX = touch.clientX - cropX;
+        dragStartY = touch.clientY - cropY;
+        document.onmousemove = drag;
+        document.ontouchmove = drag;
+        document.onmouseup = stopDrag;
+        document.ontouchend = stopDrag;
+    }
+    
+    function drag(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+        const touch = e.touches ? e.touches[0] : e;
+        cropX = touch.clientX - dragStartX;
+        cropY = touch.clientY - dragStartY;
+        updateCropPosition();
+    }
+    
+    function stopDrag() {
+        isDragging = false;
+        document.onmousemove = null;
+        document.ontouchmove = null;
+    }
+    
+    function resetCrop() {
+        cropScale = 1;
+        cropX = 0;
+        cropY = 0;
+        $('cropSlider').value = 100;
+        $('scaleDisplay').textContent = '100%';
+        updateCropPosition();
+    }
+    
+    function getCroppedImage() {
+        return new Promise(resolve => {
+            if (!cropImg) { resolve(null); return; }
+            
+            const container = $('cropContainer');
+            const img = $('cropImage');
+            const canvas = document.createElement('canvas');
+            
+            // 高解像度で出力（元は180x240だったが、3倍に）
+            canvas.width = 540;
+            canvas.height = 720;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const displayW = containerW || 180;
+            const displayH = containerH || 240;
+            const scaleX = cropImg.width / img.offsetWidth;
+            const scaleY = cropImg.height / img.offsetHeight;
+            const sx = -cropX * scaleX;
+            const sy = -cropY * scaleY;
+            const sw = displayW * scaleX;
+            const sh = displayH * scaleY;
+            
+            ctx.drawImage(cropImg, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+            
+            // Blobとして返す（高画質）
+            canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.92);
+        });
+    }
+    
+    // ========================================
+    // Event Creation
+    // ========================================
+    function selType(t) {
+        evType = t;
+        document.querySelectorAll('.type-opt').forEach(o => {
+            o.classList.toggle('active', o.dataset.type === t);
+        });
+        $('typeAFields').style.display = t === 'A' ? 'block' : 'none';
+        $('typeBFields').style.display = t === 'B' ? 'block' : 'none';
+    }
+    
+    function toggleOther() {
+        $('otherRegion').style.display = $('eventRegion').value === 'other' ? 'block' : 'none';
+    }
+    
+    function addSlot() {
+        slotCnt++;
+        $('slotsBox').insertAdjacentHTML('beforeend', `
+            <div class="slot-row">
+                <input type="time" class="input" name="ss${slotCnt}">
+                <span>〜</span>
+                <input type="time" class="input" name="se${slotCnt}">
+                <input type="number" class="input" name="sp${slotCnt}" placeholder="¥">
+            </div>
+        `);
+    }
+    
+    async function submitNewEvent(e) {
+        if (e) e.preventDefault();
+        
+        if (!user) {
+            toast('ログインしてください', 'error');
+            return;
+        }
+        
+        log('Creating event...');
+        
+        const eventImgBlob = await getCroppedImage();
+        let region = $('eventRegion').value;
+        if (region === 'other') region = $('otherRegion').value || 'other';
+        
+        // Use Date.now() for immediate ordering (no index required)
+        const now = Date.now();
+        
+        // 画像をStorageにアップロード
+        let imageUrl = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800';
+        if (eventImgBlob) {
+            try {
+                toast('画像をアップロード中...', 'success');
+                const imagePath = `events/${user.uid}/${now}.jpg`;
+                imageUrl = await uploadImageToStorage(eventImgBlob, imagePath);
+                log('Image uploaded: ' + imageUrl);
+            } catch (imgErr) {
+                log('Image upload failed: ' + imgErr.message);
+                toast('画像アップロード失敗、デフォルト画像を使用します', 'error');
+            }
+        }
+        
+        const data = {
+            type: evType,
+            title: $('eventTitle').value,
+            date: $('eventDate').value,
+            venue: $('eventVenue').value,
+            region: region,
+            description: $('eventDesc').value,
+            organizerId: user.uid,
+            organizerName: user.displayName || 'User',
+            organizerPhoto: userData.photoURL || null,
+            confirmedArtists: [],
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAtNum: now, // Numeric timestamp for fallback ordering
+            imageUrl: imageUrl
+        };
+        
+        if (evType === 'A') {
+            const slots = [];
+            document.querySelectorAll('.slot-row').forEach((row, i) => {
+                const s = row.querySelector(`[name="ss${i + 1}"]`)?.value;
+                const en = row.querySelector(`[name="se${i + 1}"]`)?.value;
+                const p = parseInt(row.querySelector(`[name="sp${i + 1}"]`)?.value) || 0;
+                if (s && en) {
+                    slots.push({
+                        startTime: s,
+                        endTime: en,
+                        price: p,
+                        bookedBy: null,
+                        bookedByName: null,
+                        bookedByPhoto: null
+                    });
+                }
+            });
+            data.slots = slots;
+        } else if (evType === 'B') {
+            data.fee = parseInt($('gigFee').value) || 0;
+            data.capacity = parseInt($('gigCap').value) || 1;
+            data.applicants = [];
+        }
+        
+        try {
+            const docRef = await db.collection('events').add(data);
+            log('Event created: ' + docRef.id);
+            toast('イベントを作成しました');
+            
+            // Reset form
+            $('createForm').reset();
+            $('cropContainer').style.display = 'none';
+            $('imgPlaceholder').style.display = 'flex';
+            $('imgUpload').classList.remove('has-image');
+            cropImg = null;
+            slotCnt = 0;
+            $('slotsBox').innerHTML = '';
+            addSlot();
+            selType('A');
+            
+            // Add created event to cache immediately (don't wait for Firestore)
+            const newEvent = { id: docRef.id, ...data, createdAt: new Date() };
+            allEvents.unshift(newEvent);
+            
+            // Navigate to main screen
+            go('mainScreen');
+            
+            // Also reload from Firestore after a short delay to ensure consistency
+            setTimeout(() => loadEvents(), 1000);
+            
+        } catch (err) {
+            log('Error creating event: ' + err.message);
+            toast('エラー: ' + err.message, 'error');
+        }
+    }
+    
+    // ========================================
+    // Event Loading
+    // ========================================
+    async function loadEvents() {
+        const list = $('eventList');
+        list.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        
+        log('Loading events...');
+        
+        try {
+            // Load all events without ordering (to include docs without createdAtNum)
+            const snap = await db.collection('events').limit(50).get();
+            log('Loaded events: ' + snap.size);
+            
+            allEvents = [];
+            snap.forEach(d => {
+                const data = d.data();
+                allEvents.push({ id: d.id, ...data });
+            });
+            
+            log('Total events loaded: ' + allEvents.length);
+            if (allEvents.length > 0) {
+                log('First event: ' + allEvents[0].title + ' (region: ' + allEvents[0].region + ')');
+            }
+            
+            // Sort client-side by createdAt
+            allEvents.sort((a, b) => {
+                const aTime = a.createdAtNum || (a.createdAt?.toMillis?.() || a.createdAt?.seconds * 1000 || 0);
+                const bTime = b.createdAtNum || (b.createdAt?.toMillis?.() || b.createdAt?.seconds * 1000 || 0);
+                return bTime - aTime;
+            });
+            
+            renderEvents(allEvents, list, true);
+            
+        } catch (err) {
+            log('Error loading events: ' + err.message);
+            list.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><h3 class="empty-title">読み込みエラー</h3><p style="color:var(--text3);margin-top:8px">${err.message}</p></div>`;
+        }
+    }
+    
+    async function loadSearch() {
+        try {
+            const snap = await db.collection('events').limit(50).get();
+            
+            allEvents = [];
+            snap.forEach(d => allEvents.push({ id: d.id, ...d.data() }));
+            
+            allEvents.sort((a, b) => {
+                const aTime = a.createdAtNum || (a.createdAt?.toMillis?.() || a.createdAt?.seconds * 1000 || 0);
+                const bTime = b.createdAtNum || (b.createdAt?.toMillis?.() || b.createdAt?.seconds * 1000 || 0);
+                return bTime - aTime;
+            });
+        } catch (e) {
+            log('Search load error: ' + e.message);
+        }
+        filterEvents();
+    }
+    
+    function search() {
+        filterEvents();
+    }
+    
+    function filterType(t, btn) {
+        curFilter = t;
+        document.querySelectorAll('#searchScreen .filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterEvents();
+    }
+    
+    function filterEvents() {
+        const term = ($('searchInput')?.value || '').toLowerCase();
+        const filtered = allEvents.filter(e => {
+            const m = !term || e.title?.toLowerCase().includes(term) || e.venue?.toLowerCase().includes(term);
+            const tm = curFilter === 'all' || e.type === curFilter;
+            return m && tm;
+        });
+        renderEvents(filtered, $('searchResults'), false);
+    }
+    
+    async function loadMyEvents() {
+        const list = $('myEventsList');
+        if (!user) return;
+        
+        list.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        
+        try {
+            const snap = await db.collection('events').where('organizerId', '==', user.uid).get();
+            const evs = [];
+            snap.forEach(d => evs.push({ id: d.id, ...d.data() }));
+            
+            if (!evs.length) {
+                list.innerHTML = '<div class="empty"><div class="empty-icon">📅</div><h3 class="empty-title">イベントがありません</h3></div>';
+                return;
+            }
+            
+            let html = '';
+            evs.forEach(ev => {
+                const labels = { A: '枠販売', B: 'ギャラ', C: '情報' };
+                const d = new Date(ev.date);
+                const ds = d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+                const ts = d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                
+                html += `
+                    <div class="card" style="position:relative;">
+                        <img class="card-img" src="${ev.imageUrl || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800'}" onerror="this.src='https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800'" onclick="showDetail('${ev.id}')">
+                        <div class="card-body" onclick="showDetail('${ev.id}')">
+                            <span class="badge ${ev.type.toLowerCase()}">${labels[ev.type]}</span>
+                            <h3 class="card-title">${ev.title}</h3>
+                            <div class="meta">
+                                <div class="meta-item"><span>📅</span><span>${ds} ${ts}</span></div>
+                                <div class="meta-item"><span>📍</span><span>${ev.venue}</span></div>
+                            </div>
+                        </div>
+                        <button class="delete-event-btn" onclick="event.stopPropagation();deleteMyEvent('${ev.id}','${ev.title.replace(/'/g, "\\'")}')">🗑️</button>
+                    </div>
+                `;
+            });
+            
+            list.innerHTML = html;
+        } catch (err) {
+            list.innerHTML = `<div class="empty"><p>${err.message}</p></div>`;
+        }
+    }
+    
+    async function deleteMyEvent(eventId, eventTitle) {
+        if (!confirm(`「${eventTitle}」を削除しますか？\nこの操作は取り消せません。`)) return;
+        
+        try {
+            await db.collection('events').doc(eventId).delete();
+            toast('イベントを削除しました', 'success');
+            // Refresh my events list
+            loadMyEvents();
+            // Remove from allEvents array so home screen also updates
+            allEvents = allEvents.filter(e => e.id !== eventId);
+        } catch (err) {
+            toast('削除エラー: ' + err.message, 'error');
+        }
+    }
+    
+    // ========================================
+    // Event Rendering
+    // ========================================
+    function renderEvents(events, container, grouped) {
+        if (!events.length) {
+            container.innerHTML = '<div class="empty"><div class="empty-icon">📅</div><h3 class="empty-title">イベントがありません</h3></div>';
+            return;
+        }
+        
+        const today = new Date().toISOString().split('T')[0];
+        const rOrder = { tokyo: 1, osaka: 2, nagoya: 3, fukuoka: 4 };
+        
+        // Sort by date and region
+        events.sort((a, b) => {
+            const ad = a.date?.split('T')[0] || '';
+            const bd = b.date?.split('T')[0] || '';
+            if (ad === today && bd !== today) return -1;
+            if (ad !== today && bd === today) return 1;
+            return ad.localeCompare(bd) || (rOrder[a.region] || 99) - (rOrder[b.region] || 99);
+        });
+        
+        let html = '';
+        let lastR = '';
+        
+        events.forEach(ev => {
+            if (grouped && ev.region !== lastR) {
+                const names = { tokyo: '東京', osaka: '大阪', nagoya: '名古屋', fukuoka: '福岡' };
+                html += `<div class="region-div"><span class="region-name">${names[ev.region] || ev.region}</span></div>`;
+                lastR = ev.region;
+            }
+            html += renderCard(ev);
+        });
+        
+        container.innerHTML = html;
+    }
+    
+    function renderCard(ev) {
+        const labels = { A: '枠販売', B: 'ギャラ', C: '情報' };
+        
+        // Price display
+        let price = '';
+        if (ev.type === 'A' && ev.slots) {
+            const prices = ev.slots.map(s => s.price).filter(p => p !== undefined);
+            const min = prices.length ? Math.min(...prices) : 0;
+            const avail = ev.slots.filter(s => !s.bookedBy).length;
+            price = `<span class="price a">${min === 0 ? '無料' : '¥' + min.toLocaleString() + '〜'}</span><span class="slots">${avail}枠</span>`;
+        } else if (ev.type === 'B') {
+            const rem = ev.capacity - (ev.confirmedArtists?.length || 0);
+            price = `<span class="price b">${ev.fee === 0 ? '無料' : '¥' + ev.fee?.toLocaleString()}</span><span class="slots">${rem}名</span>`;
+        } else {
+            price = '<span class="price">ℹ️</span>';
+        }
+        
+        // Date formatting
+        const d = new Date(ev.date);
+        const ds = d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+        const ts = d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        
+        // Artists display (max 3)
+        let arts = '';
+        let artistList = [];
+        if (ev.type === 'A' && ev.slots) {
+            artistList = ev.slots.filter(s => s.bookedBy).slice(0, 3);
+            artistList.forEach(s => {
+                arts += `<div class="artist-av" onclick="event.stopPropagation();viewProfile('${s.bookedBy}')">${s.bookedByPhoto ? `<img src="${s.bookedByPhoto}">` : (s.bookedByName?.[0] || '?')}</div>`;
+            });
+        } else if (ev.confirmedArtists?.length) {
+            artistList = ev.confirmedArtists.slice(0, 3);
+            artistList.forEach(a => {
+                arts += `<div class="artist-av" onclick="event.stopPropagation();viewProfile('${a.id}')">${a.photo ? `<img src="${a.photo}">` : (a.name?.[0] || '?')}</div>`;
+            });
+        }
+        
+        // Share buttons
+        const nativeBtn = navigator.share ? `<button class="share-btn native" onclick="event.stopPropagation();shareNative('${ev.id}')" title="シェア">📤</button>` : '';
+        const orgPhoto = ev.organizerPhoto ? `<img src="${ev.organizerPhoto}">` : (ev.organizerName?.[0] || '?');
+        
+        return `
+            <div class="card" onclick="showDetail('${ev.id}')">
+                <img class="card-img" src="${ev.imageUrl || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800'}" onerror="this.src='https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800'">
+                <div class="card-body">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                        <span class="badge ${ev.type.toLowerCase()}">${labels[ev.type]}</span>
+                        <div class="share-btns">
+                            ${nativeBtn}
+                            <button class="share-btn x" onclick="event.stopPropagation();shareX('${ev.id}')" title="X">𝕏</button>
+                            <button class="share-btn ig" onclick="event.stopPropagation();shareIG('${ev.id}')" title="Instagram">${igIcon}</button>
+                            <button class="share-btn copy" onclick="event.stopPropagation();shareCopy('${ev.id}')" title="コピー">🔗</button>
+                        </div>
+                    </div>
+                    <h3 class="card-title">${ev.title}</h3>
+                    <div class="meta">
+                        <div class="meta-item"><span>📅</span><span>${ds} ${ts}</span></div>
+                        <div class="meta-item"><span>📍</span><span>${ev.venue}</span></div>
+                    </div>
+                    <div class="card-foot">
+                        <div class="organizer in-card" onclick="event.stopPropagation();viewProfile('${ev.organizerId}')">
+                            <div class="org-avatar">${orgPhoto}</div>
+                            <span class="org-name">${ev.organizerName}</span>
+                        </div>
+                        <div class="price-info">${price}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // ========================================
+    // Share Functions
+    // ========================================
+    function getEventById(id) {
+        return allEvents.find(e => e.id === id) || curEvent;
+    }
+    
+    function getShareText(ev) {
+        const d = new Date(ev.date);
+        const dateStr = d.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'long' });
+        const url = `${APP_URL}/event/${ev.id}`;
+        return {
+            text: `🎵 ${ev.title}\n\n📅 ${dateStr}\n📍 ${ev.venue}\n\n${url}\n\n#CHAINVIBE #音楽イベント`,
+            url: url
+        };
+    }
+    
+    function shareX(eventId) {
+        const ev = getEventById(eventId);
+        if (!ev) return;
+        const { text } = getShareText(ev);
+        window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
+    }
+    
+    async function shareIG(eventId) {
+        const ev = getEventById(eventId);
+        if (!ev) return;
+        const { text } = getShareText(ev);
+        
+        await navigator.clipboard.writeText(text);
+        
+        if (ev.imageUrl) {
+            if (ev.imageUrl.startsWith('data:')) {
+                const link = document.createElement('a');
+                link.download = 'sukimaster-event.jpg';
+                link.href = ev.imageUrl;
+                link.click();
+                toast('画像を保存しました！キャプションもコピー済み');
+            } else {
+                window.open(ev.imageUrl, '_blank');
+                toast('キャプションをコピーしました！');
+            }
+        } else {
+            toast('キャプションをコピーしました');
+        }
+    }
+    
+    function shareCopy(eventId) {
+        const ev = getEventById(eventId);
+        if (!ev) return;
+        const url = `${APP_URL}/event/${ev.id}`;
+        navigator.clipboard.writeText(url)
+            .then(() => toast('URLをコピーしました'))
+            .catch(() => toast('コピーに失敗しました', 'error'));
+    }
+    
+    async function shareNative(eventId) {
+        const ev = getEventById(eventId);
+        if (!ev) return;
+        const { text, url } = getShareText(ev);
+        
+        const shareData = {
+            title: ev.title,
+            text: text,
+            url: url
+        };
+        
+        if (ev.imageUrl && ev.imageUrl.startsWith('data:')) {
+            try {
+                const response = await fetch(ev.imageUrl);
+                const blob = await response.blob();
+                shareData.files = [new File([blob], 'event.jpg', { type: 'image/jpeg' })];
+            } catch (e) {}
+        }
+        
+        try {
+            await navigator.share(shareData);
+        } catch (e) {
+            if (e.name !== 'AbortError') toast('シェアに失敗しました', 'error');
+        }
+    }
+    
+    // ========================================
+    // Event Detail
+    // ========================================
+    async function showDetail(id) {
+        log('Showing detail for: ' + id);
+        
+        try {
+            const doc = await db.collection('events').doc(id).get();
+            if (!doc.exists) {
+                toast('イベントが見つかりません', 'error');
+                return;
+            }
+            
+            curEvent = { id, ...doc.data() };
+            const ev = curEvent;
+            
+            // Basic info
+            $('detailImage').src = ev.imageUrl || '';
+            $('detailTitle').textContent = ev.title;
+            
+            const labels = { A: '枠販売', B: 'ギャラ', C: '情報' };
+            const b = $('detailBadge');
+            b.textContent = labels[ev.type];
+            b.className = 'badge ' + ev.type.toLowerCase();
+            
+            const d = new Date(ev.date);
+            $('detailDate').textContent = d.toLocaleDateString('ja-JP', {
+                year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: '2-digit', minute: '2-digit'
+            });
+            $('detailVenue').textContent = ev.venue;
+            $('detailDesc').textContent = ev.description || '';
+            
+            // Organizer
+            $('detailOrgAv').innerHTML = ev.organizerPhoto ? `<img src="${ev.organizerPhoto}">` : (ev.organizerName?.[0] || '?');
+            $('detailOrgName').textContent = ev.organizerName;
+            
+            // Share buttons
+            const nativeBtn = navigator.share ? `<button class="share-btn native" onclick="shareNative('${ev.id}')" title="シェア">📤</button>` : '';
+            $('detailShareBtns').innerHTML = `
+                ${nativeBtn}
+                <button class="share-btn x" onclick="shareX('${ev.id}')" title="X">𝕏</button>
+                <button class="share-btn ig" onclick="shareIG('${ev.id}')" title="Instagram">${igIcon}</button>
+                <button class="share-btn copy" onclick="shareCopy('${ev.id}')" title="コピー">🔗</button>
+            `;
+            
+            // Type-specific sections
+            const isOwner = user?.uid === ev.organizerId;
+            
+            $('slotsSection').style.display = ev.type === 'A' ? 'block' : 'none';
+            $('gigSection').style.display = ev.type === 'B' ? 'block' : 'none';
+            
+            // Slots (Type A)
+            if (ev.type === 'A' && ev.slots) {
+                $('slotsList').innerHTML = ev.slots.map((s, i) => `
+                    <div class="slot ${s.bookedBy ? 'booked' : ''}" onclick="${s.bookedBy ? '' : 'openSlot(' + i + ')'}">
+                        <span class="slot-time">${s.startTime} - ${s.endTime}</span>
+                        ${s.bookedBy 
+                            ? `<span style="display:flex;align-items:center;gap:8px">
+                                <span class="artist-av" style="margin:0;width:24px;height:24px" onclick="event.stopPropagation();viewProfile('${s.bookedBy}')">
+                                    ${s.bookedByPhoto ? `<img src="${s.bookedByPhoto}">` : (s.bookedByName?.[0] || '?')}
+                                </span>
+                                ${s.bookedByName || '予約済み'}
+                               </span>` 
+                            : `<span class="slot-price">${s.price === 0 ? '無料' : '¥' + s.price.toLocaleString()}</span>`
+                        }
+                    </div>
+                `).join('');
+            }
+            
+            // Gig info (Type B)
+            if (ev.type === 'B') {
+                const conf = ev.confirmedArtists?.length || 0;
+                $('detailFee').textContent = ev.fee === 0 ? '無料' : '¥' + ev.fee.toLocaleString();
+                $('detailCap').textContent = `${ev.capacity - conf} / ${ev.capacity} 名募集`;
+                
+                const applied = ev.applicants?.some(a => a.id === user?.uid);
+                const confirmed = ev.confirmedArtists?.some(a => a.id === user?.uid);
+                const btn = $('applyBtn');
+                btn.disabled = isOwner || applied || confirmed;
+                btn.textContent = confirmed ? '承認済み' : applied ? '応募済み' : '応募する';
+            }
+            
+            // Artists display
+            let arts = '';
+            if (ev.type === 'A' && ev.slots) {
+                ev.slots.filter(s => s.bookedBy).forEach(s => {
+                    arts += `<div class="artist-av" onclick="viewProfile('${s.bookedBy}')">${s.bookedByPhoto ? `<img src="${s.bookedByPhoto}">` : (s.bookedByName?.[0] || '?')}</div>`;
+                });
+            } else if (ev.confirmedArtists?.length) {
+                ev.confirmedArtists.forEach(a => {
+                    arts += `<div class="artist-av" onclick="viewProfile('${a.id}')">${a.photo ? `<img src="${a.photo}">` : (a.name?.[0] || '?')}</div>`;
+                });
+            }
+            $('detailArtists').innerHTML = arts || '<span style="color:var(--text3)">まだ出演者はいません</span>';
+            
+            // Applicants (for owner)
+            const appSec = $('appSection');
+            if (isOwner && ev.type === 'B' && ev.applicants?.length) {
+                appSec.style.display = 'block';
+                $('appList').innerHTML = ev.applicants.map(a => `
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--card);border-radius:var(--r-md);margin-bottom:8px">
+                        <div style="display:flex;align-items:center;gap:10px;cursor:pointer" onclick="viewProfile('${a.id}')">
+                            <div class="artist-av" style="margin:0">${a.photo ? `<img src="${a.photo}">` : (a.name?.[0] || '?')}</div>
+                            <span>${a.name}</span>
+                        </div>
+                        <button class="btn btn-p btn-sm" onclick="approve('${a.id}','${a.name}','${a.photo || ''}')">承認</button>
+                    </div>
+                `).join('');
+            } else {
+                appSec.style.display = 'none';
+            }
+            
+            go('detailScreen');
+            
+        } catch (err) {
+            log('Error showing detail: ' + err.message);
+            toast(err.message, 'error');
+        }
+    }
+    
+    function openSlot(i) {
+        if (!user) { toast('ログインしてください', 'error'); return; }
+        if (user.uid === curEvent?.organizerId) { toast('自分のイベントには応募できません', 'error'); return; }
+        
+        selSlotIdx = i;
+        const s = curEvent.slots[i];
+        $('slotInfo').textContent = `${s.startTime} - ${s.endTime} の枠を予約しますか？ 価格: ${s.price === 0 ? '無料' : '¥' + s.price.toLocaleString()}`;
+        $('slotModal').classList.add('active');
+    }
+    
+    async function confirmSlot() {
+        const ev = curEvent;
+        ev.slots[selSlotIdx].bookedBy = user.uid;
+        ev.slots[selSlotIdx].bookedByName = user.displayName;
+        ev.slots[selSlotIdx].bookedByPhoto = userData.photoURL || null;
+        
+        try {
+            await db.collection('events').doc(ev.id).update({ slots: ev.slots });
+            closeModal('slotModal');
+            toast('予約しました！');
+            allEvents = [];
+            showDetail(ev.id);
+        } catch (err) {
+            toast('エラー: ' + err.message, 'error');
+        }
+    }
+    
+    async function applyGig() {
+        if (!user) { toast('ログインしてください', 'error'); return; }
+        
+        try {
+            await db.collection('events').doc(curEvent.id).update({
+                applicants: firebase.firestore.FieldValue.arrayUnion({
+                    id: user.uid,
+                    name: user.displayName,
+                    photo: userData.photoURL || null
+                })
+            });
+            toast('応募しました！');
+            showDetail(curEvent.id);
+        } catch (err) {
+            toast('エラー: ' + err.message, 'error');
+        }
+    }
+    
+    async function approve(uid, name, photo) {
+        const ev = curEvent;
+        const toRemove = ev.applicants.find(a => a.id === uid);
+        
+        try {
+            await db.collection('events').doc(ev.id).update({
+                confirmedArtists: firebase.firestore.FieldValue.arrayUnion({ id: uid, name, photo }),
+                applicants: firebase.firestore.FieldValue.arrayRemove(toRemove)
+            });
+            toast('承認しました！');
+            showDetail(ev.id);
+        } catch (err) {
+            toast('エラー: ' + err.message, 'error');
+        }
+    }
+    
+    // ========================================
+    // Profile
+    // ========================================
+    function openEdit() {
+        $('editName').value = user?.displayName || '';
+        $('editBio').value = userData.bio || '';
+        $('editEmail').value = userData.contactEmail || '';
+        $('editPhone').value = userData.contactPhone || '';
+        $('editSns1').value = userData.sns1 || '';
+        $('editSns2').value = userData.sns2 || '';
+        $('editSns3').value = userData.sns3 || '';
+        $('editAv').innerHTML = userData.photoURL ? `<img src="${userData.photoURL}">` : (user?.displayName || 'U')[0].toUpperCase();
+        profImg = null;
+        $('editModal').classList.add('active');
+    }
+    
+    async function prevProfImg(e) {
+        const f = e.target.files[0];
+        if (f) {
+            try {
+                const blob = await compressImage(f, 400, 0.85);
+                profImg = blob; // Blobを保存
+                // プレビュー用にURLを作成
+                const previewUrl = URL.createObjectURL(blob);
+                $('editAv').innerHTML = `<img src="${previewUrl}">`;
+            } catch (err) {
+                toast('画像の処理に失敗しました', 'error');
+            }
+        }
+    }
+    
+    async function saveProfile(e) {
+        e.preventDefault();
+        
+        let photoURL = userData.photoURL || null;
+        
+        // 新しい画像がある場合はStorageにアップロード
+        if (profImg && profImg instanceof Blob) {
+            try {
+                toast('画像をアップロード中...', 'success');
+                const imagePath = `profiles/${user.uid}/${Date.now()}.jpg`;
+                photoURL = await uploadImageToStorage(profImg, imagePath);
+                log('Profile image uploaded: ' + photoURL);
+            } catch (imgErr) {
+                log('Profile image upload failed: ' + imgErr.message);
+                toast('画像アップロード失敗', 'error');
+                return;
+            }
+        }
+        
+        const data = {
+            displayName: $('editName').value,
+            bio: $('editBio').value,
+            contactEmail: $('editEmail').value,
+            contactPhone: $('editPhone').value,
+            sns1: $('editSns1').value,
+            sns2: $('editSns2').value,
+            sns3: $('editSns3').value,
+            photoURL: photoURL
+        };
+        
+        try {
+            await user.updateProfile({ displayName: data.displayName });
+            await db.collection('users').doc(user.uid).set({ ...userData, ...data }, { merge: true });
+            userData = { ...userData, ...data };
+            profImg = null; // リセット
+            updateUI();
+            closeModal('editModal');
+            toast('プロフィールを更新しました');
+        } catch (err) {
+            toast('エラー: ' + err.message, 'error');
+        }
+    }
+    
+    async function viewProfile(uid) {
+        if (!uid) return;
+        viewUserId = uid;
+        
+        try {
+            const doc = await db.collection('users').doc(uid).get();
+            const d = doc.exists ? doc.data() : {};
+            
+            $('viewAv').innerHTML = d.photoURL ? `<img src="${d.photoURL}">` : (d.displayName || 'U')[0].toUpperCase();
+            $('viewName').textContent = d.displayName || 'User';
+            $('viewBio').textContent = d.bio || '';
+            renderContacts(d.contactEmail, d.contactPhone, 'viewContacts');
+            renderSns([d.sns1, d.sns2, d.sns3], 'viewSns');
+            
+            go('userProfileScreen');
+        } catch (err) {
+            toast(err.message, 'error');
+        }
+    }
+    
+    // ========================================
+    // DM & Chat
+    // ========================================
+    async function loadDMs() {
+        const list = $('dmList');
+        if (!user) return;
+        
+        list.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        
+        try {
+            const snap = await db.collection('chats').where('participants', 'array-contains', user.uid).get();
+            
+            if (snap.empty) {
+                list.innerHTML = '<div class="empty"><div class="empty-icon">💬</div><h3 class="empty-title">メッセージはありません</h3></div>';
+                return;
+            }
+            
+            let html = '';
+            for (const doc of snap.docs) {
+                const chat = doc.data();
+                const otherId = chat.participants.find(p => p !== user.uid);
+                
+                try {
+                    const uDoc = await db.collection('users').doc(otherId).get();
+                    const ud = uDoc.exists ? uDoc.data() : {};
+                    html += `
+                        <div class="dm-item" onclick="openChat('${doc.id}','${otherId}','${(ud.displayName || 'User').replace(/'/g, "\\'")}')">
+                            <div class="dm-av">${ud.photoURL ? `<img src="${ud.photoURL}">` : (ud.displayName?.[0] || 'U')}</div>
+                            <div class="dm-info">
+                                <div class="dm-name">${ud.displayName || 'User'}</div>
+                                <div class="dm-preview">${chat.lastMessage || 'メッセージなし'}</div>
+                            </div>
+                        </div>
+                    `;
+                } catch (e) {}
+            }
+            
+            list.innerHTML = html || '<div class="empty"><div class="empty-icon">💬</div><h3 class="empty-title">メッセージはありません</h3></div>';
+            
+        } catch (err) {
+            list.innerHTML = `<div class="empty"><p>${err.message}</p></div>`;
+        }
+    }
+    
+    async function startDM(uid) {
+        if (!uid || !user || uid === user.uid) {
+            toast('DMを開始できません', 'error');
+            return;
+        }
+        
+        try {
+            const snap = await db.collection('chats').where('participants', 'array-contains', user.uid).get();
+            let chatId = null;
+            
+            snap.forEach(doc => {
+                if (doc.data().participants.includes(uid)) chatId = doc.id;
+            });
+            
+            if (!chatId) {
+                const ref = await db.collection('chats').add({
+                    participants: [user.uid, uid],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastMessage: ''
+                });
+                chatId = ref.id;
+            }
+            
+            const uDoc = await db.collection('users').doc(uid).get();
+            openChat(chatId, uid, uDoc.exists ? uDoc.data().displayName : 'User');
+            
+        } catch (err) {
+            toast('エラー: ' + err.message, 'error');
+        }
+    }
+    
+    function openChat(chatId, otherId, name) {
+        curChatId = chatId;
+        $('chatName').textContent = name;
+        $('chatMsgs').innerHTML = '';
+        
+        if (chatUnsub) chatUnsub();
+        
+        chatUnsub = db.collection('chats').doc(chatId).collection('messages')
+            .orderBy('createdAt', 'asc')
+            .onSnapshot(snap => {
+                const c = $('chatMsgs');
+                c.innerHTML = '';
+                snap.forEach(doc => {
+                    const m = doc.data();
+                    c.innerHTML += `<div class="chat-msg ${m.senderId === user?.uid ? 'sent' : ''}"><div class="chat-bubble">${m.text}</div></div>`;
+                });
+                c.scrollTop = c.scrollHeight;
+            }, err => console.error(err));
+        
+        go('chatScreen');
+    }
+    
+    async function sendMsg() {
+        const inp = $('chatInput');
+        const txt = inp.value.trim();
+        if (!txt || !curChatId) return;
+        
+        inp.value = '';
+        
+        try {
+            await db.collection('chats').doc(curChatId).collection('messages').add({
+                text: txt,
+                senderId: user.uid,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            await db.collection('chats').doc(curChatId).update({ lastMessage: txt });
+        } catch (err) {
+            toast('エラー: ' + err.message, 'error');
+        }
+    }
+    
+    // ========================================
+    // Event Listeners & Init
+    // ========================================
+    document.addEventListener('keypress', e => {
+        if (e.key === 'Enter' && $('chatScreen').classList.contains('active')) {
+            sendMsg();
+        }
+    });
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        log('App initialized');
+        setupLogo();
+        addSlot();
+    });
+    </script>
+</body>
+</html>
