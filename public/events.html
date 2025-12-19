@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>イベント - DJHAKK</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+    <style>
+        :root {
+            --primary: #FF6B00; --primary-light: #FF8533; --bg: #0D0D1A; --surface: #1A1A2E;
+            --card: #252538; --text: #FFFFFF; --text2: #A0A0B8; --text3: #6B6B80; --border: #3A3A50;
+            --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
+            --shadow: 0 8px 32px rgba(0,0,0,0.4); --r-md: 12px; --r-lg: 16px; --r-xl: 24px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans JP', 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .container { max-width: 600px; margin: 0 auto; padding: 16px; padding-bottom: 100px; }
+        .header { display: flex; align-items: center; gap: 16px; padding: 16px 0; margin-bottom: 16px; }
+        .header-logo { height: 40px; width: 40px; object-fit: contain; cursor: pointer; border-radius: 8px; }
+        .header-title { font-size: 20px; font-weight: 700; flex: 1; }
+        .search-box { position: relative; margin-bottom: 16px; }
+        .search-input { width: 100%; padding: 14px 16px 14px 44px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); color: var(--text); font-size: 16px; }
+        .search-input:focus { outline: none; border-color: var(--primary); }
+        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text3); }
+        .filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-btn { padding: 8px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; }
+        .filter-btn.active { background: var(--gradient); color: white; border-color: transparent; }
+        .card { background: var(--card); border-radius: var(--r-xl); overflow: hidden; cursor: pointer; margin-bottom: 16px; display: flex; }
+        .card-img { width: 120px; min-width: 120px; height: 160px; object-fit: cover; }
+        .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
+        .card-title { font-size: 15px; font-weight: 700; margin: 4px 0 8px; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .badge.a { background: rgba(255,107,0,0.2); color: #FF6B00; }
+        .badge.b { background: rgba(0,217,255,0.2); color: #00D9FF; }
+        .badge.c { background: rgba(157,78,221,0.2); color: #9D4EDD; }
+        .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 20px; }
+        .nav-create { position: relative; top: -20px; }
+        .nav-plus { width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 200; overflow-y: auto; }
+        .modal.active { display: block; }
+        .modal-content { max-width: 600px; margin: 0 auto; min-height: 100vh; background: var(--bg); }
+        .modal-header { position: sticky; top: 0; background: var(--bg); padding: 16px; display: flex; align-items: center; gap: 16px; z-index: 10; border-bottom: 1px solid var(--border); }
+        .modal-close { background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; }
+        .modal-img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+        .modal-body { padding: 20px; }
+        .modal-title { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
+        .modal-info { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+        .modal-info-item { display: flex; align-items: center; gap: 8px; color: var(--text2); }
+        .btn { padding: 12px 24px; border-radius: var(--r-lg); font-weight: 600; cursor: pointer; border: none; font-size: 14px; }
+        .btn-p { background: var(--gradient); color: white; }
+        .btn-lg { width: 100%; padding: 16px; font-size: 16px; }
+        .section-title { font-size: 16px; font-weight: 700; margin: 24px 0 12px; color: var(--text2); }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 300; }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="logo.png" class="header-logo" onclick="window.location.href='index.html'">
+            <span class="header-title">イベント</span>
+        </div>
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" placeholder="イベントを検索" id="searchInput" oninput="filterEvents()">
+        </div>
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">すべて</button>
+            <button class="filter-btn" data-filter="A" onclick="setFilter('A')">枠販売</button>
+            <button class="filter-btn" data-filter="B" onclick="setFilter('B')">ギャラ</button>
+            <button class="filter-btn" data-filter="C" onclick="setFilter('C')">情報</button>
+        </div>
+        <div id="eventsList"></div>
+    </div>
+    
+    <div class="modal" id="eventModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="modal-close" onclick="closeEventModal()">← 戻る</button>
+            </div>
+            <img id="modalImg" class="modal-img" src="logo.png">
+            <div class="modal-body">
+                <span class="badge a" id="modalBadge">枠販売</span>
+                <h1 class="modal-title" id="modalTitle"></h1>
+                <div class="modal-info">
+                    <div class="modal-info-item"><span>📅</span><span id="modalDate"></span></div>
+                    <div class="modal-info-item"><span>📍</span><span id="modalLocation"></span></div>
+                    <div class="modal-info-item"><span>👤</span><span id="modalOrganizer"></span></div>
+                </div>
+                <p id="modalDesc" style="color: var(--text2); margin-bottom: 24px;"></p>
+                <div id="modalSlots"></div>
+                <button class="btn btn-p btn-lg" id="modalAction" onclick="handleEventAction()">応募する</button>
+            </div>
+        </div>
+    </div>
+    
+    <nav class="nav">
+        <div class="nav-item" onclick="window.location.href='index.html'"><span class="nav-icon">🏠</span><span>Home</span></div>
+        <div class="nav-item active"><span class="nav-icon">🎵</span><span>Event</span></div>
+        <div class="nav-item nav-create" onclick="handleCreateClick()"><div class="nav-plus">+</div></div>
+        <div class="nav-item" onclick="window.location.href='productions.html'"><span class="nav-icon">💿</span><span>Production</span></div>
+        <div class="nav-item" onclick="handleProfileClick()"><span class="nav-icon">👤</span><span>Profile</span></div>
+    </nav>
+    <div class="toast" id="toast"></div>
+    
+    <script src="js/common.js"></script>
+    <script>
+        let allEvents = [];
+        let currentFilter = 'all';
+        let currentEvent = null;
+        
+        function handleCreateClick() { if (requireLogin()) window.location.href = 'create.html'; }
+        function handleProfileClick() { if (requireLogin()) window.location.href = 'profile.html'; }
+        
+        function setFilter(f) {
+            currentFilter = f;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
+            renderEvents();
+        }
+        
+        function filterEvents() {
+            renderEvents();
+        }
+        
+        async function loadAllEvents() {
+            allEvents = await loadEvents();
+            renderEvents();
+            checkUrlParam();
+        }
+        
+        function renderEvents() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            let filtered = allEvents.filter(ev => {
+                if (currentFilter !== 'all' && ev.type !== currentFilter) return false;
+                if (search && !ev.title.toLowerCase().includes(search) && !(ev.location||'').toLowerCase().includes(search)) return false;
+                return true;
+            });
+            
+            const container = document.getElementById('eventsList');
+            if (filtered.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color: var(--text2); padding: 40px;">イベントがありません</p>';
+                return;
+            }
+            
+            const byRegion = {};
+            filtered.forEach(ev => {
+                const r = ev.region || 'その他';
+                if (!byRegion[r]) byRegion[r] = [];
+                byRegion[r].push(ev);
+            });
+            
+            let html = '';
+            for (const r in byRegion) {
+                html += `<h3 class="section-title">${r}</h3>`;
+                byRegion[r].forEach(ev => {
+                    const labels = {A:'枠販売',B:'ギャラ',C:'情報'};
+                    const cls = {A:'a',B:'b',C:'c'};
+                    html += `<div class="card" onclick="showEventDetail('${ev.id}')">
+                        <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                        <div class="card-body">
+                            <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'枠販売'}</span>
+                            <h3 class="card-title">${ev.title}</h3>
+                            <p style="color:var(--text2);font-size:13px;">📅 ${formatDate(ev.date)}</p>
+                            <p style="color:var(--text2);font-size:13px;">📍 ${ev.location||''}</p>
+                        </div>
+                    </div>`;
+                });
+            }
+            container.innerHTML = html;
+        }
+        
+        function checkUrlParam() {
+            const id = new URLSearchParams(location.search).get('id');
+            if (id) showEventDetail(id);
+        }
+        
+        function showEventDetail(id) {
+            currentEvent = allEvents.find(e => e.id === id);
+            if (!currentEvent) return;
+            
+            const labels = {A:'枠販売',B:'ギャラ',C:'情報'};
+            const cls = {A:'a',B:'b',C:'c'};
+            
+            document.getElementById('modalImg').src = currentEvent.imageUrl || 'logo.png';
+            document.getElementById('modalBadge').textContent = labels[currentEvent.type] || '枠販売';
+            document.getElementById('modalBadge').className = 'badge ' + (cls[currentEvent.type] || 'a');
+            document.getElementById('modalTitle').textContent = currentEvent.title;
+            document.getElementById('modalDate').textContent = formatDate(currentEvent.date);
+            document.getElementById('modalLocation').textContent = currentEvent.location || '';
+            document.getElementById('modalOrganizer').textContent = currentEvent.organizerName || '';
+            document.getElementById('modalDesc').textContent = currentEvent.description || '';
+            
+            // Render slots if type A
+            let slotsHtml = '';
+            if (currentEvent.type === 'A' && currentEvent.slots) {
+                slotsHtml = '<h3 class="section-title">出演枠</h3>';
+                currentEvent.slots.forEach((slot, i) => {
+                    slotsHtml += `<div style="background:var(--card);padding:12px;border-radius:12px;margin-bottom:8px;">
+                        <p style="font-weight:600;">${slot.time || ''}</p>
+                        <p style="color:var(--text2);font-size:13px;">¥${(slot.price||0).toLocaleString()}</p>
+                    </div>`;
+                });
+            }
+            document.getElementById('modalSlots').innerHTML = slotsHtml;
+            
+            // Action button
+            const actionBtn = document.getElementById('modalAction');
+            if (currentEvent.type === 'A') {
+                actionBtn.textContent = '枠を購入する';
+            } else if (currentEvent.type === 'B') {
+                actionBtn.textContent = '応募する';
+            } else {
+                actionBtn.style.display = 'none';
+            }
+            
+            document.getElementById('eventModal').classList.add('active');
+        }
+        
+        function closeEventModal() {
+            document.getElementById('eventModal').classList.remove('active');
+            history.replaceState(null, '', 'events.html');
+        }
+        
+        function handleEventAction() {
+            if (!requireLogin()) return;
+            // TODO: Implement purchase/apply logic
+            toast('この機能は準備中です');
+        }
+        
+        function onAuthReady() {
+            loadAllEvents();
+        }
+    </script>
+</body>
+</html>

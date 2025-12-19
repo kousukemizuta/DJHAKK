@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>作成 - DJHAKK</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+    <style>
+        :root {
+            --primary: #FF6B00; --primary-light: #FF8533; --bg: #0D0D1A; --surface: #1A1A2E;
+            --card: #252538; --text: #FFFFFF; --text2: #A0A0B8; --text3: #6B6B80; --border: #3A3A50;
+            --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
+            --shadow: 0 8px 32px rgba(0,0,0,0.4); --r-md: 12px; --r-lg: 16px; --r-xl: 24px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans JP', 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .container { max-width: 600px; margin: 0 auto; padding: 16px; padding-bottom: 100px; }
+        .header { display: flex; align-items: center; gap: 16px; padding: 16px 0; margin-bottom: 24px; }
+        .back-btn { background: none; border: none; color: var(--text); font-size: 16px; cursor: pointer; }
+        .header-title { font-size: 20px; font-weight: 700; }
+        .type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+        .type-btn { padding: 16px 8px; background: var(--card); border: 2px solid var(--border); border-radius: var(--r-lg); text-align: center; cursor: pointer; }
+        .type-btn.active { border-color: var(--primary); background: rgba(255,107,0,0.1); }
+        .type-btn-icon { font-size: 28px; margin-bottom: 8px; }
+        .type-btn-label { font-size: 12px; font-weight: 600; }
+        .type-btn-desc { font-size: 10px; color: var(--text2); margin-top: 4px; }
+        .form-section { display: none; }
+        .form-section.active { display: block; }
+        .input-group { margin-bottom: 16px; }
+        .label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text2); font-size: 14px; }
+        .input { width: 100%; padding: 14px 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text); font-size: 16px; }
+        .input:focus { outline: none; border-color: var(--primary); }
+        textarea.input { resize: vertical; min-height: 100px; }
+        select.input { appearance: none; }
+        .image-upload { width: 100%; aspect-ratio: 1; background: var(--card); border: 2px dashed var(--border); border-radius: var(--r-lg); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; margin-bottom: 16px; }
+        .image-upload img { width: 100%; height: 100%; object-fit: cover; }
+        .image-upload-text { color: var(--text2); font-size: 14px; }
+        .btn { padding: 12px 24px; border-radius: var(--r-lg); font-weight: 600; cursor: pointer; border: none; font-size: 14px; }
+        .btn-p { background: var(--gradient); color: white; }
+        .btn-lg { width: 100%; padding: 16px; font-size: 16px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .slots-container { margin-bottom: 16px; }
+        .slot-item { background: var(--card); padding: 12px; border-radius: var(--r-md); margin-bottom: 8px; display: flex; gap: 8px; align-items: center; }
+        .slot-item input { flex: 1; }
+        .slot-remove { background: #FF4757; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
+        .add-slot-btn { background: var(--surface); border: 1px dashed var(--border); color: var(--text2); width: 100%; padding: 12px; border-radius: var(--r-md); cursor: pointer; }
+        .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 20px; }
+        .nav-create { position: relative; top: -20px; }
+        .nav-plus { width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 300; }
+        .toast.show { opacity: 1; }
+        .toast.error { background: #FF4757; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="back-btn" onclick="history.back()">← 戻る</button>
+            <span class="header-title">作成</span>
+        </div>
+        
+        <div class="type-grid">
+            <div class="type-btn active" data-type="A" onclick="selectType('A', this)">
+                <div class="type-btn-icon">🎫</div>
+                <div class="type-btn-label">枠販売</div>
+                <div class="type-btn-desc">アーティストが枠を購入</div>
+            </div>
+            <div class="type-btn" data-type="B" onclick="selectType('B', this)">
+                <div class="type-btn-icon">💰</div>
+                <div class="type-btn-label">ギャラ</div>
+                <div class="type-btn-desc">アーティストに報酬</div>
+            </div>
+            <div class="type-btn" data-type="C" onclick="selectType('C', this)">
+                <div class="type-btn-icon">📢</div>
+                <div class="type-btn-label">情報</div>
+                <div class="type-btn-desc">告知のみ</div>
+            </div>
+            <div class="type-btn" data-type="audio" onclick="selectType('audio', this)">
+                <div class="type-btn-icon">🎵</div>
+                <div class="type-btn-label">音源販売</div>
+                <div class="type-btn-desc">ダウンロード販売</div>
+            </div>
+            <div class="type-btn" data-type="goods" onclick="selectType('goods', this)">
+                <div class="type-btn-icon">💿</div>
+                <div class="type-btn-label">商品販売</div>
+                <div class="type-btn-desc">レコード等の物販</div>
+            </div>
+            <div class="type-btn" data-type="produce" onclick="selectType('produce', this)">
+                <div class="type-btn-icon">🎤</div>
+                <div class="type-btn-label">プロデュース</div>
+                <div class="type-btn-desc">アーティスト売り込み</div>
+            </div>
+        </div>
+        
+        <!-- Event Form -->
+        <div id="eventForm" class="form-section active">
+            <div class="image-upload" onclick="document.getElementById('eventImage').click()">
+                <img id="eventImagePreview" style="display:none;">
+                <span class="image-upload-text" id="eventImageText">📷 画像をアップロード</span>
+            </div>
+            <input type="file" id="eventImage" accept="image/*" style="display:none;" onchange="previewImage(this,'eventImagePreview','eventImageText')">
+            
+            <div class="input-group"><label class="label">タイトル</label><input type="text" id="eventTitle" class="input" placeholder="イベント名"></div>
+            <div class="input-group"><label class="label">日時</label><input type="datetime-local" id="eventDate" class="input"></div>
+            <div class="input-group"><label class="label">場所</label><input type="text" id="eventLocation" class="input" placeholder="会場名"></div>
+            <div class="input-group"><label class="label">地域</label>
+                <select id="eventRegion" class="input">
+                    <option value="東京">東京</option><option value="大阪">大阪</option><option value="名古屋">名古屋</option><option value="福岡">福岡</option><option value="その他">その他</option>
+                </select>
+            </div>
+            <div class="input-group"><label class="label">説明</label><textarea id="eventDesc" class="input" placeholder="イベントの詳細"></textarea></div>
+            
+            <div id="slotsSection" class="input-group">
+                <label class="label">出演枠</label>
+                <div id="slotsContainer" class="slots-container"></div>
+                <button type="button" class="add-slot-btn" onclick="addSlot()">+ 枠を追加</button>
+            </div>
+            
+            <div id="gigSection" class="input-group" style="display:none;">
+                <label class="label">ギャラ（円）</label>
+                <input type="number" id="gigAmount" class="input" placeholder="10000" min="1000">
+            </div>
+            
+            <button class="btn btn-p btn-lg" onclick="submitEvent()">作成する</button>
+        </div>
+        
+        <!-- Production Form -->
+        <div id="productionForm" class="form-section">
+            <div class="image-upload" onclick="document.getElementById('prodImage').click()">
+                <img id="prodImagePreview" style="display:none;">
+                <span class="image-upload-text" id="prodImageText">📷 画像をアップロード</span>
+            </div>
+            <input type="file" id="prodImage" accept="image/*" style="display:none;" onchange="previewImage(this,'prodImagePreview','prodImageText')">
+            
+            <div class="input-group"><label class="label">タイトル</label><input type="text" id="prodTitle" class="input" placeholder="商品名"></div>
+            <div class="input-group"><label class="label">価格（円）</label><input type="number" id="prodPrice" class="input" placeholder="1000" min="1000"></div>
+            <div class="input-group"><label class="label">説明</label><textarea id="prodDesc" class="input" placeholder="商品の詳細"></textarea></div>
+            
+            <div id="audioSection" class="input-group" style="display:none;">
+                <label class="label">音源ファイル</label>
+                <input type="file" id="audioFile" class="input" accept="audio/*">
+            </div>
+            
+            <button class="btn btn-p btn-lg" onclick="submitProduction()">作成する</button>
+        </div>
+    </div>
+    
+    <nav class="nav">
+        <div class="nav-item" onclick="location.href='index.html'"><span class="nav-icon">🏠</span><span>Home</span></div>
+        <div class="nav-item" onclick="location.href='events.html'"><span class="nav-icon">🎵</span><span>Event</span></div>
+        <div class="nav-item nav-create active"><div class="nav-plus">+</div></div>
+        <div class="nav-item" onclick="location.href='productions.html'"><span class="nav-icon">💿</span><span>Production</span></div>
+        <div class="nav-item" onclick="location.href='profile.html'"><span class="nav-icon">👤</span><span>Profile</span></div>
+    </nav>
+    <div class="toast" id="toast"></div>
+    
+    <script src="js/common.js"></script>
+    <script>
+        let currentType = 'A';
+        let slots = [];
+        let eventImageFile = null;
+        let prodImageFile = null;
+        
+        function selectType(type, el) {
+            currentType = type;
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            
+            const isEvent = ['A','B','C'].includes(type);
+            document.getElementById('eventForm').classList.toggle('active', isEvent);
+            document.getElementById('productionForm').classList.toggle('active', !isEvent);
+            document.getElementById('slotsSection').style.display = type === 'A' ? 'block' : 'none';
+            document.getElementById('gigSection').style.display = type === 'B' ? 'block' : 'none';
+            document.getElementById('audioSection').style.display = type === 'audio' ? 'block' : 'none';
+        }
+        
+        function previewImage(input, previewId, textId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    document.getElementById(previewId).src = e.target.result;
+                    document.getElementById(previewId).style.display = 'block';
+                    document.getElementById(textId).style.display = 'none';
+                };
+                reader.readAsDataURL(input.files[0]);
+                if (previewId === 'eventImagePreview') eventImageFile = input.files[0];
+                else prodImageFile = input.files[0];
+            }
+        }
+        
+        function addSlot() { slots.push({time:'',price:0}); renderSlots(); }
+        function removeSlot(i) { slots.splice(i,1); renderSlots(); }
+        function renderSlots() {
+            document.getElementById('slotsContainer').innerHTML = slots.map((s,i) => `
+                <div class="slot-item">
+                    <input type="text" class="input" placeholder="時間 (例: 22:00-22:30)" value="${s.time}" onchange="slots[${i}].time=this.value">
+                    <input type="number" class="input" placeholder="価格" value="${s.price||''}" onchange="slots[${i}].price=parseInt(this.value)||0">
+                    <button class="slot-remove" onclick="removeSlot(${i})">✕</button>
+                </div>
+            `).join('');
+        }
+        
+        async function submitEvent() {
+            if (!requireLogin()) return;
+            const title = document.getElementById('eventTitle').value.trim();
+            if (!title) { toast('タイトルを入力してください','error'); return; }
+            
+            try {
+                let imageUrl = '';
+                if (eventImageFile) {
+                    const blob = await compressImage(eventImageFile);
+                    imageUrl = await uploadImageToStorage(blob, `events/${Date.now()}.jpg`);
+                }
+                
+                const data = {
+                    type: currentType, title,
+                    date: new Date(document.getElementById('eventDate').value),
+                    location: document.getElementById('eventLocation').value,
+                    region: document.getElementById('eventRegion').value,
+                    description: document.getElementById('eventDesc').value,
+                    imageUrl, organizerId: user.uid, organizerName: userData.name || '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                if (currentType === 'A') data.slots = slots;
+                else if (currentType === 'B') data.gigAmount = parseInt(document.getElementById('gigAmount').value) || 0;
+                
+                await db.collection('events').add(data);
+                toast('イベントを作成しました');
+                setTimeout(() => location.href = 'events.html', 1000);
+            } catch (e) { log('Error: ' + e.message); toast('作成に失敗しました','error'); }
+        }
+        
+        async function submitProduction() {
+            if (!requireLogin()) return;
+            const title = document.getElementById('prodTitle').value.trim();
+            if (!title) { toast('タイトルを入力してください','error'); return; }
+            
+            try {
+                let imageUrl = '';
+                if (prodImageFile) {
+                    const blob = await compressImage(prodImageFile);
+                    imageUrl = await uploadImageToStorage(blob, `productions/${Date.now()}.jpg`);
+                }
+                
+                const data = {
+                    type: currentType, title,
+                    price: parseInt(document.getElementById('prodPrice').value) || 0,
+                    description: document.getElementById('prodDesc').value,
+                    imageUrl, artistId: user.uid, artistName: userData.name || '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await db.collection('productions').add(data);
+                toast('プロダクションを作成しました');
+                setTimeout(() => location.href = 'productions.html', 1000);
+            } catch (e) { log('Error: ' + e.message); toast('作成に失敗しました','error'); }
+        }
+        
+        function onAuthReady() {
+            if (!user || isGuest) { location.href = 'index.html'; return; }
+            addSlot();
+        }
+    </script>
+</body>
+</html>
