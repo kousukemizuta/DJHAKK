@@ -228,12 +228,12 @@
                 for (const r in byRegion) {
                     html += `<h3 class="section-title">${r}</h3>`;
                     byRegion[r].forEach(ev => {
-                        const labels = {A:'枠販売',B:'ギャラ',C:'情報'};
+                        const labels = {A:'タイムテーブル',B:'ギャランティー',C:'フライヤー'};
                         const cls = {A:'a',B:'b',C:'c'};
                         html += `<div class="card" onclick="window.location.href='events.html?id=${ev.id}'">
                             <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
                             <div class="card-body">
-                                <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'枠販売'}</span>
+                                <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'タイムテーブル'}</span>
                                 <h3 class="card-title">${ev.title}</h3>
                                 <p style="color:var(--text2);font-size:13px;">📅 ${formatDate(ev.date)}</p>
                                 <p style="color:var(--text2);font-size:13px;">📍 ${ev.location||''}</p>

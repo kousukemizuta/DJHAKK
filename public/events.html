@@ -59,7 +59,29 @@
         .btn-p { background: var(--gradient); color: white; }
         .btn-lg { width: 100%; padding: 16px; font-size: 16px; }
         .section-title { font-size: 16px; font-weight: 700; margin: 24px 0 12px; color: var(--text2); }
-        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 300; }
+        
+        /* 枠カード */
+        .slot-card { background: var(--card); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+        .slot-row { display: flex; align-items: center; padding: 14px 16px; }
+        .slot-time { flex: 1; font-weight: 600; }
+        .slot-price { background: var(--gradient); color: white; padding: 10px 18px; border-radius: 20px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; }
+        .slot-price:active { opacity: 0.8; }
+        
+        /* 購入モーダル */
+        .purchase-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
+        .purchase-modal.active { display: flex; }
+        .purchase-box { background: var(--surface); border-radius: 20px; padding: 28px; max-width: 340px; width: 100%; text-align: center; }
+        .purchase-icon { font-size: 56px; margin-bottom: 16px; }
+        .purchase-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+        .purchase-detail { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .purchase-time { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+        .purchase-price { font-size: 32px; font-weight: 700; color: var(--primary); }
+        .purchase-note { color: var(--text2); font-size: 13px; margin-bottom: 20px; }
+        .purchase-btn { width: 100%; padding: 16px; border-radius: 14px; font-weight: 600; font-size: 16px; cursor: pointer; border: none; margin-bottom: 10px; }
+        .purchase-btn.primary { background: var(--gradient); color: white; }
+        .purchase-btn.cancel { background: var(--card); color: var(--text2); }
+        
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 400; }
         .toast.show { opacity: 1; }
     </style>
 </head>
@@ -75,13 +97,14 @@
         </div>
         <div class="filters">
             <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">すべて</button>
-            <button class="filter-btn" data-filter="A" onclick="setFilter('A')">枠販売</button>
-            <button class="filter-btn" data-filter="B" onclick="setFilter('B')">ギャラ</button>
-            <button class="filter-btn" data-filter="C" onclick="setFilter('C')">情報</button>
+            <button class="filter-btn" data-filter="A" onclick="setFilter('A')">タイムテーブル</button>
+            <button class="filter-btn" data-filter="B" onclick="setFilter('B')">ギャランティー</button>
+            <button class="filter-btn" data-filter="C" onclick="setFilter('C')">フライヤー</button>
         </div>
         <div id="eventsList"></div>
     </div>
     
+    <!-- イベント詳細モーダル -->
     <div class="modal" id="eventModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -89,7 +112,7 @@
             </div>
             <img id="modalImg" class="modal-img" src="logo.png">
             <div class="modal-body">
-                <span class="badge a" id="modalBadge">枠販売</span>
+                <span class="badge a" id="modalBadge">タイムテーブル</span>
                 <h1 class="modal-title" id="modalTitle"></h1>
                 <div class="modal-info">
                     <div class="modal-info-item"><span>📅</span><span id="modalDate"></span></div>
@@ -98,8 +121,23 @@
                 </div>
                 <p id="modalDesc" style="color: var(--text2); margin-bottom: 24px;"></p>
                 <div id="modalSlots"></div>
-                <button class="btn btn-p btn-lg" id="modalAction" onclick="handleEventAction()">応募する</button>
+                <div id="modalAction"></div>
             </div>
+        </div>
+    </div>
+    
+    <!-- 購入確認モーダル -->
+    <div class="purchase-modal" id="purchaseModal">
+        <div class="purchase-box">
+            <div class="purchase-icon">🎫</div>
+            <h2 class="purchase-title">出演タイムテーブルを購入</h2>
+            <div class="purchase-detail">
+                <div class="purchase-time" id="purchaseTime">22:00 - 22:30</div>
+                <div class="purchase-price" id="purchasePrice">¥5,000</div>
+            </div>
+            <p class="purchase-note">このタイムテーブルを購入してイベントに出演しますか？</p>
+            <button class="purchase-btn primary" onclick="confirmPurchase()">購入を確定する</button>
+            <button class="purchase-btn cancel" onclick="closePurchaseModal()">キャンセル</button>
         </div>
     </div>
     
@@ -117,6 +155,7 @@
         let allEvents = [];
         let currentFilter = 'all';
         let currentEvent = null;
+        let selectedSlotIndex = -1;
         
         function handleCreateClick() { if (requireLogin()) window.location.href = 'create.html'; }
         function handleProfileClick() { if (requireLogin()) window.location.href = 'profile.html'; }
@@ -162,12 +201,12 @@
             for (const r in byRegion) {
                 html += `<h3 class="section-title">${r}</h3>`;
                 byRegion[r].forEach(ev => {
-                    const labels = {A:'枠販売',B:'ギャラ',C:'情報'};
+                    const labels = {A:'タイムテーブル',B:'ギャランティー',C:'フライヤー'};
                     const cls = {A:'a',B:'b',C:'c'};
                     html += `<div class="card" onclick="showEventDetail('${ev.id}')">
                         <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
                         <div class="card-body">
-                            <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'枠販売'}</span>
+                            <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'タイムテーブル'}</span>
                             <h3 class="card-title">${ev.title}</h3>
                             <p style="color:var(--text2);font-size:13px;">📅 ${formatDate(ev.date)}</p>
                             <p style="color:var(--text2);font-size:13px;">📍 ${ev.location||''}</p>
@@ -187,11 +226,11 @@
             currentEvent = allEvents.find(e => e.id === id);
             if (!currentEvent) return;
             
-            const labels = {A:'枠販売',B:'ギャラ',C:'情報'};
+            const labels = {A:'タイムテーブル',B:'ギャランティー',C:'フライヤー'};
             const cls = {A:'a',B:'b',C:'c'};
             
             document.getElementById('modalImg').src = currentEvent.imageUrl || 'logo.png';
-            document.getElementById('modalBadge').textContent = labels[currentEvent.type] || '枠販売';
+            document.getElementById('modalBadge').textContent = labels[currentEvent.type] || 'タイムテーブル';
             document.getElementById('modalBadge').className = 'badge ' + (cls[currentEvent.type] || 'a');
             document.getElementById('modalTitle').textContent = currentEvent.title;
             document.getElementById('modalDate').textContent = formatDate(currentEvent.date);
@@ -199,28 +238,29 @@
             document.getElementById('modalOrganizer').textContent = currentEvent.organizerName || '';
             document.getElementById('modalDesc').textContent = currentEvent.description || '';
             
-            // Render slots if type A
+            // タイムテーブルの場合
             let slotsHtml = '';
-            if (currentEvent.type === 'A' && currentEvent.slots) {
-                slotsHtml = '<h3 class="section-title">出演枠</h3>';
+            if (currentEvent.type === 'A' && currentEvent.slots && currentEvent.slots.length > 0) {
+                slotsHtml = '<h3 class="section-title">🎫 タイムテーブル</h3>';
                 currentEvent.slots.forEach((slot, i) => {
-                    slotsHtml += `<div style="background:var(--card);padding:12px;border-radius:12px;margin-bottom:8px;">
-                        <p style="font-weight:600;">${slot.time || ''}</p>
-                        <p style="color:var(--text2);font-size:13px;">¥${(slot.price||0).toLocaleString()}</p>
-                    </div>`;
+                    slotsHtml += `
+                        <div class="slot-card">
+                            <div class="slot-row">
+                                <span class="slot-time">🕐 ${slot.time || '時間未定'}</span>
+                                <button class="slot-price" onclick="openPurchaseModal(${i})">¥${(slot.price||0).toLocaleString()}</button>
+                            </div>
+                        </div>
+                    `;
                 });
             }
             document.getElementById('modalSlots').innerHTML = slotsHtml;
             
-            // Action button
-            const actionBtn = document.getElementById('modalAction');
-            if (currentEvent.type === 'A') {
-                actionBtn.textContent = '枠を購入する';
-            } else if (currentEvent.type === 'B') {
-                actionBtn.textContent = '応募する';
-            } else {
-                actionBtn.style.display = 'none';
+            // アクションボタン
+            let actionHtml = '';
+            if (currentEvent.type === 'B') {
+                actionHtml = `<button class="btn btn-p btn-lg" onclick="handleEventAction()">応募する</button>`;
             }
+            document.getElementById('modalAction').innerHTML = actionHtml;
             
             document.getElementById('eventModal').classList.add('active');
         }
@@ -230,9 +270,34 @@
             history.replaceState(null, '', 'events.html');
         }
         
+        // 購入モーダルを開く
+        function openPurchaseModal(index) {
+            if (!requireLogin()) return;
+            
+            selectedSlotIndex = index;
+            const slot = currentEvent.slots[index];
+            
+            document.getElementById('purchaseTime').textContent = '🕐 ' + (slot.time || '時間未定');
+            document.getElementById('purchasePrice').textContent = '¥' + (slot.price||0).toLocaleString();
+            
+            document.getElementById('purchaseModal').classList.add('active');
+        }
+        
+        // 購入モーダルを閉じる
+        function closePurchaseModal() {
+            document.getElementById('purchaseModal').classList.remove('active');
+            selectedSlotIndex = -1;
+        }
+        
+        // 購入を確定
+        function confirmPurchase() {
+            // TODO: 決済処理を実装
+            toast('この機能は準備中です');
+            closePurchaseModal();
+        }
+        
         function handleEventAction() {
             if (!requireLogin()) return;
-            // TODO: Implement purchase/apply logic
             toast('この機能は準備中です');
         }
         

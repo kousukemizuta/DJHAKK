@@ -46,9 +46,15 @@
         .btn-lg { width: 100%; padding: 16px; font-size: 16px; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .slots-container { margin-bottom: 16px; }
-        .slot-item { background: var(--card); padding: 12px; border-radius: var(--r-md); margin-bottom: 8px; display: flex; gap: 8px; align-items: center; }
-        .slot-item input { flex: 1; }
-        .slot-remove { background: #FF4757; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
+        .slot-item { background: var(--card); padding: 16px; border-radius: var(--r-md); margin-bottom: 12px; }
+        .slot-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .slot-number { font-weight: 600; color: var(--primary); }
+        .slot-remove { background: #FF4757; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; }
+        .slot-time-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+        .slot-time-btn { flex: 1; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 16px; text-align: center; cursor: pointer; }
+        .slot-time-btn:active { background: var(--card); }
+        .slot-price-row { display: flex; gap: 8px; }
+        .slot-price-row select { flex: 1; }
         .add-slot-btn { background: var(--surface); border: 1px dashed var(--border); color: var(--text2); width: 100%; padding: 12px; border-radius: var(--r-md); cursor: pointer; }
         .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; }
@@ -59,6 +65,23 @@
         .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 300; }
         .toast.show { opacity: 1; }
         .toast.error { background: #FF4757; }
+        
+        /* ドラムピッカーモーダル */
+        .picker-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 500; align-items: flex-end; justify-content: center; }
+        .picker-modal.active { display: flex; }
+        .picker-box { background: var(--surface); width: 100%; max-width: 600px; border-radius: 20px 20px 0 0; padding: 20px; }
+        .picker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .picker-title { font-size: 18px; font-weight: 600; }
+        .picker-done { background: var(--gradient); color: white; border: none; padding: 8px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; }
+        .picker-cancel { background: none; border: none; color: var(--text2); font-size: 16px; cursor: pointer; }
+        .picker-wheels { display: flex; justify-content: center; gap: 8px; height: 200px; }
+        .picker-wheel { flex: 1; max-width: 80px; overflow-y: scroll; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; }
+        .picker-wheel::-webkit-scrollbar { display: none; }
+        .picker-item { height: 40px; display: flex; align-items: center; justify-content: center; scroll-snap-align: center; color: var(--text3); font-size: 20px; }
+        .picker-item.selected { color: var(--text); font-weight: 600; }
+        .picker-highlight { position: absolute; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 560px; height: 40px; top: 50%; margin-top: -20px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); pointer-events: none; }
+        .picker-container { position: relative; }
+        .picker-label { text-align: center; color: var(--text2); font-size: 14px; margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -71,17 +94,17 @@
         <div class="type-grid">
             <div class="type-btn active" data-type="A" onclick="selectType('A', this)">
                 <div class="type-btn-icon">🎫</div>
-                <div class="type-btn-label">枠販売</div>
-                <div class="type-btn-desc">アーティストが枠を購入</div>
+                <div class="type-btn-label">タイムテーブル</div>
+                <div class="type-btn-desc">アーティストがタイムテーブルを購入</div>
             </div>
             <div class="type-btn" data-type="B" onclick="selectType('B', this)">
                 <div class="type-btn-icon">💰</div>
-                <div class="type-btn-label">ギャラ</div>
+                <div class="type-btn-label">ギャランティー</div>
                 <div class="type-btn-desc">アーティストに報酬</div>
             </div>
             <div class="type-btn" data-type="C" onclick="selectType('C', this)">
                 <div class="type-btn-icon">📢</div>
-                <div class="type-btn-label">情報</div>
+                <div class="type-btn-label">フライヤー</div>
                 <div class="type-btn-desc">告知のみ</div>
             </div>
             <div class="type-btn" data-type="audio" onclick="selectType('audio', this)">
@@ -120,13 +143,13 @@
             <div class="input-group"><label class="label">説明</label><textarea id="eventDesc" class="input" placeholder="イベントの詳細"></textarea></div>
             
             <div id="slotsSection" class="input-group">
-                <label class="label">出演枠</label>
+                <label class="label">タイムテーブル</label>
                 <div id="slotsContainer" class="slots-container"></div>
-                <button type="button" class="add-slot-btn" onclick="addSlot()">+ 枠を追加</button>
+                <button type="button" class="add-slot-btn" onclick="addSlot()">+ スロットを追加</button>
             </div>
             
             <div id="gigSection" class="input-group" style="display:none;">
-                <label class="label">ギャラ（円）</label>
+                <label class="label">ギャランティー（円）</label>
                 <input type="number" id="gigAmount" class="input" placeholder="10000" min="1000">
             </div>
             
@@ -154,6 +177,25 @@
         </div>
     </div>
     
+    <!-- ドラムピッカーモーダル -->
+    <div class="picker-modal" id="pickerModal">
+        <div class="picker-box">
+            <div class="picker-header">
+                <button class="picker-cancel" onclick="closePicker()">キャンセル</button>
+                <span class="picker-title" id="pickerTitle">開始時間</span>
+                <button class="picker-done" onclick="confirmPicker()">完了</button>
+            </div>
+            <div class="picker-container">
+                <div class="picker-highlight"></div>
+                <div class="picker-wheels">
+                    <div class="picker-wheel" id="hourWheel"></div>
+                    <div style="display:flex;align-items:center;font-size:24px;color:var(--text);">:</div>
+                    <div class="picker-wheel" id="minuteWheel"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <nav class="nav">
         <div class="nav-item" onclick="location.href='index.html'"><span class="nav-icon">🏠</span><span>Home</span></div>
         <div class="nav-item" onclick="location.href='events.html'"><span class="nav-icon">🎵</span><span>Event</span></div>
@@ -169,6 +211,12 @@
         let slots = [];
         let eventImageFile = null;
         let prodImageFile = null;
+        
+        // ピッカー関連
+        let pickerSlotIndex = -1;
+        let pickerField = ''; // 'start' or 'end'
+        let pickerHour = 22;
+        let pickerMinute = 0;
         
         function selectType(type, el) {
             currentType = type;
@@ -197,16 +245,129 @@
             }
         }
         
-        function addSlot() { slots.push({time:'',price:0}); renderSlots(); }
-        function removeSlot(i) { slots.splice(i,1); renderSlots(); }
+        // 価格オプション
+        function getPriceOptions() {
+            return [1000,2000,3000,5000,8000,10000,15000,20000,30000,50000]
+                .map(p => `<option value="${p}">¥${p.toLocaleString()}</option>`).join('');
+        }
+        
+        function addSlot() { 
+            slots.push({ start: '22:00', end: '22:30', price: 5000 }); 
+            renderSlots(); 
+        }
+        
+        function removeSlot(i) { 
+            slots.splice(i, 1); 
+            renderSlots(); 
+        }
+        
         function renderSlots() {
-            document.getElementById('slotsContainer').innerHTML = slots.map((s,i) => `
+            const priceOpts = getPriceOptions();
+            document.getElementById('slotsContainer').innerHTML = slots.map((s, i) => `
                 <div class="slot-item">
-                    <input type="text" class="input" placeholder="時間 (例: 22:00-22:30)" value="${s.time}" onchange="slots[${i}].time=this.value">
-                    <input type="number" class="input" placeholder="価格" value="${s.price||''}" onchange="slots[${i}].price=parseInt(this.value)||0">
-                    <button class="slot-remove" onclick="removeSlot(${i})">✕</button>
+                    <div class="slot-header">
+                        <span class="slot-number">スロット ${i + 1}</span>
+                        <button class="slot-remove" onclick="removeSlot(${i})">✕</button>
+                    </div>
+                    <div class="slot-time-row">
+                        <button class="slot-time-btn" onclick="openPicker(${i}, 'start')">${s.start || '開始'}</button>
+                        <span style="color:var(--text2);">〜</span>
+                        <button class="slot-time-btn" onclick="openPicker(${i}, 'end')">${s.end || '終了'}</button>
+                    </div>
+                    <div class="slot-price-row">
+                        <select class="input" onchange="slots[${i}].price=parseInt(this.value)">
+                            ${priceOpts.replace(`value="${s.price}"`, `value="${s.price}" selected`)}
+                        </select>
+                    </div>
                 </div>
             `).join('');
+        }
+        
+        // ピッカーを開く
+        function openPicker(slotIndex, field) {
+            pickerSlotIndex = slotIndex;
+            pickerField = field;
+            
+            // 現在の値をパース
+            const timeStr = field === 'start' ? slots[slotIndex].start : slots[slotIndex].end;
+            if (timeStr) {
+                const [h, m] = timeStr.split(':').map(Number);
+                pickerHour = h;
+                pickerMinute = m;
+            } else {
+                pickerHour = 22;
+                pickerMinute = 0;
+            }
+            
+            document.getElementById('pickerTitle').textContent = field === 'start' ? '開始時間' : '終了時間';
+            
+            // ホイールを生成
+            initWheels();
+            
+            document.getElementById('pickerModal').classList.add('active');
+        }
+        
+        function initWheels() {
+            const hourWheel = document.getElementById('hourWheel');
+            const minuteWheel = document.getElementById('minuteWheel');
+            
+            // 時間（0-23）
+            hourWheel.innerHTML = '<div style="height:80px"></div>' + 
+                Array.from({length: 24}, (_, i) => 
+                    `<div class="picker-item" data-value="${i}">${String(i).padStart(2, '0')}</div>`
+                ).join('') + '<div style="height:80px"></div>';
+            
+            // 分（0-55、5分刻み）
+            minuteWheel.innerHTML = '<div style="height:80px"></div>' + 
+                Array.from({length: 12}, (_, i) => {
+                    const m = i * 5;
+                    return `<div class="picker-item" data-value="${m}">${String(m).padStart(2, '0')}</div>`;
+                }).join('') + '<div style="height:80px"></div>';
+            
+            // スクロール位置を設定
+            setTimeout(() => {
+                hourWheel.scrollTop = pickerHour * 40;
+                minuteWheel.scrollTop = (pickerMinute / 5) * 40;
+                updateSelection();
+            }, 50);
+            
+            // スクロールイベント
+            hourWheel.onscroll = () => {
+                pickerHour = Math.round(hourWheel.scrollTop / 40);
+                if (pickerHour < 0) pickerHour = 0;
+                if (pickerHour > 23) pickerHour = 23;
+                updateSelection();
+            };
+            
+            minuteWheel.onscroll = () => {
+                const idx = Math.round(minuteWheel.scrollTop / 40);
+                pickerMinute = Math.max(0, Math.min(11, idx)) * 5;
+                updateSelection();
+            };
+        }
+        
+        function updateSelection() {
+            document.querySelectorAll('#hourWheel .picker-item').forEach((el, i) => {
+                el.classList.toggle('selected', i === pickerHour);
+            });
+            document.querySelectorAll('#minuteWheel .picker-item').forEach((el, i) => {
+                el.classList.toggle('selected', i * 5 === pickerMinute);
+            });
+        }
+        
+        function closePicker() {
+            document.getElementById('pickerModal').classList.remove('active');
+        }
+        
+        function confirmPicker() {
+            const timeStr = `${String(pickerHour).padStart(2, '0')}:${String(pickerMinute).padStart(2, '0')}`;
+            if (pickerField === 'start') {
+                slots[pickerSlotIndex].start = timeStr;
+            } else {
+                slots[pickerSlotIndex].end = timeStr;
+            }
+            renderSlots();
+            closePicker();
         }
         
         async function submitEvent() {
@@ -230,8 +391,15 @@
                     imageUrl, organizerId: user.uid, organizerName: userData.name || '',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
-                if (currentType === 'A') data.slots = slots;
-                else if (currentType === 'B') data.gigAmount = parseInt(document.getElementById('gigAmount').value) || 0;
+                
+                if (currentType === 'A') {
+                    data.slots = slots.map(s => ({
+                        time: `${s.start}-${s.end}`,
+                        price: s.price
+                    }));
+                } else if (currentType === 'B') {
+                    data.gigAmount = parseInt(document.getElementById('gigAmount').value) || 0;
+                }
                 
                 await db.collection('events').add(data);
                 toast('イベントを作成しました');

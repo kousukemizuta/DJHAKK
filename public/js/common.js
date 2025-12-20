@@ -337,14 +337,14 @@ async function loadProductions(filter = 'all') {
 // Render Helpers
 // ========================================
 function renderEventCard(event) {
-    const typeLabels = { A: '枠販売', B: 'ギャラ', C: '情報' };
+    const typeLabels = { A: 'タイムテーブル', B: 'ギャランティー', C: 'フライヤー' };
     const typeClass = { A: 'a', B: 'b', C: 'c' };
     
     return `
         <div class="card" onclick="showEventDetail('${event.id}')">
             <img src="${event.imageUrl || 'logo.png'}" class="card-img" alt="${event.title}">
             <div class="card-body">
-                <span class="badge ${typeClass[event.type] || 'a'}">${typeLabels[event.type] || '枠販売'}</span>
+                <span class="badge ${typeClass[event.type] || 'a'}">${typeLabels[event.type] || 'タイムテーブル'}</span>
                 <h3 class="card-title">${event.title}</h3>
                 <p style="color: var(--text2); font-size: 13px;">📅 ${formatDate(event.date)}</p>
                 <p style="color: var(--text2); font-size: 13px;">📍 ${event.location || ''}</p>
