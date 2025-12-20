@@ -56,6 +56,7 @@
         .card-img { width: 120px; min-width: 120px; height: 160px; object-fit: cover; }
         .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
         .card-title { font-size: 15px; font-weight: 700; margin: 4px 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .card-region { font-size: 11px; color: var(--primary); background: rgba(255,107,0,0.15); padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 4px; }
         .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
         .badge.a { background: rgba(255,107,0,0.2); color: #FF6B00; }
         .badge.b { background: rgba(0,217,255,0.2); color: #00D9FF; }
@@ -65,7 +66,7 @@
         .welcome-title { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
         .welcome-subtitle { color: var(--text2); margin-bottom: 40px; }
         .welcome-buttons { width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 12px; }
-        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
         .tab { flex: 1; padding: 12px; background: var(--card); border: 2px solid transparent; color: var(--text2); border-radius: var(--r-md); cursor: pointer; font-weight: 600; text-align: center; }
         .tab.active { background: var(--gradient); color: white; }
         .section-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--text2); }
@@ -79,6 +80,13 @@
         .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
         .modal-close { background: none; border: none; color: var(--text2); font-size: 24px; cursor: pointer; }
         .modal-body { padding: 20px; }
+        
+        /* 地域フィルター */
+        .region-filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+        .region-filter-label { font-size: 12px; color: var(--text3); }
+        .region-select { flex: 1; padding: 8px 32px 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%23A0A0B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+        .region-select:focus { outline: none; border-color: var(--primary); }
+        .region-select.active { background-color: rgba(255,107,0,0.2); border-color: var(--primary); color: var(--primary); }
         
         /* 日付セパレーター */
         .date-separator {
@@ -174,6 +182,39 @@
                 <div class="tab active" id="tabEvents" onclick="switchTab('events')">イベント</div>
                 <div class="tab" id="tabProductions" onclick="switchTab('productions')">プロダクション</div>
             </div>
+            
+            <!-- 地域フィルター（イベントタブのみ） -->
+            <div id="regionFilterRow" class="region-filter-row">
+                <span class="region-filter-label">🌏</span>
+                <select id="homeRegionFilter" class="region-select" onchange="setHomeRegionFilter()">
+                    <option value="all">すべての地域</option>
+                    <optgroup label="🌏 アジア">
+                        <option value="東京">東京</option>
+                        <option value="大阪">大阪</option>
+                        <option value="ソウル">ソウル</option>
+                        <option value="上海">上海</option>
+                        <option value="香港">香港</option>
+                        <option value="バンコク">バンコク</option>
+                        <option value="シンガポール">シンガポール</option>
+                    </optgroup>
+                    <optgroup label="🌎 北米">
+                        <option value="ニューヨーク">ニューヨーク</option>
+                        <option value="ロサンゼルス">ロサンゼルス</option>
+                        <option value="マイアミ">マイアミ</option>
+                        <option value="シカゴ">シカゴ</option>
+                        <option value="ラスベガス">ラスベガス</option>
+                    </optgroup>
+                    <optgroup label="🌍 ヨーロッパ">
+                        <option value="ベルリン">ベルリン</option>
+                        <option value="ロンドン">ロンドン</option>
+                        <option value="アムステルダム">アムステルダム</option>
+                        <option value="イビサ">イビサ</option>
+                        <option value="パリ">パリ</option>
+                        <option value="バルセロナ">バルセロナ</option>
+                    </optgroup>
+                </select>
+            </div>
+            
             <div id="eventsContent"><div id="eventsList"></div></div>
             <div id="productionsContent" style="display:none;"><div id="productionsList"></div></div>
         </div>
@@ -192,6 +233,7 @@
         let currentTab = 'events';
         let allEvents = [];
         let allProductions = [];
+        let currentRegionFilter = 'all';
         
         const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
         
@@ -244,6 +286,14 @@
             document.getElementById('tabProductions').classList.toggle('active', tab === 'productions');
             document.getElementById('eventsContent').style.display = tab === 'events' ? 'block' : 'none';
             document.getElementById('productionsContent').style.display = tab === 'productions' ? 'block' : 'none';
+            document.getElementById('regionFilterRow').style.display = tab === 'events' ? 'flex' : 'none';
+        }
+        
+        function setHomeRegionFilter() {
+            const select = document.getElementById('homeRegionFilter');
+            currentRegionFilter = select.value;
+            select.classList.toggle('active', currentRegionFilter !== 'all');
+            renderLists();
         }
         
         async function loadHomeData() {
@@ -288,12 +338,15 @@
             const now = new Date();
             now.setHours(0, 0, 0, 0); // 今日の0時
             
-            // 過去のイベントを除外し、日付昇順でソート
+            // 過去のイベントを除外し、地域フィルターを適用
             let futureEvents = allEvents.filter(ev => {
                 const evDate = ev.date?.toDate ? ev.date.toDate() : new Date(ev.date);
-                return evDate >= now;
+                if (evDate < now) return false;
+                if (currentRegionFilter !== 'all' && ev.region !== currentRegionFilter) return false;
+                return true;
             });
             
+            // 日付昇順でソート
             futureEvents.sort((a, b) => {
                 const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
                 const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
@@ -321,10 +374,11 @@
                         html += `<div class="card" onclick="window.location.href='events.html?id=${ev.id}'">
                             <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
                             <div class="card-body">
+                                <span class="card-region">📍 ${ev.region||'未設定'}</span>
                                 <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'タイムテーブル'}</span>
                                 <h3 class="card-title">${ev.title}</h3>
                                 <p style="color:var(--text2);font-size:13px;">🕐 ${formatTimeOnly(ev.date)}</p>
-                                <p style="color:var(--text2);font-size:13px;">📍 ${ev.location||''}</p>
+                                <p style="color:var(--text2);font-size:13px;">🏠 ${ev.location||''}</p>
                             </div>
                         </div>`;
                     });

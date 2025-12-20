@@ -37,7 +37,9 @@
         .input { width: 100%; padding: 14px 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text); font-size: 16px; }
         .input:focus { outline: none; border-color: var(--primary); }
         textarea.input { resize: vertical; min-height: 100px; }
-        select.input { appearance: none; }
+        select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23A0A0B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; }
+        select.input optgroup { background: var(--card); color: var(--primary); font-weight: 600; }
+        select.input option { background: var(--card); color: var(--text); }
         .image-upload { width: 100%; aspect-ratio: 1; background: var(--card); border: 2px dashed var(--border); border-radius: var(--r-lg); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; margin-bottom: 16px; }
         .image-upload img { width: 100%; height: 100%; object-fit: cover; }
         .image-upload-text { color: var(--text2); font-size: 14px; }
@@ -65,6 +67,10 @@
         .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 300; }
         .toast.show { opacity: 1; }
         .toast.error { background: #FF4757; }
+        
+        /* その他入力欄 */
+        .custom-region-input { display: none; margin-top: 8px; }
+        .custom-region-input.active { display: block; }
         
         /* ドラムピッカーモーダル */
         .picker-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 500; align-items: flex-end; justify-content: center; }
@@ -135,10 +141,38 @@
             <div class="input-group"><label class="label">タイトル</label><input type="text" id="eventTitle" class="input" placeholder="イベント名"></div>
             <div class="input-group"><label class="label">日時</label><input type="datetime-local" id="eventDate" class="input"></div>
             <div class="input-group"><label class="label">場所</label><input type="text" id="eventLocation" class="input" placeholder="会場名"></div>
-            <div class="input-group"><label class="label">地域</label>
-                <select id="eventRegion" class="input">
-                    <option value="東京">東京</option><option value="大阪">大阪</option><option value="名古屋">名古屋</option><option value="福岡">福岡</option><option value="その他">その他</option>
+            <div class="input-group">
+                <label class="label">地域</label>
+                <select id="eventRegion" class="input" onchange="handleRegionChange()">
+                    <optgroup label="🌏 アジア">
+                        <option value="東京">東京</option>
+                        <option value="大阪">大阪</option>
+                        <option value="ソウル">ソウル</option>
+                        <option value="上海">上海</option>
+                        <option value="香港">香港</option>
+                        <option value="バンコク">バンコク</option>
+                        <option value="シンガポール">シンガポール</option>
+                    </optgroup>
+                    <optgroup label="🌎 北米">
+                        <option value="ニューヨーク">ニューヨーク</option>
+                        <option value="ロサンゼルス">ロサンゼルス</option>
+                        <option value="マイアミ">マイアミ</option>
+                        <option value="シカゴ">シカゴ</option>
+                        <option value="ラスベガス">ラスベガス</option>
+                    </optgroup>
+                    <optgroup label="🌍 ヨーロッパ">
+                        <option value="ベルリン">ベルリン</option>
+                        <option value="ロンドン">ロンドン</option>
+                        <option value="アムステルダム">アムステルダム</option>
+                        <option value="イビサ">イビサ</option>
+                        <option value="パリ">パリ</option>
+                        <option value="バルセロナ">バルセロナ</option>
+                    </optgroup>
+                    <optgroup label="🌐 その他">
+                        <option value="other">その他（入力）</option>
+                    </optgroup>
                 </select>
+                <input type="text" id="customRegion" class="input custom-region-input" placeholder="地域名を入力（例: 福岡、台北、デトロイト）">
             </div>
             <div class="input-group"><label class="label">説明</label><textarea id="eventDesc" class="input" placeholder="イベントの詳細"></textarea></div>
             
@@ -201,22 +235,22 @@
         <div class="nav-item" onclick="location.href='events.html'"><span class="nav-icon">🎵</span><span>Event</span></div>
         <div class="nav-item nav-create active"><div class="nav-plus">+</div></div>
         <div class="nav-item" onclick="location.href='productions.html'"><span class="nav-icon">💿</span><span>Production</span></div>
-        <div class="nav-item" onclick="location.href='profile.html'"><span class="nav-icon">👤</span><span>Profile</span></div>
+        <div class="nav-item" onclick="handleProfileClick()"><span class="nav-icon">👤</span><span>Profile</span></div>
     </nav>
     <div class="toast" id="toast"></div>
     
     <script src="js/common.js"></script>
     <script>
         let currentType = 'A';
-        let slots = [];
         let eventImageFile = null;
         let prodImageFile = null;
-        
-        // ピッカー関連
-        let pickerSlotIndex = -1;
-        let pickerField = ''; // 'start' or 'end'
+        let slots = [];
+        let pickerSlotIndex = 0;
+        let pickerField = 'start';
         let pickerHour = 22;
         let pickerMinute = 0;
+        
+        function handleProfileClick() { if (requireLogin()) location.href = 'profile.html'; }
         
         function selectType(type, el) {
             currentType = type;
@@ -226,9 +260,13 @@
             const isEvent = ['A','B','C'].includes(type);
             document.getElementById('eventForm').classList.toggle('active', isEvent);
             document.getElementById('productionForm').classList.toggle('active', !isEvent);
-            document.getElementById('slotsSection').style.display = type === 'A' ? 'block' : 'none';
-            document.getElementById('gigSection').style.display = type === 'B' ? 'block' : 'none';
-            document.getElementById('audioSection').style.display = type === 'audio' ? 'block' : 'none';
+            
+            if (isEvent) {
+                document.getElementById('slotsSection').style.display = type === 'A' ? 'block' : 'none';
+                document.getElementById('gigSection').style.display = type === 'B' ? 'block' : 'none';
+            } else {
+                document.getElementById('audioSection').style.display = type === 'audio' ? 'block' : 'none';
+            }
         }
         
         function previewImage(input, previewId, textId) {
@@ -245,66 +283,79 @@
             }
         }
         
-        // 価格オプション
-        function getPriceOptions() {
-            return [1000,2000,3000,5000,8000,10000,15000,20000,30000,50000]
-                .map(p => `<option value="${p}">¥${p.toLocaleString()}</option>`).join('');
+        // 地域選択変更時の処理
+        function handleRegionChange() {
+            const select = document.getElementById('eventRegion');
+            const customInput = document.getElementById('customRegion');
+            if (select.value === 'other') {
+                customInput.classList.add('active');
+                customInput.focus();
+            } else {
+                customInput.classList.remove('active');
+                customInput.value = '';
+            }
         }
         
-        function addSlot() { 
-            slots.push({ start: '22:00', end: '22:30', price: 5000 }); 
-            renderSlots(); 
+        // 最終的な地域値を取得
+        function getRegionValue() {
+            const select = document.getElementById('eventRegion');
+            if (select.value === 'other') {
+                const custom = document.getElementById('customRegion').value.trim();
+                return custom || 'その他';
+            }
+            return select.value;
         }
         
-        function removeSlot(i) { 
-            slots.splice(i, 1); 
-            renderSlots(); 
+        function addSlot() {
+            slots.push({ start: '22:00', end: '22:30', price: 3000 });
+            renderSlots();
+        }
+        
+        function removeSlot(i) {
+            slots.splice(i, 1);
+            renderSlots();
         }
         
         function renderSlots() {
-            const priceOpts = getPriceOptions();
-            document.getElementById('slotsContainer').innerHTML = slots.map((s, i) => `
+            const container = document.getElementById('slotsContainer');
+            container.innerHTML = slots.map((s, i) => `
                 <div class="slot-item">
                     <div class="slot-header">
                         <span class="slot-number">スロット ${i + 1}</span>
-                        <button class="slot-remove" onclick="removeSlot(${i})">✕</button>
+                        ${slots.length > 1 ? `<button class="slot-remove" onclick="removeSlot(${i})">×</button>` : ''}
                     </div>
                     <div class="slot-time-row">
-                        <button class="slot-time-btn" onclick="openPicker(${i}, 'start')">${s.start || '開始'}</button>
-                        <span style="color:var(--text2);">〜</span>
-                        <button class="slot-time-btn" onclick="openPicker(${i}, 'end')">${s.end || '終了'}</button>
+                        <button type="button" class="slot-time-btn" onclick="openPicker(${i}, 'start')">${s.start}</button>
+                        <span style="color:var(--text2)">〜</span>
+                        <button type="button" class="slot-time-btn" onclick="openPicker(${i}, 'end')">${s.end}</button>
                     </div>
                     <div class="slot-price-row">
                         <select class="input" onchange="slots[${i}].price=parseInt(this.value)">
-                            ${priceOpts.replace(`value="${s.price}"`, `value="${s.price}" selected`)}
+                            <option value="1000" ${s.price===1000?'selected':''}>¥1,000</option>
+                            <option value="2000" ${s.price===2000?'selected':''}>¥2,000</option>
+                            <option value="3000" ${s.price===3000?'selected':''}>¥3,000</option>
+                            <option value="5000" ${s.price===5000?'selected':''}>¥5,000</option>
+                            <option value="10000" ${s.price===10000?'selected':''}>¥10,000</option>
+                            <option value="15000" ${s.price===15000?'selected':''}>¥15,000</option>
+                            <option value="20000" ${s.price===20000?'selected':''}>¥20,000</option>
                         </select>
                     </div>
                 </div>
             `).join('');
         }
         
-        // ピッカーを開く
-        function openPicker(slotIndex, field) {
-            pickerSlotIndex = slotIndex;
+        function openPicker(index, field) {
+            pickerSlotIndex = index;
             pickerField = field;
             
-            // 現在の値をパース
-            const timeStr = field === 'start' ? slots[slotIndex].start : slots[slotIndex].end;
-            if (timeStr) {
-                const [h, m] = timeStr.split(':').map(Number);
-                pickerHour = h;
-                pickerMinute = m;
-            } else {
-                pickerHour = 22;
-                pickerMinute = 0;
-            }
+            const timeStr = field === 'start' ? slots[index].start : slots[index].end;
+            const [h, m] = timeStr.split(':').map(Number);
+            pickerHour = h;
+            pickerMinute = m;
             
             document.getElementById('pickerTitle').textContent = field === 'start' ? '開始時間' : '終了時間';
-            
-            // ホイールを生成
-            initWheels();
-            
             document.getElementById('pickerModal').classList.add('active');
+            initWheels();
         }
         
         function initWheels() {
@@ -386,7 +437,7 @@
                     type: currentType, title,
                     date: new Date(document.getElementById('eventDate').value),
                     location: document.getElementById('eventLocation').value,
-                    region: document.getElementById('eventRegion').value,
+                    region: getRegionValue(),
                     description: document.getElementById('eventDesc').value,
                     imageUrl, organizerId: user.uid, organizerName: userData.name || '',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()

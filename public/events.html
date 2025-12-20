@@ -28,13 +28,24 @@
         .search-input { width: 100%; padding: 14px 16px 14px 44px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); color: var(--text); font-size: 16px; }
         .search-input:focus { outline: none; border-color: var(--primary); }
         .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text3); }
-        .filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-        .filter-btn { padding: 8px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; }
+        
+        /* フィルターエリア */
+        .filter-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+        .filter-label { font-size: 12px; color: var(--text3); min-width: 40px; }
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+        .filter-btn { padding: 8px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; white-space: nowrap; }
         .filter-btn.active { background: var(--gradient); color: white; border-color: transparent; }
+        
+        /* 地域フィルター */
+        .region-select { padding: 8px 32px 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%23A0A0B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+        .region-select:focus { outline: none; border-color: var(--primary); }
+        .region-select.active { background-color: rgba(255,107,0,0.2); border-color: var(--primary); color: var(--primary); }
+        
         .card { background: var(--card); border-radius: var(--r-xl); overflow: hidden; cursor: pointer; margin-bottom: 16px; display: flex; }
         .card-img { width: 120px; min-width: 120px; height: 160px; object-fit: cover; }
         .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
         .card-title { font-size: 15px; font-weight: 700; margin: 4px 0 8px; }
+        .card-region { font-size: 11px; color: var(--primary); background: rgba(255,107,0,0.15); padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 4px; }
         .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
         .badge.a { background: rgba(255,107,0,0.2); color: #FF6B00; }
         .badge.b { background: rgba(0,217,255,0.2); color: #00D9FF; }
@@ -131,12 +142,50 @@
             <span class="search-icon">🔍</span>
             <input type="text" class="search-input" placeholder="イベントを検索" id="searchInput" oninput="filterEvents()">
         </div>
-        <div class="filters">
-            <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">すべて</button>
-            <button class="filter-btn" data-filter="A" onclick="setFilter('A')">タイムテーブル</button>
-            <button class="filter-btn" data-filter="B" onclick="setFilter('B')">ギャランティー</button>
-            <button class="filter-btn" data-filter="C" onclick="setFilter('C')">フライヤー</button>
+        
+        <!-- タイプフィルター -->
+        <div class="filter-row">
+            <span class="filter-label">種類</span>
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all" onclick="setTypeFilter('all')">すべて</button>
+                <button class="filter-btn" data-filter="A" onclick="setTypeFilter('A')">タイムテーブル</button>
+                <button class="filter-btn" data-filter="B" onclick="setTypeFilter('B')">ギャランティー</button>
+                <button class="filter-btn" data-filter="C" onclick="setTypeFilter('C')">フライヤー</button>
+            </div>
         </div>
+        
+        <!-- 地域フィルター -->
+        <div class="filter-row">
+            <span class="filter-label">地域</span>
+            <select id="regionFilter" class="region-select" onchange="setRegionFilter()">
+                <option value="all">🌐 すべての地域</option>
+                <optgroup label="🌏 アジア">
+                    <option value="東京">東京</option>
+                    <option value="大阪">大阪</option>
+                    <option value="ソウル">ソウル</option>
+                    <option value="上海">上海</option>
+                    <option value="香港">香港</option>
+                    <option value="バンコク">バンコク</option>
+                    <option value="シンガポール">シンガポール</option>
+                </optgroup>
+                <optgroup label="🌎 北米">
+                    <option value="ニューヨーク">ニューヨーク</option>
+                    <option value="ロサンゼルス">ロサンゼルス</option>
+                    <option value="マイアミ">マイアミ</option>
+                    <option value="シカゴ">シカゴ</option>
+                    <option value="ラスベガス">ラスベガス</option>
+                </optgroup>
+                <optgroup label="🌍 ヨーロッパ">
+                    <option value="ベルリン">ベルリン</option>
+                    <option value="ロンドン">ロンドン</option>
+                    <option value="アムステルダム">アムステルダム</option>
+                    <option value="イビサ">イビサ</option>
+                    <option value="パリ">パリ</option>
+                    <option value="バルセロナ">バルセロナ</option>
+                </optgroup>
+            </select>
+        </div>
+        
         <div id="eventsList"></div>
     </div>
     
@@ -153,6 +202,7 @@
                 <div class="modal-info">
                     <div class="modal-info-item"><span>📅</span><span id="modalDate"></span></div>
                     <div class="modal-info-item"><span>📍</span><span id="modalLocation"></span></div>
+                    <div class="modal-info-item"><span>🌏</span><span id="modalRegion"></span></div>
                     <div class="modal-info-item"><span>👤</span><span id="modalOrganizer"></span></div>
                 </div>
                 <p id="modalDesc" style="color: var(--text2); margin-bottom: 24px;"></p>
@@ -189,7 +239,8 @@
     <script src="js/common.js"></script>
     <script>
         let allEvents = [];
-        let currentFilter = 'all';
+        let currentTypeFilter = 'all';
+        let currentRegionFilter = 'all';
         let currentEvent = null;
         let selectedSlotIndex = -1;
         
@@ -198,9 +249,16 @@
         function handleCreateClick() { if (requireLogin()) window.location.href = 'create.html'; }
         function handleProfileClick() { if (requireLogin()) window.location.href = 'profile.html'; }
         
-        function setFilter(f) {
-            currentFilter = f;
+        function setTypeFilter(f) {
+            currentTypeFilter = f;
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
+            renderEvents();
+        }
+        
+        function setRegionFilter() {
+            const select = document.getElementById('regionFilter');
+            currentRegionFilter = select.value;
+            select.classList.toggle('active', currentRegionFilter !== 'all');
             renderEvents();
         }
         
@@ -241,12 +299,13 @@
             const now = new Date();
             now.setHours(0, 0, 0, 0); // 今日の0時
             
-            // フィルタリング: 過去イベント除外、検索、タイプフィルター
+            // フィルタリング: 過去イベント除外、検索、タイプフィルター、地域フィルター
             let filtered = allEvents.filter(ev => {
                 const evDate = ev.date?.toDate ? ev.date.toDate() : new Date(ev.date);
                 if (evDate < now) return false; // 過去のイベントは除外
-                if (currentFilter !== 'all' && ev.type !== currentFilter) return false;
-                if (search && !ev.title.toLowerCase().includes(search) && !(ev.location||'').toLowerCase().includes(search)) return false;
+                if (currentTypeFilter !== 'all' && ev.type !== currentTypeFilter) return false;
+                if (currentRegionFilter !== 'all' && ev.region !== currentRegionFilter) return false;
+                if (search && !ev.title.toLowerCase().includes(search) && !(ev.location||'').toLowerCase().includes(search) && !(ev.region||'').toLowerCase().includes(search)) return false;
                 return true;
             });
             
@@ -281,10 +340,11 @@
                     html += `<div class="card" onclick="showEventDetail('${ev.id}')">
                         <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
                         <div class="card-body">
+                            <span class="card-region">📍 ${ev.region||'未設定'}</span>
                             <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'タイムテーブル'}</span>
                             <h3 class="card-title">${ev.title}</h3>
                             <p style="color:var(--text2);font-size:13px;">🕐 ${formatTime(ev.date)}</p>
-                            <p style="color:var(--text2);font-size:13px;">📍 ${ev.location||''}</p>
+                            <p style="color:var(--text2);font-size:13px;">🏠 ${ev.location||''}</p>
                         </div>
                     </div>`;
                 });
@@ -317,6 +377,7 @@
             document.getElementById('modalTitle').textContent = currentEvent.title;
             document.getElementById('modalDate').textContent = formatDate(currentEvent.date);
             document.getElementById('modalLocation').textContent = currentEvent.location || '';
+            document.getElementById('modalRegion').textContent = currentEvent.region || '';
             document.getElementById('modalOrganizer').textContent = currentEvent.organizerName || '';
             document.getElementById('modalDesc').textContent = currentEvent.description || '';
             
