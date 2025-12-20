@@ -60,6 +60,42 @@
         .btn-lg { width: 100%; padding: 16px; font-size: 16px; }
         .section-title { font-size: 16px; font-weight: 700; margin: 24px 0 12px; color: var(--text2); }
         
+        /* 日付セパレーター */
+        .date-separator {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 28px 0 16px;
+        }
+        .date-separator::before,
+        .date-separator::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+        }
+        .date-separator-inner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--surface);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+        .date-separator-date {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 1px;
+        }
+        .date-separator-day {
+            font-size: 12px;
+            color: var(--text2);
+            font-weight: 500;
+        }
+        
         /* 枠カード */
         .slot-card { background: var(--card); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
         .slot-row { display: flex; align-items: center; padding: 14px 16px; }
@@ -130,12 +166,12 @@
     <div class="purchase-modal" id="purchaseModal">
         <div class="purchase-box">
             <div class="purchase-icon">🎫</div>
-            <h2 class="purchase-title">出演タイムテーブルを購入</h2>
+            <h2 class="purchase-title">タイムテーブルを購入</h2>
             <div class="purchase-detail">
                 <div class="purchase-time" id="purchaseTime">22:00 - 22:30</div>
                 <div class="purchase-price" id="purchasePrice">¥5,000</div>
             </div>
-            <p class="purchase-note">このタイムテーブルを購入してイベントに出演しますか？</p>
+            <p class="purchase-note">このスロットを購入してイベントに出演しますか？</p>
             <button class="purchase-btn primary" onclick="confirmPurchase()">購入を確定する</button>
             <button class="purchase-btn cancel" onclick="closePurchaseModal()">キャンセル</button>
         </div>
@@ -157,6 +193,8 @@
         let currentEvent = null;
         let selectedSlotIndex = -1;
         
+        const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+        
         function handleCreateClick() { if (requireLogin()) window.location.href = 'create.html'; }
         function handleProfileClick() { if (requireLogin()) window.location.href = 'profile.html'; }
         
@@ -176,45 +214,89 @@
             checkUrlParam();
         }
         
+        // 日付キーを生成 (YYYY-MM-DD)
+        function getDateKey(date) {
+            const d = date.toDate ? date.toDate() : new Date(date);
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+        
+        // 日付セパレーターHTML生成
+        function createDateSeparator(dateKey) {
+            const d = new Date(dateKey);
+            const month = d.getMonth() + 1;
+            const day = d.getDate();
+            const dayName = dayNames[d.getDay()];
+            return `
+                <div class="date-separator">
+                    <div class="date-separator-inner">
+                        <span class="date-separator-date">${month}.${day}</span>
+                        <span class="date-separator-day">${dayName}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
         function renderEvents() {
             const search = document.getElementById('searchInput').value.toLowerCase();
+            const now = new Date();
+            now.setHours(0, 0, 0, 0); // 今日の0時
+            
+            // フィルタリング: 過去イベント除外、検索、タイプフィルター
             let filtered = allEvents.filter(ev => {
+                const evDate = ev.date?.toDate ? ev.date.toDate() : new Date(ev.date);
+                if (evDate < now) return false; // 過去のイベントは除外
                 if (currentFilter !== 'all' && ev.type !== currentFilter) return false;
                 if (search && !ev.title.toLowerCase().includes(search) && !(ev.location||'').toLowerCase().includes(search)) return false;
                 return true;
             });
             
+            // 日付昇順でソート（開催日が近い順）
+            filtered.sort((a, b) => {
+                const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
+                const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
+                return dateA - dateB;
+            });
+            
             const container = document.getElementById('eventsList');
             if (filtered.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color: var(--text2); padding: 40px;">イベントがありません</p>';
+                container.innerHTML = '<p style="text-align:center; color: var(--text2); padding: 40px;">今後のイベントはありません</p>';
                 return;
             }
             
-            const byRegion = {};
+            // 日付別にグループ化
+            const byDate = {};
             filtered.forEach(ev => {
-                const r = ev.region || 'その他';
-                if (!byRegion[r]) byRegion[r] = [];
-                byRegion[r].push(ev);
+                const key = getDateKey(ev.date);
+                if (!byDate[key]) byDate[key] = [];
+                byDate[key].push(ev);
             });
             
             let html = '';
-            for (const r in byRegion) {
-                html += `<h3 class="section-title">${r}</h3>`;
-                byRegion[r].forEach(ev => {
-                    const labels = {A:'タイムテーブル',B:'ギャランティー',C:'フライヤー'};
-                    const cls = {A:'a',B:'b',C:'c'};
+            const labels = {A:'タイムテーブル', B:'ギャランティー', C:'フライヤー'};
+            const cls = {A:'a', B:'b', C:'c'};
+            
+            for (const dateKey in byDate) {
+                html += createDateSeparator(dateKey);
+                byDate[dateKey].forEach(ev => {
                     html += `<div class="card" onclick="showEventDetail('${ev.id}')">
                         <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
                         <div class="card-body">
                             <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'タイムテーブル'}</span>
                             <h3 class="card-title">${ev.title}</h3>
-                            <p style="color:var(--text2);font-size:13px;">📅 ${formatDate(ev.date)}</p>
+                            <p style="color:var(--text2);font-size:13px;">🕐 ${formatTime(ev.date)}</p>
                             <p style="color:var(--text2);font-size:13px;">📍 ${ev.location||''}</p>
                         </div>
                     </div>`;
                 });
             }
             container.innerHTML = html;
+        }
+        
+        // 時間のみフォーマット
+        function formatTime(date) {
+            if (!date) return '';
+            const d = date.toDate ? date.toDate() : new Date(date);
+            return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
         }
         
         function checkUrlParam() {
@@ -226,8 +308,8 @@
             currentEvent = allEvents.find(e => e.id === id);
             if (!currentEvent) return;
             
-            const labels = {A:'タイムテーブル',B:'ギャランティー',C:'フライヤー'};
-            const cls = {A:'a',B:'b',C:'c'};
+            const labels = {A:'タイムテーブル', B:'ギャランティー', C:'フライヤー'};
+            const cls = {A:'a', B:'b', C:'c'};
             
             document.getElementById('modalImg').src = currentEvent.imageUrl || 'logo.png';
             document.getElementById('modalBadge').textContent = labels[currentEvent.type] || 'タイムテーブル';

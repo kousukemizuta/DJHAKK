@@ -79,6 +79,45 @@
         .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
         .modal-close { background: none; border: none; color: var(--text2); font-size: 24px; cursor: pointer; }
         .modal-body { padding: 20px; }
+        
+        /* 日付セパレーター */
+        .date-separator {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 28px 0 16px;
+        }
+        .date-separator:first-child {
+            margin-top: 0;
+        }
+        .date-separator::before,
+        .date-separator::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+        }
+        .date-separator-inner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--surface);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+        .date-separator-date {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 1px;
+        }
+        .date-separator-day {
+            font-size: 12px;
+            color: var(--text2);
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -154,6 +193,8 @@
         let allEvents = [];
         let allProductions = [];
         
+        const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+        
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id)?.classList.add('active');
@@ -211,31 +252,78 @@
             renderLists();
         }
         
+        // 日付キーを生成 (YYYY-MM-DD)
+        function getDateKey(date) {
+            const d = date.toDate ? date.toDate() : new Date(date);
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+        
+        // 日付セパレーターHTML生成
+        function createDateSeparator(dateKey) {
+            const d = new Date(dateKey);
+            const month = d.getMonth() + 1;
+            const day = d.getDate();
+            const dayName = dayNames[d.getDay()];
+            return `
+                <div class="date-separator">
+                    <div class="date-separator-inner">
+                        <span class="date-separator-date">${month}.${day}</span>
+                        <span class="date-separator-day">${dayName}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 時間のみフォーマット
+        function formatTimeOnly(date) {
+            if (!date) return '';
+            const d = date.toDate ? date.toDate() : new Date(date);
+            return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+        
         function renderLists() {
             const evList = document.getElementById('eventsList');
             const prList = document.getElementById('productionsList');
             
-            if (allEvents.length === 0) {
-                evList.innerHTML = '<p style="text-align:center; color: var(--text2); padding: 40px;">イベントがありません</p>';
+            const now = new Date();
+            now.setHours(0, 0, 0, 0); // 今日の0時
+            
+            // 過去のイベントを除外し、日付昇順でソート
+            let futureEvents = allEvents.filter(ev => {
+                const evDate = ev.date?.toDate ? ev.date.toDate() : new Date(ev.date);
+                return evDate >= now;
+            });
+            
+            futureEvents.sort((a, b) => {
+                const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
+                const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
+                return dateA - dateB;
+            });
+            
+            if (futureEvents.length === 0) {
+                evList.innerHTML = '<p style="text-align:center; color: var(--text2); padding: 40px;">今後のイベントはありません</p>';
             } else {
-                const byRegion = {};
-                allEvents.forEach(ev => {
-                    const r = ev.region || 'その他';
-                    if (!byRegion[r]) byRegion[r] = [];
-                    byRegion[r].push(ev);
+                // 日付別にグループ化
+                const byDate = {};
+                futureEvents.forEach(ev => {
+                    const key = getDateKey(ev.date);
+                    if (!byDate[key]) byDate[key] = [];
+                    byDate[key].push(ev);
                 });
+                
                 let html = '';
-                for (const r in byRegion) {
-                    html += `<h3 class="section-title">${r}</h3>`;
-                    byRegion[r].forEach(ev => {
-                        const labels = {A:'タイムテーブル',B:'ギャランティー',C:'フライヤー'};
-                        const cls = {A:'a',B:'b',C:'c'};
+                const labels = {A:'タイムテーブル', B:'ギャランティー', C:'フライヤー'};
+                const cls = {A:'a', B:'b', C:'c'};
+                
+                for (const dateKey in byDate) {
+                    html += createDateSeparator(dateKey);
+                    byDate[dateKey].forEach(ev => {
                         html += `<div class="card" onclick="window.location.href='events.html?id=${ev.id}'">
                             <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
                             <div class="card-body">
                                 <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'タイムテーブル'}</span>
                                 <h3 class="card-title">${ev.title}</h3>
-                                <p style="color:var(--text2);font-size:13px;">📅 ${formatDate(ev.date)}</p>
+                                <p style="color:var(--text2);font-size:13px;">🕐 ${formatTimeOnly(ev.date)}</p>
                                 <p style="color:var(--text2);font-size:13px;">📍 ${ev.location||''}</p>
                             </div>
                         </div>`;
