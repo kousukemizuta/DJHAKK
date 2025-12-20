@@ -32,6 +32,78 @@ let userData = {};
 let isGuest = false;
 
 // ========================================
+// Currency Configuration
+// ========================================
+const CURRENCY_CONFIG = {
+    jpy: { symbol: '¥', decimal: false, name: '日本円' },
+    usd: { symbol: '$', decimal: true, name: '米ドル' },
+    eur: { symbol: '€', decimal: true, name: 'ユーロ' },
+    gbp: { symbol: '£', decimal: true, name: '英ポンド' },
+    krw: { symbol: '₩', decimal: false, name: '韓国ウォン' },
+    cny: { symbol: '¥', decimal: true, name: '中国元' },
+    hkd: { symbol: 'HK$', decimal: true, name: '香港ドル' },
+    thb: { symbol: '฿', decimal: true, name: 'タイバーツ' },
+    sgd: { symbol: 'S$', decimal: true, name: 'シンガポールドル' },
+    twd: { symbol: 'NT$', decimal: false, name: '台湾ドル' }
+};
+
+const REGION_CURRENCY_MAP = {
+    // 日本
+    '東京': 'jpy',
+    '大阪': 'jpy',
+    '名古屋': 'jpy',
+    '福岡': 'jpy',
+    '沖縄/那覇': 'jpy',
+    // アジア
+    'ソウル': 'krw',
+    '上海': 'cny',
+    '香港': 'hkd',
+    'バンコク': 'thb',
+    'シンガポール': 'sgd',
+    // 北米
+    'ニューヨーク': 'usd',
+    'ロサンゼルス': 'usd',
+    'マイアミ': 'usd',
+    'シカゴ': 'usd',
+    'ラスベガス': 'usd',
+    // ヨーロッパ
+    'ベルリン': 'eur',
+    'ロンドン': 'gbp',
+    'アムステルダム': 'eur',
+    'イビサ': 'eur',
+    'パリ': 'eur',
+    'バルセロナ': 'eur'
+};
+
+// 地域から通貨を取得
+function getCurrencyFromRegion(region) {
+    return REGION_CURRENCY_MAP[region] || 'usd'; // デフォルトはUSD
+}
+
+// 金額をフォーマット
+function formatPrice(amount, currency) {
+    const config = CURRENCY_CONFIG[currency] || CURRENCY_CONFIG.usd;
+    if (amount === 0) return '無料';
+    if (config.decimal) {
+        return `${config.symbol}${amount.toFixed(2)}`;
+    }
+    return `${config.symbol}${amount.toLocaleString()}`;
+}
+
+// 入力値を数値に変換（通貨に応じて）
+function parsePrice(value, currency) {
+    const num = parseFloat(value) || 0;
+    const config = CURRENCY_CONFIG[currency] || CURRENCY_CONFIG.usd;
+    // 小数点対応通貨はそのまま、整数通貨は整数に
+    return config.decimal ? num : Math.floor(num);
+}
+
+// 通貨記号を取得
+function getCurrencySymbol(currency) {
+    return (CURRENCY_CONFIG[currency] || CURRENCY_CONFIG.usd).symbol;
+}
+
+// ========================================
 // Utility Functions
 // ========================================
 const $ = id => document.getElementById(id);
