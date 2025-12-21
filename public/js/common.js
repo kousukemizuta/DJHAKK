@@ -570,6 +570,101 @@ function handleProfileClick() {
 }
 
 // ========================================
+// Firebase Cloud Messaging (Push Notifications)
+// ========================================
+const VAPID_KEY = 'BNKShnq4CdZcJIQp84KRNTJdZ5xi-W-ErYMiDpqp_L9Y-QIxvj-wSluHwSCnMs070GiAK3Jmpi5iFr6icAgFQzg';
+let messagingInitialized = false;
+
+async function initializePushNotifications() {
+    if (messagingInitialized || !user || isGuest) return;
+    
+    try {
+        // Service Workerが対応しているか確認
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            log('Push notifications not supported');
+            return;
+        }
+        
+        // Service Workerを登録
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        log('Service Worker registered');
+        
+        // Firebase Messagingを初期化
+        const messaging = firebase.messaging();
+        
+        // 通知許可をリクエスト
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            log('Notification permission denied');
+            return;
+        }
+        
+        // FCMトークンを取得
+        const token = await messaging.getToken({
+            vapidKey: VAPID_KEY,
+            serviceWorkerRegistration: registration
+        });
+        
+        if (token) {
+            log('FCM Token obtained');
+            // トークンをFirestoreに保存
+            await db.collection('users').doc(user.uid).update({
+                fcmToken: token,
+                fcmTokenUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            log('FCM Token saved to Firestore');
+        }
+        
+        // フォアグラウンドでのメッセージ受信
+        messaging.onMessage((payload) => {
+            log('Foreground message received:', payload);
+            
+            // トースト通知を表示
+            const title = payload.notification?.title || '新しいメッセージ';
+            const body = payload.notification?.body || 'DMが届きました';
+            toast(`${title}: ${body}`);
+            
+            // 未読バッジを更新（リアルタイムリスナーが処理するはず）
+        });
+        
+        messagingInitialized = true;
+        log('Push notifications initialized');
+        
+    } catch (error) {
+        log('Error initializing push notifications: ' + error.message);
+    }
+}
+
+// 通知許可を手動でリクエスト（設定画面などから）
+async function requestNotificationPermission() {
+    if (!user || isGuest) {
+        toast('ログインが必要です', 'error');
+        return false;
+    }
+    
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            await initializePushNotifications();
+            toast('通知が有効になりました');
+            return true;
+        } else {
+            toast('通知がブロックされています', 'error');
+            return false;
+        }
+    } catch (error) {
+        log('Error requesting notification permission: ' + error.message);
+        toast('通知の設定に失敗しました', 'error');
+        return false;
+    }
+}
+
+// 通知が有効かどうか確認
+function isNotificationEnabled() {
+    return 'Notification' in window && Notification.permission === 'granted';
+}
+
+// ========================================
 // Auth State Observer
 // ========================================
 auth.onAuthStateChanged(async (u) => {
@@ -577,8 +672,16 @@ auth.onAuthStateChanged(async (u) => {
     if (u && !isGuest) {
         await loadUserData();
         startUnreadListener();
+        
+        // プッシュ通知を初期化（ユーザーがログインしている場合）
+        // 少し遅延させてUIの準備を待つ
+        setTimeout(() => {
+            initializePushNotifications();
+        }, 2000);
+        
         log('User logged in: ' + u.email);
     } else {
+        messagingInitialized = false;
         log('User logged out or guest mode');
     }
     
