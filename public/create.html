@@ -55,23 +55,26 @@
         .slot-time-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
         .slot-time-btn { flex: 1; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 16px; text-align: center; cursor: pointer; }
         .slot-time-btn:active { background: var(--card); }
-        .slot-price-row { display: flex; gap: 8px; align-items: center; }
+        .slot-price-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
         .slot-currency { padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--primary); font-weight: 600; font-size: 14px; min-width: 60px; text-align: center; }
         .slot-price-input { flex: 1; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 16px; text-align: right; }
         .slot-price-input:focus { outline: none; border-color: var(--primary); }
         .slot-price-display { font-size: 12px; color: var(--text2); text-align: right; margin-top: 4px; }
+        .slot-capacity-row { display: flex; gap: 8px; align-items: center; }
+        .slot-capacity-label { color: var(--text2); font-size: 14px; }
+        .slot-capacity-select { padding: 10px 32px 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23A0A0B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
         .add-slot-btn { background: var(--surface); border: 1px dashed var(--border); color: var(--text2); width: 100%; padding: 12px; border-radius: var(--r-md); cursor: pointer; }
         .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; position: relative; }
         .nav-item.active { color: var(--primary); }
         .nav-icon { font-size: 20px; }
         .nav-create { position: relative; top: -20px; }
         .nav-plus { width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); }
+        .nav-unread-badge { position: absolute; top: -4px; right: 50%; transform: translateX(50%); margin-right: -15px; background: #FF4757; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: none; align-items: center; justify-content: center; padding: 0 4px; }
         .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 300; }
         .toast.show { opacity: 1; }
         .toast.error { background: #FF4757; }
         
-        /* その他入力欄・通貨選択 */
         .custom-region-input { display: none; margin-top: 8px; }
         .custom-region-input.active { display: block; }
         .currency-select-row { display: none; margin-top: 8px; }
@@ -81,7 +84,6 @@
         .currency-info-text { font-size: 13px; color: var(--text2); }
         .currency-info-value { font-weight: 600; color: var(--primary); }
         
-        /* ドラムピッカーモーダル */
         .picker-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 500; align-items: flex-end; justify-content: center; }
         .picker-modal.active { display: flex; }
         .picker-box { background: var(--surface); width: 100%; max-width: 600px; border-radius: 20px 20px 0 0; padding: 20px; }
@@ -109,12 +111,12 @@
             <div class="type-btn active" data-type="A" onclick="selectType('A', this)">
                 <div class="type-btn-icon">🎫</div>
                 <div class="type-btn-label">タイムテーブル</div>
-                <div class="type-btn-desc">アーティストがタイムテーブルを購入</div>
+                <div class="type-btn-desc">スロットを販売</div>
             </div>
             <div class="type-btn" data-type="B" onclick="selectType('B', this)">
                 <div class="type-btn-icon">💰</div>
                 <div class="type-btn-label">ギャランティー</div>
-                <div class="type-btn-desc">アーティストに報酬</div>
+                <div class="type-btn-desc">報酬を支払う</div>
             </div>
             <div class="type-btn" data-type="C" onclick="selectType('C', this)">
                 <div class="type-btn-icon">📢</div>
@@ -185,10 +187,10 @@
                         <option value="other">その他（入力）</option>
                     </optgroup>
                 </select>
-                <input type="text" id="customRegion" class="input custom-region-input" placeholder="地域名を入力（例: 台北、メルボルン）">
+                <input type="text" id="customRegion" class="input custom-region-input" placeholder="地域名を入力">
                 <div id="currencySelectRow" class="currency-select-row">
                     <label class="label" style="margin-top:8px;">通貨</label>
-                    <select id="customCurrency" class="input">
+                    <select id="customCurrency" class="input" onchange="handleCustomCurrencyChange()">
                         <option value="jpy">JPY - 日本円 (¥)</option>
                         <option value="usd">USD - 米ドル ($)</option>
                         <option value="eur">EUR - ユーロ (€)</option>
@@ -237,11 +239,6 @@
             <div class="input-group"><label class="label">価格（円）</label><input type="number" id="prodPrice" class="input" placeholder="1000" min="0"></div>
             <div class="input-group"><label class="label">説明</label><textarea id="prodDesc" class="input" placeholder="商品の詳細"></textarea></div>
             
-            <div id="audioSection" class="input-group" style="display:none;">
-                <label class="label">音源ファイル</label>
-                <input type="file" id="audioFile" class="input" accept="audio/*">
-            </div>
-            
             <button class="btn btn-p btn-lg" onclick="submitProduction()">作成する</button>
         </div>
     </div>
@@ -270,7 +267,7 @@
         <div class="nav-item" onclick="location.href='events.html'"><span class="nav-icon">🎵</span><span>Event</span></div>
         <div class="nav-item nav-create active"><div class="nav-plus">+</div></div>
         <div class="nav-item" onclick="location.href='productions.html'"><span class="nav-icon">💿</span><span>Production</span></div>
-        <div class="nav-item" onclick="handleProfileClick()"><span class="nav-icon">👤</span><span>Profile</span></div>
+        <div class="nav-item" onclick="handleProfileClick()"><span class="nav-icon">👤</span><span>Profile</span><span class="nav-unread-badge"></span></div>
     </nav>
     <div class="toast" id="toast"></div>
     
@@ -279,16 +276,14 @@
         let currentType = 'A';
         let eventImageFile = null;
         let prodImageFile = null;
-        let slots = [];        // タイムテーブル用
-        let gigSlots = [];     // ギャランティー用
+        let slots = [];
+        let gigSlots = [];
         let currentCurrency = 'jpy';
         let pickerSlotIndex = 0;
         let pickerField = 'start';
-        let pickerSlotType = 'slot'; // 'slot' or 'gig'
+        let pickerSlotType = 'slot';
         let pickerHour = 22;
         let pickerMinute = 0;
-        
-        function handleProfileClick() { if (requireLogin()) location.href = 'profile.html'; }
         
         function selectType(type, el) {
             currentType = type;
@@ -302,8 +297,6 @@
             if (isEvent) {
                 document.getElementById('slotsSection').style.display = type === 'A' ? 'block' : 'none';
                 document.getElementById('gigSlotsSection').style.display = type === 'B' ? 'block' : 'none';
-            } else {
-                document.getElementById('audioSection').style.display = type === 'audio' ? 'block' : 'none';
             }
         }
         
@@ -321,7 +314,6 @@
             }
         }
         
-        // 地域選択変更時の処理
         function handleRegionChange() {
             const select = document.getElementById('eventRegion');
             const customInput = document.getElementById('customRegion');
@@ -331,13 +323,11 @@
                 customInput.classList.add('active');
                 currencySelectRow.classList.add('active');
                 customInput.focus();
-                // その他の場合はカスタム通貨を使用
                 currentCurrency = document.getElementById('customCurrency').value;
             } else {
                 customInput.classList.remove('active');
                 currencySelectRow.classList.remove('active');
                 customInput.value = '';
-                // 地域から通貨を自動設定
                 currentCurrency = getCurrencyFromRegion(select.value);
             }
             updateCurrencyDisplay();
@@ -345,33 +335,29 @@
             renderGigSlots();
         }
         
-        // 通貨表示を更新
+        function handleCustomCurrencyChange() {
+            currentCurrency = document.getElementById('customCurrency').value;
+            updateCurrencyDisplay();
+            renderSlots();
+            renderGigSlots();
+        }
+        
         function updateCurrencyDisplay() {
             const config = CURRENCY_CONFIG[currentCurrency];
             document.getElementById('currencyDisplay').textContent = `${currentCurrency.toUpperCase()} (${config.symbol})`;
         }
         
-        // カスタム通貨変更時
-        document.getElementById('customCurrency')?.addEventListener('change', function() {
-            currentCurrency = this.value;
-            updateCurrencyDisplay();
-            renderSlots();
-            renderGigSlots();
-        });
-        
-        // 最終的な地域値を取得
         function getRegionValue() {
             const select = document.getElementById('eventRegion');
             if (select.value === 'other') {
-                const custom = document.getElementById('customRegion').value.trim();
-                return custom || 'その他';
+                return document.getElementById('customRegion').value.trim() || 'その他';
             }
             return select.value;
         }
         
         // ========== タイムテーブル用スロット ==========
         function addSlot() {
-            slots.push({ start: '22:00', end: '22:30', price: 0 });
+            slots.push({ start: '22:00', end: '22:30', price: 0, capacity: 1 });
             renderSlots();
         }
         
@@ -383,6 +369,10 @@
         function updateSlotPrice(index, value) {
             slots[index].price = parsePrice(value, currentCurrency);
             renderSlots();
+        }
+        
+        function updateSlotCapacity(index, value) {
+            slots[index].capacity = parseInt(value) || 1;
         }
         
         function renderSlots() {
@@ -408,13 +398,19 @@
                                onchange="updateSlotPrice(${i}, this.value)">
                     </div>
                     <div class="slot-price-display">${formatPrice(s.price || 0, currentCurrency)}</div>
+                    <div class="slot-capacity-row">
+                        <span class="slot-capacity-label">募集人数:</span>
+                        <select class="slot-capacity-select" onchange="updateSlotCapacity(${i}, this.value)">
+                            ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${s.capacity === n ? 'selected' : ''}>${n}人</option>`).join('')}
+                        </select>
+                    </div>
                 </div>
             `).join('');
         }
         
         // ========== ギャランティー用スロット ==========
         function addGigSlot() {
-            gigSlots.push({ start: '22:00', end: '23:00', price: 0 });
+            gigSlots.push({ start: '22:00', end: '23:00', price: 0, capacity: 1 });
             renderGigSlots();
         }
         
@@ -426,6 +422,10 @@
         function updateGigSlotPrice(index, value) {
             gigSlots[index].price = parsePrice(value, currentCurrency);
             renderGigSlots();
+        }
+        
+        function updateGigSlotCapacity(index, value) {
+            gigSlots[index].capacity = parseInt(value) || 1;
         }
         
         function renderGigSlots() {
@@ -451,6 +451,12 @@
                                onchange="updateGigSlotPrice(${i}, this.value)">
                     </div>
                     <div class="slot-price-display">${formatPrice(s.price || 0, currentCurrency)}</div>
+                    <div class="slot-capacity-row">
+                        <span class="slot-capacity-label">募集人数:</span>
+                        <select class="slot-capacity-select" onchange="updateGigSlotCapacity(${i}, this.value)">
+                            ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${s.capacity === n ? 'selected' : ''}>${n}人</option>`).join('')}
+                        </select>
+                    </div>
                 </div>
             `).join('');
         }
@@ -562,18 +568,23 @@
                     imageUrl, 
                     organizerId: user.uid, 
                     organizerName: userData.name || '',
+                    organizerPhoto: userData.photoURL || '',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
                 if (currentType === 'A') {
                     data.slots = slots.map(s => ({
                         time: `${s.start}-${s.end}`,
-                        price: s.price
+                        price: s.price,
+                        capacity: s.capacity || 1,
+                        applicants: []
                     }));
                 } else if (currentType === 'B') {
                     data.slots = gigSlots.map(s => ({
                         time: `${s.start}-${s.end}`,
-                        price: s.price
+                        price: s.price,
+                        capacity: s.capacity || 1,
+                        applicants: []
                     }));
                 }
                 

@@ -24,12 +24,23 @@
         .header { display: flex; align-items: center; gap: 16px; padding: 16px 0; margin-bottom: 24px; }
         .header-logo { height: 40px; width: 40px; object-fit: contain; cursor: pointer; border-radius: 8px; }
         .header-title { font-size: 20px; font-weight: 700; flex: 1; }
+        .back-btn { background: none; border: none; color: var(--text); font-size: 16px; cursor: pointer; }
         
-        .profile-header { text-align: center; margin-bottom: 32px; }
+        .profile-header { text-align: center; margin-bottom: 24px; }
         .avatar-large { width: 100px; height: 100px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 16px; overflow: hidden; cursor: pointer; }
+        .avatar-large.readonly { cursor: default; }
         .avatar-large img { width: 100%; height: 100%; object-fit: cover; }
         .profile-name { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
-        .profile-email { color: var(--text2); font-size: 14px; }
+        .profile-bio { color: var(--text2); font-size: 14px; margin-bottom: 16px; white-space: pre-wrap; }
+        
+        .profile-sns { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 20px; }
+        .sns-link { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--card); border-radius: 20px; color: var(--text2); text-decoration: none; font-size: 13px; }
+        .sns-link:hover { background: var(--surface); color: var(--text); }
+        
+        .profile-actions { display: flex; gap: 12px; justify-content: center; margin-bottom: 24px; }
+        .profile-btn { padding: 12px 24px; border-radius: 20px; font-weight: 600; font-size: 14px; cursor: pointer; border: none; }
+        .profile-btn.dm { background: var(--gradient); color: white; }
+        .profile-btn.secondary { background: var(--card); color: var(--text2); }
         
         .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
         .tab { flex: 1; padding: 12px; background: var(--card); border: 2px solid transparent; color: var(--text2); border-radius: var(--r-md); cursor: pointer; font-weight: 600; text-align: center; font-size: 13px; }
@@ -43,6 +54,15 @@
         .input { width: 100%; padding: 14px 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text); font-size: 16px; }
         .input:focus { outline: none; border-color: var(--primary); }
         textarea.input { resize: vertical; min-height: 80px; }
+        select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23A0A0B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; }
+        
+        .sns-item { background: var(--card); border-radius: var(--r-md); padding: 16px; margin-bottom: 12px; }
+        .sns-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .sns-item-title { font-weight: 600; color: var(--text2); font-size: 14px; }
+        .sns-item-remove { background: #FF4757; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px; }
+        .sns-select-row { display: flex; gap: 8px; margin-bottom: 8px; }
+        .sns-select { flex: 1; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; }
+        .add-sns-btn { background: var(--surface); border: 1px dashed var(--border); color: var(--text2); width: 100%; padding: 12px; border-radius: var(--r-md); cursor: pointer; margin-bottom: 16px; }
         
         .btn { padding: 12px 24px; border-radius: var(--r-lg); font-weight: 600; cursor: pointer; border: none; font-size: 14px; }
         .btn-p { background: var(--gradient); color: white; }
@@ -56,172 +76,344 @@
         .card-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
         .card-meta { color: var(--text2); font-size: 12px; }
         
-        .dm-item { background: var(--card); border-radius: var(--r-lg); padding: 16px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; gap: 12px; }
-        .dm-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .dm-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .dm-content { flex: 1; }
-        .dm-name { font-weight: 600; margin-bottom: 4px; }
-        .dm-preview { color: var(--text2); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .dm-time { color: var(--text3); font-size: 11px; }
-        .dm-unread { background: var(--primary); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
-        
         .empty-state { text-align: center; padding: 40px; color: var(--text2); }
         
         .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; position: relative; }
         .nav-item.active { color: var(--primary); }
         .nav-icon { font-size: 20px; }
         .nav-create { position: relative; top: -20px; }
         .nav-plus { width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); }
+        .nav-unread-badge { position: absolute; top: -4px; right: 50%; transform: translateX(50%); margin-right: -15px; background: #FF4757; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: none; align-items: center; justify-content: center; padding: 0 4px; }
         
-        .chat-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 200; }
-        .chat-modal.active { display: flex; flex-direction: column; }
-        .chat-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
-        .chat-back { background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; }
-        .chat-messages { flex: 1; overflow-y: auto; padding: 16px; }
-        .chat-message { margin-bottom: 12px; max-width: 80%; }
-        .chat-message.mine { margin-left: auto; }
-        .chat-bubble { padding: 12px 16px; border-radius: 16px; background: var(--card); }
-        .chat-message.mine .chat-bubble { background: var(--primary); }
-        .chat-time { font-size: 10px; color: var(--text3); margin-top: 4px; text-align: right; }
-        .chat-input-area { padding: 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
-        .chat-input { flex: 1; padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 24px; color: var(--text); font-size: 16px; }
-        .chat-send { background: var(--gradient); border: none; border-radius: 50%; width: 44px; height: 44px; color: white; font-size: 20px; cursor: pointer; }
-        
-        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 300; }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 300; transition: opacity 0.3s; }
         .toast.show { opacity: 1; }
         .toast.error { background: #FF4757; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
+        <div class="header" id="headerSection">
             <img src="logo.png" class="header-logo" onclick="location.href='index.html'">
             <span class="header-title">プロフィール</span>
         </div>
         
         <div class="profile-header">
-            <div class="avatar-large" onclick="document.getElementById('avatarInput').click()">
+            <div class="avatar-large" id="avatarContainer">
                 <img id="avatarImg" style="display:none;">
                 <span id="avatarInitial">?</span>
             </div>
             <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
             <div class="profile-name" id="profileName">-</div>
-            <div class="profile-email" id="profileEmail">-</div>
+            <div class="profile-bio" id="profileBio"></div>
+            <div class="profile-sns" id="profileSns"></div>
+            <div class="profile-actions" id="profileActions"></div>
         </div>
         
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('edit')">編集</div>
-            <div class="tab" onclick="switchTab('events')">マイイベント</div>
-            <div class="tab" onclick="switchTab('dm')">DM</div>
+        <!-- 自分のプロフィール用タブ -->
+        <div id="myProfileTabs" style="display:none;">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('edit')">編集</div>
+                <div class="tab" onclick="switchTab('events')">マイイベント</div>
+                <div class="tab" onclick="switchTab('dm')">DM</div>
+            </div>
+            
+            <div id="editTab" class="tab-content active">
+                <div class="input-group"><label class="label">名前</label><input type="text" id="editName" class="input"></div>
+                <div class="input-group"><label class="label">自己紹介</label><textarea id="editBio" class="input" placeholder="自己紹介を入力"></textarea></div>
+                
+                <div class="input-group">
+                    <label class="label">SNSリンク</label>
+                    <div id="snsLinksContainer"></div>
+                    <button type="button" class="add-sns-btn" onclick="addSnsLink()">+ SNSを追加</button>
+                </div>
+                
+                <button class="btn btn-p btn-lg" onclick="saveProfile()" style="margin-bottom:16px;">保存</button>
+                <button class="btn btn-danger btn-lg" onclick="handleLogout()">ログアウト</button>
+            </div>
+            
+            <div id="eventsTab" class="tab-content">
+                <div id="myEventsList"></div>
+            </div>
+            
+            <div id="dmTab" class="tab-content">
+                <button class="btn btn-p btn-lg" onclick="location.href='messages.html'" style="margin-bottom:16px;">💬 メッセージ一覧を見る</button>
+                <div id="dmPreviewList"></div>
+            </div>
         </div>
         
-        <!-- Edit Profile -->
-        <div id="editTab" class="tab-content active">
-            <div class="input-group"><label class="label">名前</label><input type="text" id="editName" class="input"></div>
-            <div class="input-group"><label class="label">自己紹介</label><textarea id="editBio" class="input" placeholder="自己紹介を入力"></textarea></div>
-            <div class="input-group"><label class="label">SNS (X/Twitter)</label><input type="url" id="editTwitter" class="input" placeholder="https://x.com/username"></div>
-            <div class="input-group"><label class="label">SNS (Instagram)</label><input type="url" id="editInstagram" class="input" placeholder="https://instagram.com/username"></div>
-            <button class="btn btn-p btn-lg" onclick="saveProfile()" style="margin-bottom:16px;">保存</button>
-            <button class="btn btn-danger btn-lg" onclick="handleLogout()">ログアウト</button>
-        </div>
-        
-        <!-- My Events -->
-        <div id="eventsTab" class="tab-content">
-            <div id="myEventsList"></div>
-        </div>
-        
-        <!-- DM -->
-        <div id="dmTab" class="tab-content">
-            <div id="dmList"></div>
-        </div>
-    </div>
-    
-    <!-- Chat Modal -->
-    <div class="chat-modal" id="chatModal">
-        <div class="chat-header">
-            <button class="chat-back" onclick="closeChat()">←</button>
-            <span id="chatPartnerName">-</span>
-        </div>
-        <div class="chat-messages" id="chatMessages"></div>
-        <div class="chat-input-area">
-            <input type="text" class="chat-input" id="chatInput" placeholder="メッセージを入力" onkeypress="if(event.key==='Enter')sendMessage()">
-            <button class="chat-send" onclick="sendMessage()">→</button>
+        <!-- 他ユーザーのプロフィール用 -->
+        <div id="otherProfileContent" style="display:none;">
+            <div class="section-title" style="margin-top:0; font-size:14px; color:var(--text3);">主催イベント</div>
+            <div id="otherEventsList"></div>
         </div>
     </div>
     
     <nav class="nav">
         <div class="nav-item" onclick="location.href='index.html'"><span class="nav-icon">🏠</span><span>Home</span></div>
         <div class="nav-item" onclick="location.href='events.html'"><span class="nav-icon">🎵</span><span>Event</span></div>
-        <div class="nav-item nav-create" onclick="location.href='create.html'"><div class="nav-plus">+</div></div>
+        <div class="nav-item nav-create" onclick="handleCreateClick()"><div class="nav-plus">+</div></div>
         <div class="nav-item" onclick="location.href='productions.html'"><span class="nav-icon">💿</span><span>Production</span></div>
-        <div class="nav-item active"><span class="nav-icon">👤</span><span>Profile</span></div>
+        <div class="nav-item active"><span class="nav-icon">👤</span><span>Profile</span><span class="nav-unread-badge"></span></div>
     </nav>
     <div class="toast" id="toast"></div>
     
     <script src="js/common.js"></script>
     <script>
+        let viewingUserId = null;
+        let viewingUserData = null;
+        let isOwnProfile = true;
         let myEvents = [];
-        let myChats = [];
-        let currentChatId = null;
-        let chatUnsub = null;
+        let snsLinks = [];
         
         function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['edit','events','dm'][i] === tab));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
             document.getElementById(tab + 'Tab').classList.add('active');
+            
             if (tab === 'events') loadMyEvents();
-            if (tab === 'dm') loadDMs();
+            if (tab === 'dm') loadDMPreview();
         }
         
-        function loadProfileData() {
-            if (!userData) return;
+        async function loadProfileData() {
+            // URLパラメータからユーザーIDを取得
+            const params = new URLSearchParams(location.search);
+            viewingUserId = params.get('uid');
+            
+            if (viewingUserId && viewingUserId !== user.uid) {
+                // 他ユーザーのプロフィール
+                isOwnProfile = false;
+                await loadOtherProfile(viewingUserId);
+            } else {
+                // 自分のプロフィール
+                isOwnProfile = true;
+                viewingUserId = user.uid;
+                loadOwnProfile();
+            }
+        }
+        
+        function loadOwnProfile() {
+            document.getElementById('myProfileTabs').style.display = 'block';
+            document.getElementById('otherProfileContent').style.display = 'none';
+            document.getElementById('avatarContainer').classList.remove('readonly');
+            document.getElementById('avatarContainer').onclick = () => document.getElementById('avatarInput').click();
+            
+            // ヘッダー
+            document.getElementById('headerSection').innerHTML = `
+                <img src="logo.png" class="header-logo" onclick="location.href='index.html'">
+                <span class="header-title">プロフィール</span>
+            `;
+            
+            // プロフィール表示
             document.getElementById('profileName').textContent = userData.name || '-';
-            document.getElementById('profileEmail').textContent = user?.email || '-';
-            document.getElementById('editName').value = userData.name || '';
-            document.getElementById('editBio').value = userData.bio || '';
-            document.getElementById('editTwitter').value = userData.twitter || '';
-            document.getElementById('editInstagram').value = userData.instagram || '';
+            document.getElementById('profileBio').textContent = '';
+            document.getElementById('profileSns').innerHTML = '';
+            document.getElementById('profileActions').innerHTML = '';
             
             if (userData.photoURL) {
                 document.getElementById('avatarImg').src = userData.photoURL;
                 document.getElementById('avatarImg').style.display = 'block';
                 document.getElementById('avatarInitial').style.display = 'none';
             } else {
-                document.getElementById('avatarInitial').textContent = (userData.name || '?')[0].toUpperCase();
+                document.getElementById('avatarImg').style.display = 'none';
+                document.getElementById('avatarInitial').style.display = 'flex';
+                document.getElementById('avatarInitial').textContent = (userData.name || '?')[0];
+            }
+            
+            // 編集フォームにデータをセット
+            document.getElementById('editName').value = userData.name || '';
+            document.getElementById('editBio').value = userData.bio || '';
+            
+            // SNSリンクを読み込み
+            snsLinks = userData.snsLinks || [];
+            // 旧形式からの移行
+            if (snsLinks.length === 0) {
+                if (userData.twitter) snsLinks.push({ platform: 'twitter', url: userData.twitter });
+                if (userData.instagram) snsLinks.push({ platform: 'instagram', url: userData.instagram });
+            }
+            renderSnsLinks();
+        }
+        
+        async function loadOtherProfile(uid) {
+            document.getElementById('myProfileTabs').style.display = 'none';
+            document.getElementById('otherProfileContent').style.display = 'block';
+            document.getElementById('avatarContainer').classList.add('readonly');
+            document.getElementById('avatarContainer').onclick = null;
+            
+            // ヘッダーに戻るボタン
+            document.getElementById('headerSection').innerHTML = `
+                <button class="back-btn" onclick="history.back()">← 戻る</button>
+                <span class="header-title">プロフィール</span>
+            `;
+            
+            // ユーザーデータを取得
+            viewingUserData = await getUserById(uid);
+            if (!viewingUserData) {
+                toast('ユーザーが見つかりません', 'error');
+                return;
+            }
+            
+            // プロフィール表示
+            document.getElementById('profileName').textContent = viewingUserData.name || '-';
+            document.getElementById('profileBio').textContent = viewingUserData.bio || '';
+            
+            if (viewingUserData.photoURL) {
+                document.getElementById('avatarImg').src = viewingUserData.photoURL;
+                document.getElementById('avatarImg').style.display = 'block';
+                document.getElementById('avatarInitial').style.display = 'none';
+            } else {
+                document.getElementById('avatarImg').style.display = 'none';
+                document.getElementById('avatarInitial').style.display = 'flex';
+                document.getElementById('avatarInitial').textContent = (viewingUserData.name || '?')[0];
+            }
+            
+            // SNSリンク表示
+            const snsLinks = viewingUserData.snsLinks || [];
+            let snsHtml = '';
+            snsLinks.forEach(link => {
+                const platform = SNS_PLATFORMS.find(p => p.id === link.platform) || SNS_PLATFORMS.find(p => p.id === 'other');
+                if (link.url) {
+                    snsHtml += `<a href="${link.url}" target="_blank" class="sns-link">${platform.icon} ${platform.name}</a>`;
+                }
+            });
+            // 旧形式対応
+            if (viewingUserData.twitter) {
+                snsHtml += `<a href="${viewingUserData.twitter}" target="_blank" class="sns-link">🐦 X</a>`;
+            }
+            if (viewingUserData.instagram) {
+                snsHtml += `<a href="${viewingUserData.instagram}" target="_blank" class="sns-link">📷 Instagram</a>`;
+            }
+            document.getElementById('profileSns').innerHTML = snsHtml;
+            
+            // アクションボタン（自分以外にのみ表示）
+            if (user && uid !== user.uid) {
+                document.getElementById('profileActions').innerHTML = `
+                    <button class="profile-btn dm" onclick="openDM('${uid}', '${viewingUserData.name || 'ユーザー'}')">💬 DMを送る</button>
+                `;
+            } else {
+                document.getElementById('profileActions').innerHTML = '';
+            }
+            
+            // 他ユーザーのイベント一覧
+            await loadOtherEvents(uid);
+        }
+        
+        async function loadOtherEvents(uid) {
+            const container = document.getElementById('otherEventsList');
+            try {
+                const snapshot = await db.collection('events').where('organizerId', '==', uid).orderBy('date', 'desc').get();
+                const events = [];
+                snapshot.forEach(doc => events.push({ id: doc.id, ...doc.data() }));
+                
+                if (events.length === 0) {
+                    container.innerHTML = '<div class="empty-state">イベントはありません</div>';
+                    return;
+                }
+                
+                container.innerHTML = events.map(ev => `
+                    <div class="card" onclick="location.href='events.html?id=${ev.id}'">
+                        <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                        <div class="card-body">
+                            <div class="card-title">${ev.title}</div>
+                            <div class="card-meta">📅 ${formatDate(ev.date)}</div>
+                            <div class="card-meta">📍 ${ev.location || ''}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                log('Error loading other events: ' + e.message);
+                container.innerHTML = '<div class="empty-state">読み込みに失敗しました</div>';
             }
         }
         
+        // ========== SNSリンク管理 ==========
+        function addSnsLink() {
+            snsLinks.push({ platform: 'twitter', url: '' });
+            renderSnsLinks();
+        }
+        
+        function removeSnsLink(index) {
+            snsLinks.splice(index, 1);
+            renderSnsLinks();
+        }
+        
+        function updateSnsLink(index, field, value) {
+            snsLinks[index][field] = value;
+        }
+        
+        function renderSnsLinks() {
+            const container = document.getElementById('snsLinksContainer');
+            
+            if (snsLinks.length === 0) {
+                container.innerHTML = '<p style="color:var(--text3);font-size:13px;text-align:center;padding:12px;">SNSリンクがありません</p>';
+                return;
+            }
+            
+            let html = '';
+            snsLinks.forEach((link, i) => {
+                const platformOptions = SNS_PLATFORMS.map(p => 
+                    `<option value="${p.id}" ${link.platform === p.id ? 'selected' : ''}>${p.icon} ${p.name}</option>`
+                ).join('');
+                
+                html += `
+                    <div class="sns-item">
+                        <div class="sns-item-header">
+                            <span class="sns-item-title">SNS ${i + 1}</span>
+                            <button class="sns-item-remove" onclick="removeSnsLink(${i})">×</button>
+                        </div>
+                        <div class="sns-select-row">
+                            <select class="sns-select input" onchange="updateSnsLink(${i}, 'platform', this.value)">
+                                ${platformOptions}
+                            </select>
+                        </div>
+                        <input type="url" class="input" value="${link.url || ''}" 
+                               placeholder="URLを入力" 
+                               onchange="updateSnsLink(${i}, 'url', this.value)">
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+        
+        // ========== アバターアップロード ==========
         async function uploadAvatar(input) {
             if (!input.files || !input.files[0]) return;
             try {
-                const blob = await compressImage(input.files[0], 400, 0.8);
+                const blob = await compressImage(input.files[0], 400, 0.9);
                 const url = await uploadImageToStorage(blob, `avatars/${user.uid}.jpg`);
-                await updateUserData({ photoURL: url });
+                await db.collection('users').doc(user.uid).update({ photoURL: url });
+                userData.photoURL = url;
                 document.getElementById('avatarImg').src = url;
                 document.getElementById('avatarImg').style.display = 'block';
                 document.getElementById('avatarInitial').style.display = 'none';
                 toast('アイコンを更新しました');
-            } catch (e) { log('Avatar upload error: ' + e.message); toast('アップロードに失敗しました','error'); }
+            } catch (e) { 
+                log('Avatar upload error: ' + e.message); 
+                toast('アップロードに失敗しました','error'); 
+            }
         }
         
+        // ========== プロフィール保存 ==========
         async function saveProfile() {
             const data = {
                 name: document.getElementById('editName').value.trim(),
                 bio: document.getElementById('editBio').value.trim(),
-                twitter: document.getElementById('editTwitter').value.trim(),
-                instagram: document.getElementById('editInstagram').value.trim()
+                snsLinks: snsLinks.filter(link => link.url) // URLがあるもののみ保存
             };
             if (await updateUserData(data)) {
                 document.getElementById('profileName').textContent = data.name || '-';
                 toast('プロフィールを保存しました');
-            } else { toast('保存に失敗しました','error'); }
+            } else { 
+                toast('保存に失敗しました','error'); 
+            }
         }
         
         async function handleLogout() {
             if (confirm('ログアウトしますか？')) await logout();
         }
         
+        // ========== マイイベント ==========
         async function loadMyEvents() {
             const container = document.getElementById('myEventsList');
             try {
@@ -243,90 +435,58 @@
                         </div>
                     </div>
                 `).join('');
-            } catch (e) { log('Error loading events: ' + e.message); container.innerHTML = '<div class="empty-state">読み込みに失敗しました</div>'; }
+            } catch (e) { 
+                log('Error loading events: ' + e.message); 
+                container.innerHTML = '<div class="empty-state">読み込みに失敗しました</div>'; 
+            }
         }
         
-        async function loadDMs() {
-            const container = document.getElementById('dmList');
+        // ========== DMプレビュー ==========
+        async function loadDMPreview() {
+            const container = document.getElementById('dmPreviewList');
             try {
-                const snapshot = await db.collection('chats').where('participants', 'array-contains', user.uid).orderBy('lastMessageAt', 'desc').get();
-                myChats = [];
-                snapshot.forEach(doc => myChats.push({ id: doc.id, ...doc.data() }));
+                const snapshot = await db.collection('chats')
+                    .where('participants', 'array-contains', user.uid)
+                    .orderBy('lastMessageAt', 'desc')
+                    .limit(5)
+                    .get();
                 
-                if (myChats.length === 0) {
+                if (snapshot.empty) {
                     container.innerHTML = '<div class="empty-state">メッセージはありません</div>';
                     return;
                 }
                 
-                container.innerHTML = myChats.map(chat => {
+                let html = '';
+                snapshot.forEach(doc => {
+                    const chat = doc.data();
                     const partnerId = chat.participants.find(p => p !== user.uid);
                     const partnerName = chat.participantNames?.[partnerId] || 'ユーザー';
-                    return `
-                        <div class="dm-item" onclick="openChat('${chat.id}','${partnerName}')">
-                            <div class="dm-avatar"><span>${partnerName[0]}</span></div>
-                            <div class="dm-content">
-                                <div class="dm-name">${partnerName}</div>
-                                <div class="dm-preview">${chat.lastMessage || ''}</div>
+                    const partnerPhoto = chat.participantPhotos?.[partnerId] || '';
+                    const isUnread = chat.unreadBy === user.uid;
+                    
+                    html += `
+                        <div class="card" onclick="location.href='chat.html?id=${doc.id}'" style="display:flex;align-items:center;padding:12px;">
+                            ${renderAvatar(partnerPhoto, partnerName, 48, false)}
+                            <div style="flex:1;margin-left:12px;">
+                                <div style="font-weight:600;${isUnread ? 'color:var(--primary);' : ''}">${partnerName}</div>
+                                <div style="color:var(--text2);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${chat.lastMessage || ''}</div>
                             </div>
-                            <div class="dm-time">${formatDate(chat.lastMessageAt)}</div>
-                        </div>
-                    `;
-                }).join('');
-            } catch (e) { log('Error loading DMs: ' + e.message); container.innerHTML = '<div class="empty-state">読み込みに失敗しました</div>'; }
-        }
-        
-        function openChat(chatId, partnerName) {
-            currentChatId = chatId;
-            document.getElementById('chatPartnerName').textContent = partnerName;
-            document.getElementById('chatModal').classList.add('active');
-            loadMessages();
-        }
-        
-        function closeChat() {
-            document.getElementById('chatModal').classList.remove('active');
-            if (chatUnsub) { chatUnsub(); chatUnsub = null; }
-            currentChatId = null;
-        }
-        
-        function loadMessages() {
-            if (!currentChatId) return;
-            const container = document.getElementById('chatMessages');
-            
-            if (chatUnsub) chatUnsub();
-            chatUnsub = db.collection('chats').doc(currentChatId).collection('messages').orderBy('createdAt', 'asc').onSnapshot(snapshot => {
-                container.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const msg = doc.data();
-                    const isMine = msg.senderId === user.uid;
-                    container.innerHTML += `
-                        <div class="chat-message ${isMine ? 'mine' : ''}">
-                            <div class="chat-bubble">${msg.text}</div>
-                            <div class="chat-time">${formatDate(msg.createdAt)}</div>
+                            <div style="color:var(--text3);font-size:11px;">${formatDateShort(chat.lastMessageAt)}</div>
                         </div>
                     `;
                 });
-                container.scrollTop = container.scrollHeight;
-            });
-        }
-        
-        async function sendMessage() {
-            const input = document.getElementById('chatInput');
-            const text = input.value.trim();
-            if (!text || !currentChatId) return;
-            
-            input.value = '';
-            try {
-                await db.collection('chats').doc(currentChatId).collection('messages').add({
-                    text, senderId: user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                await db.collection('chats').doc(currentChatId).update({
-                    lastMessage: text, lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            } catch (e) { log('Error sending message: ' + e.message); toast('送信に失敗しました','error'); }
+                container.innerHTML = html;
+            } catch (e) { 
+                log('Error loading DMs: ' + e.message); 
+                container.innerHTML = '<div class="empty-state">読み込みに失敗しました</div>'; 
+            }
         }
         
         function onAuthReady() {
-            if (!user || isGuest) { location.href = 'index.html'; return; }
+            if (!user || isGuest) { 
+                location.href = 'index.html'; 
+                return; 
+            }
             loadProfileData();
         }
     </script>

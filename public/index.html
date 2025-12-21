@@ -37,11 +37,12 @@
         .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; margin-bottom: 24px; }
         .header-logo { height: 40px; width: 40px; object-fit: contain; cursor: pointer; border-radius: 8px; }
         .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; position: relative; }
         .nav-item.active, .nav-item:hover { color: var(--primary); }
         .nav-icon { font-size: 20px; }
         .nav-create { position: relative; top: -20px; }
         .nav-plus { width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); }
+        .nav-unread-badge { position: absolute; top: -4px; right: 50%; transform: translateX(50%); margin-right: -15px; background: #FF4757; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: none; align-items: center; justify-content: center; padding: 0 4px; }
         .btn { padding: 12px 24px; border-radius: var(--r-lg); font-weight: 600; cursor: pointer; border: none; font-size: 14px; }
         .btn-p { background: var(--gradient); color: white; }
         .btn-s { background: var(--card); color: var(--text); }
@@ -52,8 +53,11 @@
         .input:focus { outline: none; border-color: var(--primary); }
         .input-group { margin-bottom: 16px; }
         .label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text2); font-size: 14px; }
-        .card { background: var(--card); border-radius: var(--r-xl); overflow: hidden; cursor: pointer; margin-bottom: 16px; display: flex; }
-        .card-img { width: 120px; min-width: 120px; height: 160px; object-fit: cover; }
+        
+        /* カード */
+        .card { background: var(--card); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 16px; }
+        .card-main { display: flex; cursor: pointer; }
+        .card-img { width: 120px; min-width: 120px; height: 140px; object-fit: cover; }
         .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
         .card-title { font-size: 15px; font-weight: 700; margin: 4px 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .card-region { font-size: 11px; color: var(--primary); background: rgba(255,107,0,0.15); padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 4px; }
@@ -61,6 +65,28 @@
         .badge.a { background: rgba(255,107,0,0.2); color: #FF6B00; }
         .badge.b { background: rgba(0,217,255,0.2); color: #00D9FF; }
         .badge.c { background: rgba(157,78,221,0.2); color: #9D4EDD; }
+        
+        .card-organizer { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+        .card-organizer-name { font-size: 12px; color: var(--text2); }
+        
+        .card-slots { padding: 12px; border-top: 1px solid var(--border); }
+        .card-slot { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .card-slot:last-child { margin-bottom: 0; }
+        .card-slot-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 200px; }
+        .card-slot-time { font-size: 12px; color: var(--text2); }
+        .card-slot-price { font-size: 12px; font-weight: 600; color: var(--primary); }
+        .card-slot-price.free { color: #00D9FF; }
+        .card-slot-count { font-size: 11px; color: var(--text3); }
+        .card-slot-count.full { color: #FF4757; }
+        .card-slot-avatars { display: flex; gap: -8px; align-items: center; flex-wrap: wrap; }
+        .card-slot-avatars > * { margin-left: -6px; }
+        .card-slot-avatars > *:first-child { margin-left: 0; }
+        .card-slot-buy { padding: 6px 12px; background: var(--gradient); color: white; border: none; border-radius: 14px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .card-slot-buy.free { background: #00D9FF; color: #0D0D1A; }
+        .card-slot-buy.full { background: var(--border); color: var(--text3); cursor: not-allowed; }
+        
+        .avatar-empty { width: 24px; height: 24px; border-radius: 50%; background: var(--border); border: 2px solid var(--card); }
+        
         .welcome-screen { align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
         .welcome-logo { width: 120px; height: 120px; margin-bottom: 24px; }
         .welcome-title { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
@@ -81,51 +107,18 @@
         .modal-close { background: none; border: none; color: var(--text2); font-size: 24px; cursor: pointer; }
         .modal-body { padding: 20px; }
         
-        /* 地域フィルター */
         .region-filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
         .region-filter-label { font-size: 12px; color: var(--text3); }
         .region-select { flex: 1; padding: 8px 32px 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%23A0A0B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
         .region-select:focus { outline: none; border-color: var(--primary); }
         .region-select.active { background-color: rgba(255,107,0,0.2); border-color: var(--primary); color: var(--primary); }
         
-        /* 日付セパレーター */
-        .date-separator {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin: 28px 0 16px;
-        }
-        .date-separator:first-child {
-            margin-top: 0;
-        }
-        .date-separator::before,
-        .date-separator::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--border), transparent);
-        }
-        .date-separator-inner {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: var(--surface);
-            border-radius: 20px;
-            border: 1px solid var(--border);
-        }
-        .date-separator-date {
-            font-family: 'Outfit', sans-serif;
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--primary);
-            letter-spacing: 1px;
-        }
-        .date-separator-day {
-            font-size: 12px;
-            color: var(--text2);
-            font-weight: 500;
-        }
+        .date-separator { display: flex; align-items: center; gap: 16px; margin: 28px 0 16px; }
+        .date-separator:first-child { margin-top: 0; }
+        .date-separator::before, .date-separator::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+        .date-separator-inner { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--surface); border-radius: 20px; border: 1px solid var(--border); }
+        .date-separator-date { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; color: var(--primary); letter-spacing: 1px; }
+        .date-separator-day { font-size: 12px; color: var(--text2); font-weight: 500; }
     </style>
 </head>
 <body>
@@ -220,7 +213,7 @@
         <div class="nav-item" onclick="window.location.href='events.html'"><span class="nav-icon">🎵</span><span>Event</span></div>
         <div class="nav-item nav-create" onclick="handleCreateClick()"><div class="nav-plus">+</div></div>
         <div class="nav-item" onclick="window.location.href='productions.html'"><span class="nav-icon">💿</span><span>Production</span></div>
-        <div class="nav-item" onclick="handleProfileClick()"><span class="nav-icon">👤</span><span>Profile</span></div>
+        <div class="nav-item" onclick="handleProfileClick()"><span class="nav-icon">👤</span><span>Profile</span><span class="nav-unread-badge"></span></div>
     </nav>
     <div class="toast" id="toast"></div>
     
@@ -228,6 +221,7 @@
     <script>
         let allEvents = [];
         let allProductions = [];
+        let usersCache = {};
         let currentTab = 'events';
         let currentRegionFilter = 'all';
         const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
@@ -269,14 +263,6 @@
             loadHomeData();
         }
         
-        function handleCreateClick() {
-            if (requireLogin()) window.location.href = 'create.html';
-        }
-        
-        function handleProfileClick() {
-            if (requireLogin()) window.location.href = 'profile.html';
-        }
-        
         function switchTab(tab) {
             currentTab = tab;
             document.getElementById('tabEvents').classList.toggle('active', tab === 'events');
@@ -296,16 +282,29 @@
         async function loadHomeData() {
             allEvents = await loadEvents();
             allProductions = await loadProductions();
+            
+            // ユーザー情報を一括取得
+            const allUserIds = new Set();
+            allEvents.forEach(ev => {
+                if (ev.organizerId) allUserIds.add(ev.organizerId);
+                if (ev.slots) {
+                    ev.slots.forEach(slot => {
+                        if (slot.applicants) {
+                            slot.applicants.forEach(uid => allUserIds.add(uid));
+                        }
+                    });
+                }
+            });
+            usersCache = await getUsersByIds([...allUserIds]);
+            
             renderLists();
         }
         
-        // 日付キーを生成 (YYYY-MM-DD)
         function getDateKey(date) {
             const d = date.toDate ? date.toDate() : new Date(date);
             return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         }
         
-        // 日付セパレーターHTML生成
         function createDateSeparator(dateKey) {
             const d = new Date(dateKey);
             const month = d.getMonth() + 1;
@@ -321,11 +320,28 @@
             `;
         }
         
-        // 時間のみフォーマット
         function formatTimeOnly(date) {
             if (!date) return '';
             const d = date.toDate ? date.toDate() : new Date(date);
             return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+        
+        function renderSlotAvatars(applicants, capacity) {
+            let html = '';
+            const count = applicants ? applicants.length : 0;
+            
+            if (applicants) {
+                applicants.forEach(uid => {
+                    const u = usersCache[uid] || {};
+                    html += renderAvatar(u.photoURL, u.name || '?', 24, true, uid);
+                });
+            }
+            
+            for (let i = count; i < capacity; i++) {
+                html += `<div class="avatar-empty"></div>`;
+            }
+            
+            return html;
         }
         
         function renderLists() {
@@ -333,9 +349,8 @@
             const prList = document.getElementById('productionsList');
             
             const now = new Date();
-            now.setHours(0, 0, 0, 0); // 今日の0時
+            now.setHours(0, 0, 0, 0);
             
-            // 過去のイベントを除外し、地域フィルターを適用
             let futureEvents = allEvents.filter(ev => {
                 const evDate = ev.date?.toDate ? ev.date.toDate() : new Date(ev.date);
                 if (evDate < now) return false;
@@ -343,7 +358,6 @@
                 return true;
             });
             
-            // 日付昇順でソート
             futureEvents.sort((a, b) => {
                 const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
                 const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
@@ -353,7 +367,6 @@
             if (futureEvents.length === 0) {
                 evList.innerHTML = '<p style="text-align:center; color: var(--text2); padding: 40px;">今後のイベントはありません</p>';
             } else {
-                // 日付別にグループ化
                 const byDate = {};
                 futureEvents.forEach(ev => {
                     const key = getDateKey(ev.date);
@@ -368,16 +381,53 @@
                 for (const dateKey in byDate) {
                     html += createDateSeparator(dateKey);
                     byDate[dateKey].forEach(ev => {
-                        html += `<div class="card" onclick="window.location.href='events.html?id=${ev.id}'">
-                            <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
-                            <div class="card-body">
-                                <span class="card-region">📍 ${ev.region||'未設定'}</span>
-                                <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'タイムテーブル'}</span>
-                                <h3 class="card-title">${ev.title}</h3>
-                                <p style="color:var(--text2);font-size:13px;">🕐 ${formatTimeOnly(ev.date)}</p>
-                                <p style="color:var(--text2);font-size:13px;">🏠 ${ev.location||''}</p>
-                            </div>
-                        </div>`;
+                        const currency = ev.currency || 'jpy';
+                        const organizer = usersCache[ev.organizerId] || {};
+                        
+                        html += `<div class="card">
+                            <div class="card-main" onclick="window.location.href='events.html?id=${ev.id}'">
+                                <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                                <div class="card-body">
+                                    <span class="card-region">📍 ${ev.region||'未設定'}</span>
+                                    <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'タイムテーブル'}</span>
+                                    <h3 class="card-title">${ev.title}</h3>
+                                    <p style="color:var(--text2);font-size:13px;">🕐 ${formatTimeOnly(ev.date)} 🏠 ${ev.location||''}</p>
+                                    <div class="card-organizer" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${ev.organizerId}'">
+                                        ${renderAvatar(organizer.photoURL || ev.organizerPhoto, organizer.name || ev.organizerName || '?', 28, false)}
+                                        <span class="card-organizer-name">${organizer.name || ev.organizerName || '主催者'}</span>
+                                    </div>
+                                </div>
+                            </div>`;
+                        
+                        // スロット表示（Type A, B のみ）
+                        if ((ev.type === 'A' || ev.type === 'B') && ev.slots && ev.slots.length > 0) {
+                            html += `<div class="card-slots">`;
+                            ev.slots.forEach((slot, i) => {
+                                const price = slot.price || 0;
+                                const capacity = slot.capacity || 1;
+                                const applicants = slot.applicants || [];
+                                const count = applicants.length;
+                                const isFull = count >= capacity;
+                                const isFree = price === 0;
+                                
+                                html += `<div class="card-slot">
+                                    <div class="card-slot-info">
+                                        <span class="card-slot-time">🕐 ${slot.time || '未定'}</span>
+                                        <span class="card-slot-price ${isFree ? 'free' : ''}">${formatPrice(price, currency)}</span>
+                                        <span class="card-slot-count ${isFull ? 'full' : ''}">${count}/${capacity}人${isFull ? ' 満員' : ''}</span>
+                                    </div>
+                                    <div class="card-slot-avatars">${renderSlotAvatars(applicants, capacity)}</div>
+                                    <button class="card-slot-buy ${isFree ? 'free' : ''} ${isFull ? 'full' : ''}" 
+                                            onclick="event.stopPropagation(); window.location.href='events.html?id=${ev.id}'"
+                                            ${isFull ? 'disabled' : ''}>
+                                        ${isFull ? '満員' : (isFree ? '無料予約' : formatPriceShort(price, currency))}
+                                    </button>
+                                </div>`;
+                            });
+                            html += `</div>`;
+                        }
+                        
+                        html += `</div>`;
                     });
                 }
                 evList.innerHTML = html;
@@ -390,11 +440,13 @@
                 allProductions.forEach(p => {
                     const labels = {audio:'音源',goods:'商品',produce:'プロデュース'};
                     html += `<div class="card" onclick="window.location.href='productions.html?id=${p.id}'">
-                        <img src="${p.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
-                        <div class="card-body">
-                            <span class="badge a">${labels[p.type]||'商品'}</span>
-                            <h3 class="card-title">${p.title}</h3>
-                            <p style="color:var(--text2);font-size:13px;">¥${(p.price||0).toLocaleString()}</p>
+                        <div class="card-main">
+                            <img src="${p.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                            <div class="card-body">
+                                <span class="badge a">${labels[p.type]||'商品'}</span>
+                                <h3 class="card-title">${p.title}</h3>
+                                <p style="color:var(--text2);font-size:13px;">¥${(p.price||0).toLocaleString()}</p>
+                            </div>
                         </div>
                     </div>`;
                 });

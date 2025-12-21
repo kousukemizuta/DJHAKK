@@ -30,6 +30,8 @@ const storage = firebase.storage();
 let user = null;
 let userData = {};
 let isGuest = false;
+let unreadCount = 0;
+let unreadUnsub = null;
 
 // ========================================
 // Currency Configuration
@@ -48,39 +50,28 @@ const CURRENCY_CONFIG = {
 };
 
 const REGION_CURRENCY_MAP = {
-    // 日本
-    '東京': 'jpy',
-    '大阪': 'jpy',
-    '名古屋': 'jpy',
-    '福岡': 'jpy',
-    '沖縄/那覇': 'jpy',
-    // アジア
-    'ソウル': 'krw',
-    '上海': 'cny',
-    '香港': 'hkd',
-    'バンコク': 'thb',
-    'シンガポール': 'sgd',
-    // 北米
-    'ニューヨーク': 'usd',
-    'ロサンゼルス': 'usd',
-    'マイアミ': 'usd',
-    'シカゴ': 'usd',
-    'ラスベガス': 'usd',
-    // ヨーロッパ
-    'ベルリン': 'eur',
-    'ロンドン': 'gbp',
-    'アムステルダム': 'eur',
-    'イビサ': 'eur',
-    'パリ': 'eur',
-    'バルセロナ': 'eur'
+    '東京': 'jpy', '大阪': 'jpy', '名古屋': 'jpy', '福岡': 'jpy', '沖縄/那覇': 'jpy',
+    'ソウル': 'krw', '上海': 'cny', '香港': 'hkd', 'バンコク': 'thb', 'シンガポール': 'sgd',
+    'ニューヨーク': 'usd', 'ロサンゼルス': 'usd', 'マイアミ': 'usd', 'シカゴ': 'usd', 'ラスベガス': 'usd',
+    'ベルリン': 'eur', 'ロンドン': 'gbp', 'アムステルダム': 'eur', 'イビサ': 'eur', 'パリ': 'eur', 'バルセロナ': 'eur'
 };
 
-// 地域から通貨を取得
+// SNSプラットフォーム設定
+const SNS_PLATFORMS = [
+    { id: 'twitter', name: 'X (Twitter)', icon: '🐦', prefix: 'https://x.com/' },
+    { id: 'instagram', name: 'Instagram', icon: '📷', prefix: 'https://instagram.com/' },
+    { id: 'soundcloud', name: 'SoundCloud', icon: '🎵', prefix: 'https://soundcloud.com/' },
+    { id: 'tiktok', name: 'TikTok', icon: '🎬', prefix: 'https://tiktok.com/@' },
+    { id: 'youtube', name: 'YouTube', icon: '📺', prefix: 'https://youtube.com/' },
+    { id: 'facebook', name: 'Facebook', icon: '👤', prefix: 'https://facebook.com/' },
+    { id: 'threads', name: 'Threads', icon: '🧵', prefix: 'https://threads.net/@' },
+    { id: 'other', name: 'その他', icon: '🔗', prefix: '' }
+];
+
 function getCurrencyFromRegion(region) {
-    return REGION_CURRENCY_MAP[region] || 'usd'; // デフォルトはUSD
+    return REGION_CURRENCY_MAP[region] || 'usd';
 }
 
-// 金額をフォーマット
 function formatPrice(amount, currency) {
     const config = CURRENCY_CONFIG[currency] || CURRENCY_CONFIG.usd;
     if (amount === 0) return '無料';
@@ -90,15 +81,21 @@ function formatPrice(amount, currency) {
     return `${config.symbol}${amount.toLocaleString()}`;
 }
 
-// 入力値を数値に変換（通貨に応じて）
+function formatPriceShort(amount, currency) {
+    const config = CURRENCY_CONFIG[currency] || CURRENCY_CONFIG.usd;
+    if (amount === 0) return '無料';
+    if (config.decimal) {
+        return `${config.symbol}${amount.toFixed(0)}`;
+    }
+    return `${config.symbol}${amount.toLocaleString()}`;
+}
+
 function parsePrice(value, currency) {
     const num = parseFloat(value) || 0;
     const config = CURRENCY_CONFIG[currency] || CURRENCY_CONFIG.usd;
-    // 小数点対応通貨はそのまま、整数通貨は整数に
     return config.decimal ? num : Math.floor(num);
 }
 
-// 通貨記号を取得
 function getCurrencySymbol(currency) {
     return (CURRENCY_CONFIG[currency] || CURRENCY_CONFIG.usd).symbol;
 }
@@ -130,9 +127,6 @@ function closeModal(id) {
     if (modal) modal.classList.remove('active');
 }
 
-// ========================================
-// Logo Setup
-// ========================================
 function setupLogo() {
     document.querySelectorAll('.header-logo').forEach(el => el.src = 'logo.png');
     const welcomeLogo = $('welcomeLogo');
@@ -200,6 +194,7 @@ async function loginWithGoogle() {
 }
 
 async function logout() {
+    if (unreadUnsub) unreadUnsub();
     await auth.signOut();
     user = null;
     userData = {};
@@ -237,7 +232,7 @@ function showLoginModal() {
     if (!modal) {
         const modalHtml = `
             <div class="modal" id="loginModal">
-                <div class="modal-content">
+                <div class="modal-content" style="max-width:400px;margin:auto;margin-top:100px;">
                     <div class="modal-header">
                         <h3>ログインが必要です</h3>
                         <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
@@ -283,6 +278,134 @@ async function updateUserData(data) {
     }
 }
 
+// 他ユーザーの情報を取得
+async function getUserById(uid) {
+    try {
+        const doc = await db.collection('users').doc(uid).get();
+        if (doc.exists) {
+            return { id: doc.id, ...doc.data() };
+        }
+        return null;
+    } catch (e) {
+        log('Error getting user: ' + e.message);
+        return null;
+    }
+}
+
+// 複数ユーザーの情報を一括取得
+async function getUsersByIds(uids) {
+    if (!uids || uids.length === 0) return {};
+    try {
+        const users = {};
+        // Firestoreの制限により10件ずつ取得
+        for (let i = 0; i < uids.length; i += 10) {
+            const batch = uids.slice(i, i + 10);
+            const snapshot = await db.collection('users').where(firebase.firestore.FieldPath.documentId(), 'in', batch).get();
+            snapshot.forEach(doc => {
+                users[doc.id] = { id: doc.id, ...doc.data() };
+            });
+        }
+        return users;
+    } catch (e) {
+        log('Error getting users: ' + e.message);
+        return {};
+    }
+}
+
+// ========================================
+// DM Functions
+// ========================================
+// DMを開始または既存のチャットを取得
+async function startOrGetChat(targetUserId, targetUserName) {
+    if (!user) return null;
+    
+    try {
+        // 既存のチャットを検索
+        const snapshot = await db.collection('chats')
+            .where('participants', 'array-contains', user.uid)
+            .get();
+        
+        let existingChatId = null;
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.participants.includes(targetUserId)) {
+                existingChatId = doc.id;
+            }
+        });
+        
+        if (existingChatId) {
+            return existingChatId;
+        }
+        
+        // 新規チャットを作成
+        const chatRef = await db.collection('chats').add({
+            participants: [user.uid, targetUserId],
+            participantNames: {
+                [user.uid]: userData.name || 'User',
+                [targetUserId]: targetUserName
+            },
+            participantPhotos: {
+                [user.uid]: userData.photoURL || '',
+                [targetUserId]: ''
+            },
+            lastMessage: '',
+            lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            unreadBy: null
+        });
+        
+        return chatRef.id;
+    } catch (e) {
+        log('Error starting chat: ' + e.message);
+        return null;
+    }
+}
+
+// チャットページへ遷移
+async function openDM(targetUserId, targetUserName) {
+    if (!requireLogin()) return;
+    
+    const chatId = await startOrGetChat(targetUserId, targetUserName);
+    if (chatId) {
+        window.location.href = `chat.html?id=${chatId}`;
+    } else {
+        toast('チャットを開始できませんでした', 'error');
+    }
+}
+
+// ========================================
+// Unread Badge Functions
+// ========================================
+function startUnreadListener() {
+    if (!user || unreadUnsub) return;
+    
+    unreadUnsub = db.collection('chats')
+        .where('participants', 'array-contains', user.uid)
+        .onSnapshot(snapshot => {
+            let count = 0;
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.unreadBy === user.uid) {
+                    count++;
+                }
+            });
+            unreadCount = count;
+            updateUnreadBadge();
+        });
+}
+
+function updateUnreadBadge() {
+    const badges = document.querySelectorAll('.nav-unread-badge');
+    badges.forEach(badge => {
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    });
+}
+
 // ========================================
 // Image Functions
 // ========================================
@@ -326,50 +449,17 @@ function formatDateFull(date) {
     return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-// ========================================
-// Footer Generation
-// ========================================
-function generateFooter(activePage) {
-    // Remove existing footer
-    const existingNav = document.querySelector('.nav');
-    if (existingNav) existingNav.remove();
+function formatDateShort(date) {
+    if (!date) return '';
+    const d = date.toDate ? date.toDate() : new Date(date);
+    const now = new Date();
+    const diff = now - d;
     
-    const footer = document.createElement('nav');
-    footer.className = 'nav';
-    footer.innerHTML = `
-        <div class="nav-item ${activePage === 'home' ? 'active' : ''}" onclick="window.location.href='index.html'">
-            <span class="nav-icon">🏠</span>
-            <span>Home</span>
-        </div>
-        <div class="nav-item ${activePage === 'events' ? 'active' : ''}" onclick="window.location.href='events.html'">
-            <span class="nav-icon">🎵</span>
-            <span>Event</span>
-        </div>
-        <div class="nav-item nav-create" onclick="handleCreateClick()">
-            <div class="nav-plus">+</div>
-        </div>
-        <div class="nav-item ${activePage === 'productions' ? 'active' : ''}" onclick="window.location.href='productions.html'">
-            <span class="nav-icon">💿</span>
-            <span>Production</span>
-        </div>
-        <div class="nav-item ${activePage === 'profile' ? 'active' : ''}" onclick="handleProfileClick()">
-            <span class="nav-icon">👤</span>
-            <span>Profile</span>
-        </div>
-    `;
-    document.body.appendChild(footer);
-}
-
-function handleCreateClick() {
-    if (requireLogin()) {
-        window.location.href = 'create.html';
-    }
-}
-
-function handleProfileClick() {
-    if (requireLogin()) {
-        window.location.href = 'profile.html';
-    }
+    if (diff < 60000) return '今';
+    if (diff < 3600000) return Math.floor(diff / 60000) + '分前';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + '時間前';
+    if (diff < 604800000) return Math.floor(diff / 86400000) + '日前';
+    return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
 // ========================================
@@ -405,39 +495,78 @@ async function loadProductions(filter = 'all') {
     }
 }
 
-// ========================================
-// Render Helpers
-// ========================================
-function renderEventCard(event) {
-    const typeLabels = { A: 'タイムテーブル', B: 'ギャランティー', C: 'フライヤー' };
-    const typeClass = { A: 'a', B: 'b', C: 'c' };
-    
-    return `
-        <div class="card" onclick="showEventDetail('${event.id}')">
-            <img src="${event.imageUrl || 'logo.png'}" class="card-img" alt="${event.title}">
-            <div class="card-body">
-                <span class="badge ${typeClass[event.type] || 'a'}">${typeLabels[event.type] || 'タイムテーブル'}</span>
-                <h3 class="card-title">${event.title}</h3>
-                <p style="color: var(--text2); font-size: 13px;">📅 ${formatDate(event.date)}</p>
-                <p style="color: var(--text2); font-size: 13px;">📍 ${event.location || ''}</p>
-            </div>
-        </div>
-    `;
+// イベントに応募
+async function applyToSlot(eventId, slotIndex) {
+    if (!user) return false;
+    try {
+        const eventRef = db.collection('events').doc(eventId);
+        const eventDoc = await eventRef.get();
+        if (!eventDoc.exists) return false;
+        
+        const event = eventDoc.data();
+        const slot = event.slots[slotIndex];
+        
+        // 既に応募済みかチェック
+        if (slot.applicants && slot.applicants.includes(user.uid)) {
+            toast('既に応募済みです', 'error');
+            return false;
+        }
+        
+        // 定員チェック
+        const currentCount = slot.applicants ? slot.applicants.length : 0;
+        if (currentCount >= (slot.capacity || 1)) {
+            toast('このスロットは満員です', 'error');
+            return false;
+        }
+        
+        // 応募を追加
+        const updatedSlots = [...event.slots];
+        if (!updatedSlots[slotIndex].applicants) {
+            updatedSlots[slotIndex].applicants = [];
+        }
+        updatedSlots[slotIndex].applicants.push(user.uid);
+        
+        await eventRef.update({ slots: updatedSlots });
+        return true;
+    } catch (e) {
+        log('Error applying to slot: ' + e.message);
+        return false;
+    }
 }
 
-function renderProductionCard(prod) {
-    const typeLabels = { audio: '音源', goods: '商品', produce: 'プロデュース' };
+// ========================================
+// Avatar Helper
+// ========================================
+function renderAvatar(photoURL, name, size = 32, clickable = false, uid = null) {
+    const initial = (name || '?')[0].toUpperCase();
+    const clickAttr = clickable && uid ? `onclick="event.stopPropagation(); window.location.href='profile.html?uid=${uid}'"` : '';
+    const cursorStyle = clickable ? 'cursor:pointer;' : '';
     
-    return `
-        <div class="card" onclick="showProductionDetail('${prod.id}')">
-            <img src="${prod.imageUrl || 'logo.png'}" class="card-img" alt="${prod.title}">
-            <div class="card-body">
-                <span class="badge a">${typeLabels[prod.type] || '商品'}</span>
-                <h3 class="card-title">${prod.title}</h3>
-                <p style="color: var(--text2); font-size: 13px;">¥${(prod.price || 0).toLocaleString()}</p>
-            </div>
-        </div>
-    `;
+    if (photoURL) {
+        return `<div class="avatar" style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;${cursorStyle}" ${clickAttr}>
+            <img src="${photoURL}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<span style=\\'display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:var(--gradient);color:white;font-weight:600;\\'>${initial}</span>'">
+        </div>`;
+    }
+    return `<div class="avatar" style="width:${size}px;height:${size}px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:${size/2.5}px;${cursorStyle}" ${clickAttr}>${initial}</div>`;
+}
+
+function renderEmptyAvatar(size = 32) {
+    return `<div class="avatar-empty" style="width:${size}px;height:${size}px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;"></div>`;
+}
+
+// ========================================
+// Navigation with Unread Badge
+// ========================================
+function handleCreateClick() {
+    if (requireLogin()) {
+        window.location.href = 'create.html';
+    }
+}
+
+function handleProfileClick() {
+    if (requireLogin()) {
+        window.location.href = 'profile.html';
+    }
 }
 
 // ========================================
@@ -447,12 +576,12 @@ auth.onAuthStateChanged(async (u) => {
     user = u;
     if (u && !isGuest) {
         await loadUserData();
+        startUnreadListener();
         log('User logged in: ' + u.email);
     } else {
         log('User logged out or guest mode');
     }
     
-    // Call page-specific init if defined
     if (typeof onAuthReady === 'function') {
         onAuthReady();
     }
