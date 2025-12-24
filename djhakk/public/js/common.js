@@ -644,11 +644,16 @@ function renderEmptyAvatar(size = 32) {
 function renderSnsIcons(snsLinks, size = 28) {
     if (!snsLinks || snsLinks.length === 0) return '';
     
+    const fallbackSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>';
+    const iconSize = Math.round(size * 0.6);
+    
     let html = '<div class="sns-icons" style="display:flex;gap:6px;flex-wrap:wrap;">';
     snsLinks.forEach(link => {
         if (link.url) {
             const platform = SNS_PLATFORMS.find(p => p.id === link.platform) || SNS_PLATFORMS.find(p => p.id === 'other');
-            html += `<a href="${link.url}" target="_blank" onclick="event.stopPropagation();" style="display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;background:var(--surface);border-radius:50%;text-decoration:none;color:var(--text2);" title="${platform.name}"><span style="width:${size*0.6}px;height:${size*0.6}px;display:flex;align-items:center;justify-content:center;">${platform.svg}</span></a>`;
+            const svgIcon = platform && platform.svg ? platform.svg : fallbackSvg;
+            const platformName = platform && platform.name ? platform.name : 'Link';
+            html += `<a href="${link.url}" target="_blank" onclick="event.stopPropagation();" style="display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;background:var(--surface);border-radius:50%;text-decoration:none;" title="${platformName}"><span style="width:${iconSize}px;height:${iconSize}px;display:flex;align-items:center;justify-content:center;color:#A0A0B8;">${svgIcon}</span></a>`;
         }
     });
     html += '</div>';
