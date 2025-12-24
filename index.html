@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DJHAKK</title>
+    <meta name="description" content="アーティストとイベントをつなぐマッチングプラットフォーム">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+    <style>
+        :root {
+            --primary: #FF6B00;
+            --primary-light: #FF8533;
+            --bg: #0D0D1A;
+            --surface: #1A1A2E;
+            --card: #252538;
+            --text: #FFFFFF;
+            --text2: #A0A0B8;
+            --text3: #6B6B80;
+            --border: #3A3A50;
+            --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+            --r-md: 12px;
+            --r-lg: 16px;
+            --r-xl: 24px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans JP', 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .container { max-width: 600px; margin: 0 auto; min-height: 100vh; }
+        .screen { display: none; flex-direction: column; flex: 1; padding: 16px; padding-bottom: 80px; }
+        .screen.active { display: flex; }
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; margin-bottom: 24px; }
+        .header-logo { height: 40px; width: 40px; object-fit: contain; cursor: pointer; border-radius: 8px; }
+        .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; position: relative; }
+        .nav-item.active, .nav-item:hover { color: var(--primary); }
+        .nav-icon { font-size: 20px; }
+        .nav-create { position: relative; top: -20px; }
+        .nav-plus { width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); }
+        .nav-unread-badge { position: absolute; top: -4px; right: 50%; transform: translateX(50%); margin-right: -15px; background: #FF4757; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: none; align-items: center; justify-content: center; padding: 0 4px; }
+        .btn { padding: 12px 24px; border-radius: var(--r-lg); font-weight: 600; cursor: pointer; border: none; font-size: 14px; }
+        .btn-p { background: var(--gradient); color: white; }
+        .btn-s { background: var(--card); color: var(--text); }
+        .btn-lg { width: 100%; padding: 16px; font-size: 16px; }
+        .btn-google { background: white; color: #333; display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .btn-guest { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+        .input { width: 100%; padding: 14px 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text); font-size: 16px; }
+        .input:focus { outline: none; border-color: var(--primary); }
+        .input-group { margin-bottom: 16px; }
+        .label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text2); font-size: 14px; }
+        
+        /* カード共通 */
+        .card { background: var(--card); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 16px; }
+        .card-main { display: flex; cursor: pointer; }
+        .card-img { width: 120px; min-width: 120px; height: 140px; object-fit: cover; }
+        .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
+        .card-title { font-size: 15px; font-weight: 700; margin: 4px 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .card-region { font-size: 11px; color: var(--primary); background: rgba(255,107,0,0.15); padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 4px; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .badge.a { background: rgba(255,107,0,0.2); color: #FF6B00; }
+        .badge.b { background: rgba(0,217,255,0.2); color: #00D9FF; }
+        .badge.c { background: rgba(157,78,221,0.2); color: #9D4EDD; }
+        
+        /* アーティストカード */
+        .artist-card { background: var(--card); border-radius: var(--r-xl); padding: 16px; margin-bottom: 16px; cursor: pointer; }
+        .artist-card-header { display: flex; gap: 12px; margin-bottom: 12px; }
+        .artist-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 600; overflow: hidden; flex-shrink: 0; }
+        .artist-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .artist-info { flex: 1; min-width: 0; }
+        .artist-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .artist-region { font-size: 12px; color: var(--primary); }
+        .artist-bio { font-size: 13px; color: var(--text2); margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
+        .artist-footer { display: flex; justify-content: space-between; align-items: center; }
+        .artist-dm-btn { padding: 8px 16px; background: var(--gradient); color: white; border: none; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        
+        .card-organizer { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+        .card-organizer-name { font-size: 12px; color: var(--text2); }
+        
+        .card-slots { padding: 12px; border-top: 1px solid var(--border); }
+        .card-slot { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .card-slot:last-child { margin-bottom: 0; }
+        .card-slot-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 200px; }
+        .card-slot-time { font-size: 12px; color: var(--text2); }
+        .card-slot-price { font-size: 12px; font-weight: 600; color: var(--primary); }
+        .card-slot-price.free { color: #00D9FF; }
+        .card-slot-count { font-size: 11px; color: var(--text3); }
+        .card-slot-count.full { color: #FF4757; }
+        .card-slot-avatars { display: flex; gap: -8px; align-items: center; flex-wrap: wrap; }
+        .card-slot-avatars > * { margin-left: -6px; }
+        .card-slot-avatars > *:first-child { margin-left: 0; }
+        .card-slot-buy { padding: 6px 12px; background: var(--gradient); color: white; border: none; border-radius: 14px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .card-slot-buy.free { background: #00D9FF; color: #0D0D1A; }
+        .card-slot-buy.full { background: var(--border); color: var(--text3); cursor: not-allowed; }
+        
+        .avatar-empty { width: 24px; height: 24px; border-radius: 50%; background: var(--border); border: 2px solid var(--card); }
+        
+        .welcome-screen { align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
+        .welcome-logo { width: 120px; height: 120px; margin-bottom: 24px; }
+        .welcome-title { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .welcome-subtitle { color: var(--text2); margin-bottom: 40px; }
+        .welcome-buttons { width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 12px; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+        .tab { flex: 1; padding: 12px; background: var(--card); border: 2px solid transparent; color: var(--text2); border-radius: var(--r-md); cursor: pointer; font-weight: 600; text-align: center; font-size: 13px; }
+        .tab.active { background: var(--gradient); color: white; }
+        .section-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--text2); }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 300; }
+        .toast.show { opacity: 1; }
+        .toast.error { background: #FF4757; }
+        .link { color: var(--primary); cursor: pointer; text-decoration: underline; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--surface); border-radius: var(--r-xl); width: 100%; max-width: 400px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        .modal-close { background: none; border: none; color: var(--text2); font-size: 24px; cursor: pointer; }
+        .modal-body { padding: 20px; }
+        
+        .region-filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+        .region-filter-label { font-size: 12px; color: var(--text3); }
+        .region-select { flex: 1; padding: 8px 32px 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%23A0A0B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+        .region-select:focus { outline: none; border-color: var(--primary); }
+        .region-select.active { background-color: rgba(255,107,0,0.2); border-color: var(--primary); color: var(--primary); }
+        
+        .date-separator { display: flex; align-items: center; gap: 12px; margin: 20px 0 16px; }
+        .date-separator-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+        .date-separator-text { font-size: 13px; font-weight: 600; color: var(--text2); background: var(--surface); padding: 4px 12px; border-radius: 12px; }
+        
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ウェルカム画面 -->
+        <div class="screen welcome-screen active" id="welcomeScreen">
+            <img src="logo.png" class="welcome-logo" id="welcomeLogo">
+            <h1 class="welcome-title">DJHAKK</h1>
+            <p class="welcome-subtitle">アーティストとイベントをつなぐ</p>
+            <div class="welcome-buttons">
+                <button class="btn btn-google btn-lg" onclick="loginWithGoogle()">
+                    <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Googleでログイン
+                </button>
+                <button class="btn btn-s btn-lg" onclick="showScreen('loginScreen')">メールでログイン</button>
+                <button class="btn btn-guest btn-lg" onclick="guestLogin()">ゲストとして閲覧</button>
+            </div>
+        </div>
+        
+        <!-- ログイン画面 -->
+        <div class="screen" id="loginScreen">
+            <div class="header"><img src="logo.png" class="header-logo" onclick="showScreen('welcomeScreen')"><h1 style="flex:1;font-size:20px;">ログイン</h1></div>
+            <div class="input-group"><label class="label">メールアドレス</label><input type="email" id="loginEmail" class="input" placeholder="example@email.com"></div>
+            <div class="input-group"><label class="label">パスワード</label><input type="password" id="loginPassword" class="input" placeholder="••••••••"></div>
+            <button class="btn btn-p btn-lg" onclick="handleLogin()">ログイン</button>
+            <p style="text-align:center;margin-top:20px;color:var(--text2)">アカウントがない方は<span class="link" onclick="showScreen('signupScreen')">新規登録</span></p>
+        </div>
+        
+        <!-- 新規登録画面 -->
+        <div class="screen" id="signupScreen">
+            <div class="header"><img src="logo.png" class="header-logo" onclick="showScreen('welcomeScreen')"><h1 style="flex:1;font-size:20px;">新規登録</h1></div>
+            <div class="input-group"><label class="label">名前</label><input type="text" id="signupName" class="input" placeholder="DJ Name"></div>
+            <div class="input-group"><label class="label">メールアドレス</label><input type="email" id="signupEmail" class="input" placeholder="example@email.com"></div>
+            <div class="input-group"><label class="label">パスワード</label><input type="password" id="signupPassword" class="input" placeholder="6文字以上"></div>
+            <button class="btn btn-p btn-lg" onclick="handleSignup()">登録</button>
+            <p style="text-align:center;margin-top:20px;color:var(--text2)">アカウントをお持ちの方は<span class="link" onclick="showScreen('loginScreen')">ログイン</span></p>
+        </div>
+        
+        <!-- メイン画面 -->
+        <div class="screen" id="mainScreen">
+            <div class="header">
+                <img src="logo.png" class="header-logo" onclick="location.reload()">
+                <h1 style="font-size:24px;font-weight:700;">DJHAKK</h1>
+            </div>
+            
+            <!-- タブ（アーティスト/イベント/プロダクション） -->
+            <div class="tabs">
+                <div class="tab active" onclick="switchMainTab('artist')">アーティスト</div>
+                <div class="tab" onclick="switchMainTab('event')">イベント</div>
+                <div class="tab" onclick="switchMainTab('production')">プロダクション</div>
+            </div>
+            
+            <!-- 地域フィルター -->
+            <div class="region-filter-row">
+                <span class="region-filter-label">地域</span>
+                <select class="region-select" id="regionFilter" onchange="handleRegionFilter()"></select>
+            </div>
+            
+            <!-- アーティスト一覧 -->
+            <div id="artistList"></div>
+            
+            <!-- イベント一覧 -->
+            <div id="eventList" style="display:none;"></div>
+            
+            <!-- プロダクション一覧 -->
+            <div id="productionList" style="display:none;"></div>
+        </div>
+    </div>
+    
+    <nav class="nav">
+        <div class="nav-item active" onclick="location.href='index.html'"><span class="nav-icon">🏠</span><span>Home</span></div>
+        <div class="nav-item" onclick="location.href='events.html'"><span class="nav-icon">🎵</span><span>Event</span></div>
+        <div class="nav-item nav-create" onclick="handleCreateClick()"><div class="nav-plus">+</div></div>
+        <div class="nav-item" onclick="location.href='productions.html'"><span class="nav-icon">💿</span><span>Production</span></div>
+        <div class="nav-item" onclick="handleProfileClick()"><span class="nav-icon">👤</span><span>Profile</span><span class="nav-unread-badge"></span></div>
+    </nav>
+    <div class="toast" id="toast"></div>
+    
+    <script src="js/common.js"></script>
+    <script>
+        let allArtists = [];
+        let allEvents = [];
+        let allProductions = [];
+        let usersCache = {};
+        let currentMainTab = 'artist';
+        let currentRegion = 'all';
+        
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            if (!email || !password) { toast('入力してください', 'error'); return; }
+            if (await login(email, password)) {
+                showScreen('mainScreen');
+                loadHomeData();
+            }
+        }
+        
+        async function handleSignup() {
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            if (!name || !email || !password) { toast('入力してください', 'error'); return; }
+            if (password.length < 6) { toast('パスワードは6文字以上', 'error'); return; }
+            if (await signup(email, password, name)) {
+                showScreen('mainScreen');
+                loadHomeData();
+            }
+        }
+        
+        function guestLogin() {
+            continueAsGuest();
+            showScreen('mainScreen');
+            loadHomeData();
+        }
+        
+        function switchMainTab(tab) {
+            currentMainTab = tab;
+            document.querySelectorAll('.tabs .tab').forEach((t, i) => {
+                t.classList.toggle('active', (i === 0 && tab === 'artist') || (i === 1 && tab === 'event') || (i === 2 && tab === 'production'));
+            });
+            document.getElementById('artistList').style.display = tab === 'artist' ? 'block' : 'none';
+            document.getElementById('eventList').style.display = tab === 'event' ? 'block' : 'none';
+            document.getElementById('productionList').style.display = tab === 'production' ? 'block' : 'none';
+            renderCurrentTab();
+        }
+        
+        function handleRegionFilter() {
+            const select = document.getElementById('regionFilter');
+            currentRegion = select.value;
+            select.classList.toggle('active', currentRegion !== 'all');
+            renderCurrentTab();
+        }
+        
+        function renderCurrentTab() {
+            if (currentMainTab === 'artist') renderArtists();
+            else if (currentMainTab === 'event') renderEvents();
+            else renderProductions();
+        }
+        
+        async function loadHomeData() {
+            // 地域フィルターを初期化
+            document.getElementById('regionFilter').innerHTML = generateRegionOptions(true);
+            
+            // データを並行読み込み
+            const [artists, events, productions] = await Promise.all([
+                loadAllUsers(),
+                loadEvents(),
+                loadProductions()
+            ]);
+            
+            allArtists = artists;
+            allEvents = events;
+            allProductions = productions;
+            
+            // イベント用にユーザー情報を取得
+            const organizerIds = [...new Set(events.map(e => e.organizerId).filter(id => id))];
+            usersCache = await getUsersByIds(organizerIds);
+            
+            renderCurrentTab();
+        }
+        
+        function renderArtists() {
+            const container = document.getElementById('artistList');
+            
+            let filtered = allArtists.filter(a => {
+                if (currentRegion !== 'all' && a.region !== currentRegion) return false;
+                return true;
+            });
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state">アーティストがいません</div>';
+                return;
+            }
+            
+            let html = '';
+            filtered.forEach(artist => {
+                const initial = (artist.name || '?')[0].toUpperCase();
+                const bio = artist.bio || '';
+                const bioPreview = bio.length > 60 ? bio.substring(0, 60) + '...' : bio;
+                const isMe = user && artist.id === user.uid;
+                
+                html += `
+                    <div class="artist-card" onclick="window.location.href='profile.html?uid=${artist.id}'">
+                        <div class="artist-card-header">
+                            <div class="artist-avatar">
+                                ${artist.photoURL ? `<img src="${artist.photoURL}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
+                            </div>
+                            <div class="artist-info">
+                                <div class="artist-name">${artist.name}${isMe ? ' <span style="font-size:11px;color:var(--text3);">(あなた)</span>' : ''}</div>
+                                ${artist.region ? `<div class="artist-region">📍 ${artist.region}</div>` : ''}
+                            </div>
+                        </div>
+                        ${bioPreview ? `<div class="artist-bio">${bioPreview}</div>` : ''}
+                        <div class="artist-footer">
+                            ${renderSnsIcons(artist.snsLinks, 28)}
+                            ${!isMe ? `<button class="artist-dm-btn" onclick="event.stopPropagation(); openDM('${artist.id}', '${artist.name}')">💬 DM</button>` : '<div></div>'}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+        
+        // スロットのアバター表示
+        function renderSlotAvatars(applicants, capacity) {
+            let html = '';
+            const count = applicants.length;
+            for (let i = 0; i < capacity; i++) {
+                if (i < count) {
+                    const uid = applicants[i];
+                    const u = usersCache[uid];
+                    if (u && u.photoURL) {
+                        html += `<div style="width:24px;height:24px;border-radius:50%;overflow:hidden;border:2px solid var(--card);margin-left:${i > 0 ? '-6px' : '0'};">
+                            <img src="${u.photoURL}" style="width:100%;height:100%;object-fit:cover;">
+                        </div>`;
+                    } else {
+                        const initial = u ? (u.name || '?')[0].toUpperCase() : '?';
+                        html += `<div style="width:24px;height:24px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:white;font-size:10px;font-weight:600;border:2px solid var(--card);margin-left:${i > 0 ? '-6px' : '0'};">${initial}</div>`;
+                    }
+                } else {
+                    html += `<div class="avatar-empty" style="margin-left:${i > 0 ? '-6px' : '0'};"></div>`;
+                }
+            }
+            return html;
+        }
+        
+        function formatTimeOnly(date) {
+            if (!date) return '';
+            const d = date.toDate ? date.toDate() : new Date(date);
+            return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+        
+        function getDateKey(date) {
+            if (!date) return '';
+            const d = date.toDate ? date.toDate() : new Date(date);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+        
+        function createDateSeparator(dateKey) {
+            const d = new Date(dateKey);
+            const days = ['日', '月', '火', '水', '木', '金', '土'];
+            const dateStr = `${d.getMonth() + 1}.${d.getDate()} ${days[d.getDay()]}`;
+            return `<div class="date-separator">
+                <div class="date-separator-line"></div>
+                <span class="date-separator-text">${dateStr}</span>
+                <div class="date-separator-line"></div>
+            </div>`;
+        }
+        
+        function renderEvents() {
+            const container = document.getElementById('eventList');
+            const now = new Date();
+            
+            let futureEvents = allEvents.filter(ev => {
+                const evDate = ev.date?.toDate ? ev.date.toDate() : new Date(ev.date);
+                if (evDate < now) return false;
+                if (currentRegion !== 'all' && ev.region !== currentRegion) return false;
+                return true;
+            });
+            
+            futureEvents.sort((a, b) => {
+                const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
+                const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
+                return dateA - dateB;
+            });
+            
+            if (futureEvents.length === 0) {
+                container.innerHTML = '<div class="empty-state">今後のイベントはありません</div>';
+                return;
+            }
+            
+            const byDate = {};
+            futureEvents.forEach(ev => {
+                const key = getDateKey(ev.date);
+                if (!byDate[key]) byDate[key] = [];
+                byDate[key].push(ev);
+            });
+            
+            let html = '';
+            const labels = {A:'タイムテーブル', B:'ギャランティー', C:'フライヤー'};
+            const cls = {A:'a', B:'b', C:'c'};
+            
+            for (const dateKey in byDate) {
+                html += createDateSeparator(dateKey);
+                byDate[dateKey].forEach(ev => {
+                    const currency = ev.currency || 'jpy';
+                    const organizer = usersCache[ev.organizerId] || {};
+                    
+                    html += `<div class="card">
+                        <div class="card-main" onclick="window.location.href='events.html?id=${ev.id}'">
+                            <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                            <div class="card-body">
+                                <span class="card-region">📍 ${ev.region||'未設定'}</span>
+                                <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'タイムテーブル'}</span>
+                                <h3 class="card-title">${ev.title}</h3>
+                                <p style="color:var(--text2);font-size:13px;">🕐 ${formatTimeOnly(ev.date)} 🏠 ${ev.location||''}</p>
+                                <div class="card-organizer" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${ev.organizerId}'">
+                                    ${renderAvatar(organizer.photoURL || ev.organizerPhoto, organizer.name || ev.organizerName || '?', 28, false)}
+                                    <span class="card-organizer-name">${organizer.name || ev.organizerName || '主催者'}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                    
+                    // スロット表示（Type A, B のみ）
+                    if ((ev.type === 'A' || ev.type === 'B') && ev.slots && ev.slots.length > 0) {
+                        html += `<div class="card-slots">`;
+                        ev.slots.forEach((slot, i) => {
+                            const price = slot.price || 0;
+                            const capacity = slot.capacity || 1;
+                            const applicants = slot.applicants || [];
+                            const count = applicants.length;
+                            const isFull = count >= capacity;
+                            const isFree = price === 0;
+                            
+                            html += `<div class="card-slot">
+                                <div class="card-slot-info">
+                                    <span class="card-slot-time">🕐 ${slot.time || '未定'}</span>
+                                    <span class="card-slot-price ${isFree ? 'free' : ''}">${formatPrice(price, currency)}</span>
+                                    <span class="card-slot-count ${isFull ? 'full' : ''}">${count}/${capacity}人${isFull ? ' 満員' : ''}</span>
+                                </div>
+                                <div class="card-slot-avatars">${renderSlotAvatars(applicants, capacity)}</div>
+                                <button class="card-slot-buy ${isFree ? 'free' : ''} ${isFull ? 'full' : ''}" 
+                                        onclick="event.stopPropagation(); window.location.href='events.html?id=${ev.id}'"
+                                        ${isFull ? 'disabled' : ''}>
+                                    ${isFull ? '満員' : (isFree ? '無料予約' : formatPriceShort(price, currency))}
+                                </button>
+                            </div>`;
+                        });
+                        html += `</div>`;
+                    }
+                    
+                    html += `</div>`;
+                });
+            }
+            container.innerHTML = html;
+        }
+        
+        function renderProductions() {
+            const container = document.getElementById('productionList');
+            
+            if (allProductions.length === 0) {
+                container.innerHTML = '<div class="empty-state">プロダクションがありません</div>';
+                return;
+            }
+            
+            let html = '';
+            const labels = {audio:'音源',goods:'商品',produce:'プロデュース'};
+            allProductions.forEach(p => {
+                html += `<div class="card" onclick="window.location.href='productions.html?id=${p.id}'">
+                    <div class="card-main">
+                        <img src="${p.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                        <div class="card-body">
+                            <span class="badge a">${labels[p.type]||'商品'}</span>
+                            <h3 class="card-title">${p.title}</h3>
+                            <p style="color:var(--text2);font-size:13px;">¥${(p.price||0).toLocaleString()}</p>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+        
+        function onAuthReady() {
+            const params = new URLSearchParams(location.search);
+            if (user && !isGuest) {
+                showScreen('mainScreen');
+                loadHomeData();
+            } else if (params.get('login')) {
+                showScreen('loginScreen');
+            } else if (params.get('signup')) {
+                showScreen('signupScreen');
+            }
+            setupLogo();
+        }
+    </script>
+</body>
+</html>
