@@ -157,55 +157,55 @@
     <div class="container">
         <div class="header">
             <img src="logo.png" class="header-logo" onclick="window.location.href='index.html'">
-            <span class="header-title">イベント</span>
+            <span class="header-title">EVENT</span>
         </div>
         <div class="search-box">
-            <span class="search-icon"></span>
-            <input type="text" class="search-input" placeholder="イベントを検索" id="searchInput" oninput="filterEvents()">
+            <span class="search-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></span>
+            <input type="text" class="search-input" placeholder="EVENT SEARCH" id="searchInput" oninput="filterEvents()">
         </div>
         
         <div class="filter-row">
-            <span class="filter-label">種類</span>
+            <span class="filter-label">Type</span>
             <div class="filters">
-                <button class="filter-btn active" data-filter="all" onclick="setTypeFilter('all')">すべて</button>
-                <button class="filter-btn" data-filter="A" onclick="setTypeFilter('A')">タイムテーブル</button>
-                <button class="filter-btn" data-filter="B" onclick="setTypeFilter('B')">ギャランティー</button>
-                <button class="filter-btn" data-filter="C" onclick="setTypeFilter('C')">フライヤー</button>
+                <button class="filter-btn active" data-filter="all" onclick="setTypeFilter('all')">All</button>
+                <button class="filter-btn" data-filter="A" onclick="setTypeFilter('A')">TIMETABLE</button>
+                <button class="filter-btn" data-filter="B" onclick="setTypeFilter('B')">GUARANTEE(ｷﾞｬﾗ)</button>
+                <button class="filter-btn" data-filter="C" onclick="setTypeFilter('C')">FLYER</button>
             </div>
         </div>
         
         <div class="filter-row">
-            <span class="filter-label">地域</span>
+            <span class="filter-label">AREA</span>
             <select id="regionFilter" class="region-select" onchange="setRegionFilter()">
-                <option value="all">すべての地域</option>
-                <optgroup label="🇯🇵 日本">
-                    <option value="東京">東京</option>
-                    <option value="大阪">大阪</option>
-                    <option value="名古屋">名古屋</option>
-                    <option value="福岡">福岡</option>
-                    <option value="沖縄/那覇">沖縄/那覇</option>
+                <option value="all">ALL AREA</option>
+                <optgroup label="JAPAN">
+                    <option value="TOKYO">TOKYO</option>
+                    <option value="OSAKA">OSAKA</option>
+                    <option value="NAGOYA">NAGOYA</option>
+                    <option value="FUKUOKA">FUKUOKA</option>
+                    <option value="OKINAWA">OKINAWA</option>
                 </optgroup>
-                <optgroup label="🌏 アジア">
-                    <option value="ソウル">ソウル</option>
-                    <option value="上海">上海</option>
-                    <option value="香港">香港</option>
-                    <option value="バンコク">バンコク</option>
-                    <option value="シンガポール">シンガポール</option>
+                <optgroup label="ASIA">
+                    <option value="SEOUL">SEOUL</option>
+                    <option value="SHANGHAI">SHANGHAI</option>
+                    <option value="HONG KONG">HONG KONG</option>
+                    <option value="BANGKOK">BANGKOK</option>
+                    <option value="SINGAPORE">SINGAPORE</option>
                 </optgroup>
-                <optgroup label="🌎 北米">
-                    <option value="ニューヨーク">ニューヨーク</option>
-                    <option value="ロサンゼルス">ロサンゼルス</option>
-                    <option value="マイアミ">マイアミ</option>
-                    <option value="シカゴ">シカゴ</option>
-                    <option value="ラスベガス">ラスベガス</option>
+                <optgroup label="NORTH AMERICA">
+                    <option value="NEW YORK">NEW YORK</option>
+                    <option value="LOS ANGELES">LOS ANGELES</option>
+                    <option value="MIAMI">MIAMI</option>
+                    <option value="CHICAGO">CHICAGO</option>
+                    <option value="LAS VEGAS">LAS VEGAS</option>
                 </optgroup>
-                <optgroup label="🌍 ヨーロッパ">
-                    <option value="ベルリン">ベルリン</option>
-                    <option value="ロンドン">ロンドン</option>
-                    <option value="アムステルダム">アムステルダム</option>
-                    <option value="イビサ">イビサ</option>
-                    <option value="パリ">パリ</option>
-                    <option value="バルセロナ">バルセロナ</option>
+                <optgroup label="EUROPE">
+                    <option value="BERLIN">BERLIN</option>
+                    <option value="LONDON">LONDON</option>
+                    <option value="AMSTERDAM">AMSTERDAM</option>
+                    <option value="IBIZA">IBIZA</option>
+                    <option value="PARIS">PARIS</option>
+                    <option value="BARCELONA">BARCELONA</option>
                 </optgroup>
             </select>
         </div>
@@ -217,16 +217,16 @@
     <div class="modal" id="eventModal">
         <div class="modal-content">
             <div class="modal-header">
-                <button class="modal-close" onclick="closeEventModal()">← 戻る</button>
+                <button class="modal-close" onclick="closeEventModal()">← Back</button>
             </div>
             <img id="modalImg" class="modal-img" src="logo.png">
             <div class="modal-body">
-                <span class="badge a" id="modalBadge">タイムテーブル</span>
+                <span class="badge a" id="modalBadge">TIMETABLE</span>
                 <h1 class="modal-title" id="modalTitle"></h1>
                 <div class="modal-info">
-                    <div class="modal-info-item" id="modalDate">日付: </div>
-                    <div class="modal-info-item" id="modalLocation">場所: </div>
-                    <div class="modal-info-item" id="modalRegion">🌏</div>
+                    <div class="modal-info-item" id="modalDate">DATE </div>
+                    <div class="modal-info-item" id="modalLocation">@ </div>
+                    <div class="modal-info-item" id="modalRegion">AREA </div>
                 </div>
                 
                 <div id="modalOrganizer" class="organizer-section"></div>
@@ -241,14 +241,14 @@
     <div class="purchase-modal" id="purchaseModal">
         <div class="purchase-box">
             <div class="purchase-icon" id="purchaseIcon"></div>
-            <div class="purchase-title" id="purchaseTitle">タイムテーブルを購入</div>
+            <div class="purchase-title" id="purchaseTitle">Buy Timetable</div>
             <div class="purchase-detail">
                 <div class="purchase-time" id="purchaseTime">22:00-22:30</div>
                 <div class="purchase-price" id="purchasePrice">¥3,000</div>
             </div>
-            <p class="purchase-note" id="purchaseNote">このスロットを購入してイベントに出演しますか？</p>
-            <button class="purchase-btn primary" id="purchaseConfirmBtn" onclick="confirmPurchase()">購入を確定する</button>
-            <button class="purchase-btn cancel" onclick="closePurchaseModal()">キャンセル</button>
+            <p class="purchase-note" id="purchaseNote">Buy this slot to perform at the event?</p>
+            <button class="purchase-btn primary" id="purchaseConfirmBtn" onclick="confirmPurchase()">Confirm Purchase</button>
+            <button class="purchase-btn cancel" onclick="closePurchaseModal()">Cancel</button>
         </div>
     </div>
     
@@ -269,7 +269,7 @@
         let currentEvent = null;
         let selectedSlotIndex = -1;
         let usersCache = {};
-        const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+        const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
         
         function setTypeFilter(f) {
             currentTypeFilter = f;
@@ -375,7 +375,7 @@
             
             const container = document.getElementById('eventsList');
             if (filtered.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color: var(--text2); padding: 40px;">イベントがありません</p>';
+                container.innerHTML = '<p style="text-align:center; color: var(--text2); padding: 40px;">No events</p>';
                 return;
             }
             
@@ -386,7 +386,7 @@
                 byDate[key].push(ev);
             });
             
-            const labels = {A:'タイムテーブル', B:'ギャランティー', C:'フライヤー'};
+            const labels = {A:'TIMETABLE', B:'GUARANTEE(ｷﾞｬﾗ)', C:'FLYER'};
             const cls = {A:'a', B:'b', C:'c'};
             let html = '';
             
@@ -401,13 +401,13 @@
                         <div class="card-main" onclick="showDetail('${ev.id}')">
                             <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
                             <div class="card-body">
-                                <span class="card-region">場所: ${ev.region||'未設定'}</span>
-                                <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'タイムテーブル'}</span>
+                                <span class="card-region">@ ${ev.region||'N/A'}</span>
+                                <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'TIMETABLE'}</span>
                                 <h3 class="card-title">${ev.title}</h3>
                                 <p style="color:var(--text2);font-size:13px;">${formatTimeOnly(ev.date)} ${ev.location||''}</p>
                                 <div class="card-organizer" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${ev.organizerId}'">
                                     ${renderAvatar(organizer.photoURL || ev.organizerPhoto, organizer.name || ev.organizerName || '?', 28, false)}
-                                    <span class="card-organizer-name">${organizer.name || ev.organizerName || '主催者'}</span>
+                                    <span class="card-organizer-name">${organizer.name || ev.organizerName || 'Organizer'}</span>
                                 </div>
                             </div>
                         </div>`;
@@ -425,15 +425,15 @@
                             
                             html += `<div class="card-slot">
                                 <div class="card-slot-info">
-                                    <span class="card-slot-time">${slot.time || '未定'}</span>
+                                    <span class="card-slot-time">${slot.time || 'TBD'}</span>
                                     <span class="card-slot-price ${isFree ? 'free' : ''}">${formatPrice(price, currency)}</span>
-                                    <span class="card-slot-count ${isFull ? 'full' : ''}">${count}/${capacity}人${isFull ? ' 満員' : ''}</span>
+                                    <span class="card-slot-count ${isFull ? 'full' : ''}">${count}/${capacity}${isFull ? ' FULL' : ''}</span>
                                 </div>
                                 <div class="card-slot-avatars">${renderSlotAvatars(applicants, capacity)}</div>
                                 <button class="card-slot-buy ${isFree ? 'free' : ''} ${isFull ? 'full' : ''}" 
                                         onclick="event.stopPropagation(); openPurchaseFromCard('${ev.id}', ${i})"
                                         ${isFull ? 'disabled' : ''}>
-                                    ${isFull ? '満員' : (isFree ? '無料予約' : formatPriceShort(price, currency))}
+                                    ${isFull ? 'FULL' : (isFree ? 'FREE' : formatPriceShort(price, currency))}
                                 </button>
                             </div>`;
                         });
@@ -455,17 +455,17 @@
             currentEvent = allEvents.find(e => e.id === id);
             if (!currentEvent) return;
             
-            const labels = {A:'タイムテーブル', B:'ギャランティー', C:'フライヤー'};
+            const labels = {A:'TIMETABLE', B:'GUARANTEE(ｷﾞｬﾗ)', C:'FLYER'};
             const cls = {A:'a', B:'b', C:'c'};
             const currency = currentEvent.currency || 'jpy';
             
             document.getElementById('modalImg').src = currentEvent.imageUrl || 'logo.png';
-            document.getElementById('modalBadge').textContent = labels[currentEvent.type] || 'タイムテーブル';
+            document.getElementById('modalBadge').textContent = labels[currentEvent.type] || 'TIMETABLE';
             document.getElementById('modalBadge').className = 'badge ' + (cls[currentEvent.type] || 'a');
             document.getElementById('modalTitle').textContent = currentEvent.title;
-            document.getElementById('modalDate').textContent = '日付: ' + formatDateFull(currentEvent.date);
-            document.getElementById('modalLocation').textContent = '場所: ' + (currentEvent.location || '未設定');
-            document.getElementById('modalRegion').textContent = '🌏 ' + (currentEvent.region || '未設定');
+            document.getElementById('modalDate').textContent = 'DATE ' + formatDateFull(currentEvent.date);
+            document.getElementById('modalLocation').textContent = '@ ' + (currentEvent.location || 'N/A');
+            document.getElementById('modalRegion').textContent = 'AREA ' + (currentEvent.region || 'N/A');
             document.getElementById('modalDesc').textContent = currentEvent.description || '';
             
             // 主催者セクション
@@ -474,14 +474,14 @@
             const organizerPhoto = organizer.photoURL || currentEvent.organizerPhoto || '';
             
             document.getElementById('modalOrganizer').innerHTML = `
-                <div class="organizer-header">主催者</div>
+                <div class="organizer-header">ORGANIZER</div>
                 <div class="organizer-row">
                     ${renderAvatar(organizerPhoto, organizerName, 48, true, currentEvent.organizerId)}
                     <div class="organizer-info">
                         <div class="organizer-name">${organizerName}</div>
                     </div>
                     <div class="organizer-actions">
-                        <button class="organizer-btn profile" onclick="window.location.href='profile.html?uid=${currentEvent.organizerId}'">プロフィール</button>
+                        <button class="organizer-btn profile" onclick="window.location.href='profile.html?uid=${currentEvent.organizerId}'">PROFILE</button>
                         <button class="organizer-btn dm" onclick="openDM('${currentEvent.organizerId}', '${organizerName}')">DM</button>
                     </div>
                 </div>
@@ -490,7 +490,7 @@
             // スロット
             let slotsHtml = '';
             if ((currentEvent.type === 'A' || currentEvent.type === 'B') && currentEvent.slots && currentEvent.slots.length > 0) {
-                const title = currentEvent.type === 'A' ? 'タイムテーブル' : 'ギャランティー';
+                const title = currentEvent.type === 'A' ? 'TIMETABLE' : 'GUARANTEE(ｷﾞｬﾗ)';
                 slotsHtml = `<div class="section-title">${title}</div>`;
                 
                 currentEvent.slots.forEach((slot, i) => {
@@ -502,27 +502,27 @@
                     const isFree = price === 0;
                     
                     let btnClass = 'primary';
-                    let btnText = currentEvent.type === 'A' ? '購入する' : '応募する';
+                    let btnText = currentEvent.type === 'A' ? 'Buy' : 'Apply';
                     if (isFree) {
                         btnClass = 'free';
-                        btnText = currentEvent.type === 'A' ? '無料で予約する' : '無料で応募する';
+                        btnText = currentEvent.type === 'A' ? 'Reserve Free' : 'Apply Free';
                     }
                     if (isFull) {
                         btnClass = 'full';
-                        btnText = '満員';
+                        btnText = 'FULL';
                     }
                     
                     slotsHtml += `
                         <div class="slot-card">
                             <div class="slot-header">
-                                <span class="slot-time">${slot.time || '時間未定'}</span>
+                                <span class="slot-time">${slot.time || 'TBD'}</span>
                                 <span class="slot-price ${isFree ? 'free' : ''}">${formatPrice(price, currency)}</span>
                             </div>
                             <div class="slot-applicants">
-                                <div class="slot-applicants-label">応募者</div>
+                                <div class="slot-applicants-label">Applicants</div>
                                 <div class="slot-applicants-row">
                                     ${renderSlotAvatars(applicants, capacity)}
-                                    <span class="slot-count ${isFull ? 'full' : ''}">${count}/${capacity}人${isFull ? ' 満員' : ''}</span>
+                                    <span class="slot-count ${isFull ? 'full' : ''}">${count}/${capacity}${isFull ? ' FULL' : ''}</span>
                                 </div>
                             </div>
                             <button class="slot-buy-btn ${btnClass}" onclick="openPurchaseModal(${i})" ${isFull ? 'disabled' : ''}>${btnText}</button>
@@ -535,7 +535,7 @@
             // アクションボタン
             let actionHtml = '';
             if (currentEvent.type === 'C') {
-                actionHtml = `<button class="btn btn-s btn-lg" onclick="shareEvent()">📤 シェアする</button>`;
+                actionHtml = `<button class="btn btn-s btn-lg" onclick="shareEvent()">📤 Share</button>`;
             }
             document.getElementById('modalAction').innerHTML = actionHtml;
             
@@ -567,40 +567,40 @@
             const count = (slot.applicants || []).length;
             
             if (count >= capacity) {
-                toast('このスロットは満員です', 'error');
+                toast('This slot is full', 'error');
                 return;
             }
             
             // 既に応募済みかチェック
             if (user && slot.applicants && slot.applicants.includes(user.uid)) {
-                toast('既に応募済みです', 'error');
+                toast('Already applied', 'error');
                 return;
             }
             
             if (currentEvent.type === 'A') {
                 document.getElementById('purchaseIcon').textContent = '';
-                document.getElementById('purchaseTitle').textContent = 'タイムテーブルを購入';
+                document.getElementById('purchaseTitle').textContent = 'Buy Timetable';
                 document.getElementById('purchaseNote').textContent = isFree 
-                    ? 'このスロットを無料で予約しますか？' 
-                    : 'このスロットを購入してイベントに出演しますか？';
+                    ? 'Reserve this slot for free?' 
+                    : 'Buy this slot to perform at the event?';
             } else {
                 document.getElementById('purchaseIcon').textContent = '';
-                document.getElementById('purchaseTitle').textContent = 'ギャランティーに応募';
+                document.getElementById('purchaseTitle').textContent = 'Apply for GUARANTEE';
                 document.getElementById('purchaseNote').textContent = isFree 
-                    ? 'このスロットに無料で応募しますか？' 
-                    : 'このスロットに応募しますか？（報酬が支払われます）';
+                    ? 'Apply for this slot for free?' 
+                    : 'Apply for this slot? (You will be paid)';
             }
             
-            document.getElementById('purchaseTime').textContent = '' + (slot.time || '時間未定');
+            document.getElementById('purchaseTime').textContent = '' + (slot.time || 'TBD');
             document.getElementById('purchasePrice').textContent = formatPrice(price, currency);
             document.getElementById('purchasePrice').className = 'purchase-price' + (isFree ? ' free' : '');
             
             const confirmBtn = document.getElementById('purchaseConfirmBtn');
             if (isFree) {
-                confirmBtn.textContent = currentEvent.type === 'A' ? '無料で予約する' : '無料で応募する';
+                confirmBtn.textContent = currentEvent.type === 'A' ? 'Reserve Free' : 'Apply Free';
                 confirmBtn.className = 'purchase-btn free';
             } else {
-                confirmBtn.textContent = currentEvent.type === 'A' ? '購入を確定する' : '応募する';
+                confirmBtn.textContent = currentEvent.type === 'A' ? 'Confirm Purchase' : 'Apply';
                 confirmBtn.className = 'purchase-btn primary';
             }
             
@@ -622,7 +622,7 @@
                 // 無料の場合は直接予約
                 const success = await applyToSlot(currentEvent.id, selectedSlotIndex);
                 if (success) {
-                    toast('予約が完了しました（無料）');
+                    toast('Reserved (Free)');
                     // データを再読み込み
                     await loadAllEvents();
                     // モーダルを更新
@@ -632,7 +632,7 @@
                 }
             } else {
                 // 有料の場合はStripe決済（TODO）
-                toast('この機能は準備中です');
+                toast('Coming soon');
             }
             closePurchaseModal();
         }
@@ -646,7 +646,7 @@
                 });
             } else {
                 navigator.clipboard.writeText(window.location.href);
-                toast('URLをコピーしました');
+                toast('URL copied');
             }
         }
         

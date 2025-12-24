@@ -50,18 +50,18 @@ const CURRENCY_CONFIG = {
 };
 
 const REGION_CURRENCY_MAP = {
-    '東京': 'jpy', '大阪': 'jpy', '名古屋': 'jpy', '福岡': 'jpy', '沖縄/那覇': 'jpy',
-    'ソウル': 'krw', '上海': 'cny', '香港': 'hkd', 'バンコク': 'thb', 'シンガポール': 'sgd',
-    'ニューヨーク': 'usd', 'ロサンゼルス': 'usd', 'マイアミ': 'usd', 'シカゴ': 'usd', 'ラスベガス': 'usd',
-    'ベルリン': 'eur', 'ロンドン': 'gbp', 'アムステルダム': 'eur', 'イビサ': 'eur', 'パリ': 'eur', 'バルセロナ': 'eur'
+    'TOKYO': 'jpy', 'OSAKA': 'jpy', 'NAGOYA': 'jpy', 'FUKUOKA': 'jpy', 'OKINAWA': 'jpy',
+    'SEOUL': 'krw', 'SHANGHAI': 'cny', 'HONG KONG': 'hkd', 'BANGKOK': 'thb', 'SINGAPORE': 'sgd',
+    'NEW YORK': 'usd', 'LOS ANGELES': 'usd', 'MIAMI': 'usd', 'CHICAGO': 'usd', 'LAS VEGAS': 'usd',
+    'BERLIN': 'eur', 'LONDON': 'gbp', 'AMSTERDAM': 'eur', 'IBIZA': 'eur', 'PARIS': 'eur', 'BARCELONA': 'eur'
 };
 
 // 地域リスト
 const REGIONS = [
-    { group: '日本', cities: ['東京', '大阪', '名古屋', '福岡', '沖縄/那覇'] },
-    { group: 'アジア', cities: ['ソウル', '上海', '香港', 'バンコク', 'シンガポール'] },
-    { group: '北米', cities: ['ニューヨーク', 'ロサンゼルス', 'マイアミ', 'シカゴ', 'ラスベガス'] },
-    { group: 'ヨーロッパ', cities: ['ベルリン', 'ロンドン', 'アムステルダム', 'イビサ', 'パリ', 'バルセロナ'] }
+    { group: 'JAPAN', cities: ['TOKYO', 'OSAKA', 'NAGOYA', 'FUKUOKA', 'OKINAWA'] },
+    { group: 'ASIA', cities: ['SEOUL', 'SHANGHAI', 'HONG KONG', 'BANGKOK', 'SINGAPORE'] },
+    { group: 'NORTH AMERICA', cities: ['NEW YORK', 'LOS ANGELES', 'MIAMI', 'CHICAGO', 'LAS VEGAS'] },
+    { group: 'EUROPE', cities: ['BERLIN', 'LONDON', 'AMSTERDAM', 'IBIZA', 'PARIS', 'BARCELONA'] }
 ];
 
 // SNSプラットフォーム設定（SVGアイコン使用）
@@ -118,7 +118,7 @@ function getCurrencySymbol(currency) {
 
 // 地域選択のHTMLを生成
 function generateRegionOptions(includeAll = false) {
-    let html = includeAll ? '<option value="all">すべての地域</option>' : '<option value="">地域を選択</option>';
+    let html = includeAll ? '<option value="all">ALL AREA</option>' : '<option value="">Select Area</option>';
     REGIONS.forEach(r => {
         html += `<optgroup label="${r.group}">`;
         r.cities.forEach(city => {
@@ -169,11 +169,11 @@ async function login(email, password) {
     try {
         await auth.signInWithEmailAndPassword(email, password);
         isGuest = false;
-        toast('ログインしました');
+        toast('Log in');
         return true;
     } catch (e) {
         log('Login error: ' + e.message);
-        toast('ログインに失敗しました', 'error');
+        toast('Login failed', 'error');
         return false;
     }
 }
@@ -188,11 +188,11 @@ async function signup(email, password, name) {
             lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         isGuest = false;
-        toast('アカウントを作成しました');
+        toast('Account created');
         return true;
     } catch (e) {
         log('Signup error: ' + e.message);
-        toast('登録に失敗しました', 'error');
+        toast('Registration failed', 'error');
         return false;
     }
 }
@@ -218,12 +218,12 @@ async function loginWithGoogle() {
             });
         }
         isGuest = false;
-        toast('Googleでログインしました');
+        toast('Log in');
         return true;
     } catch (e) {
         log('Google login error: ' + e.message);
         if (e.code !== 'auth/popup-closed-by-user') {
-            toast('Googleログインに失敗しました', 'error');
+            toast('Google login failed', 'error');
         }
         return false;
     }
@@ -270,13 +270,12 @@ function showLoginModal() {
             <div class="modal" id="loginModal">
                 <div class="modal-content" style="max-width:400px;margin:auto;margin-top:100px;">
                     <div class="modal-header">
-                        <h3>ログインが必要です</h3>
+                        <h3>Log in</h3>
                         <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
                     </div>
                     <div class="modal-body" style="text-align:center; padding: 24px;">
-                        <p style="margin-bottom: 20px; color: var(--text2);">この機能を利用するにはログインが必要です</p>
-                        <button class="btn btn-p btn-lg" onclick="window.location.href='index.html?login=true'" style="margin-bottom: 12px;">ログイン</button>
-                        <button class="btn btn-s btn-lg" onclick="window.location.href='index.html?signup=true'">新規登録</button>
+                        <button class="btn btn-p btn-lg" onclick="window.location.href='index.html?login=true'" style="margin-bottom: 12px;">Log in</button>
+                        <button class="btn btn-s btn-lg" onclick="window.location.href='index.html?signup=true'">New</button>
                     </div>
                 </div>
             </div>
@@ -455,7 +454,7 @@ async function openDM(targetUserId, targetUserName) {
     if (chatId) {
         window.location.href = `chat.html?id=${chatId}`;
     } else {
-        toast('チャットを開始できませんでした', 'error');
+        toast('Failed to start chat', 'error');
     }
 }
 
@@ -541,10 +540,10 @@ function formatDateShort(date) {
     const now = new Date();
     const diff = now - d;
     
-    if (diff < 60000) return '今';
-    if (diff < 3600000) return Math.floor(diff / 60000) + '分前';
-    if (diff < 86400000) return Math.floor(diff / 3600000) + '時間前';
-    if (diff < 604800000) return Math.floor(diff / 86400000) + '日前';
+    if (diff < 60000) return 'now';
+    if (diff < 3600000) return Math.floor(diff / 60000) + 'm';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + 'h';
+    if (diff < 604800000) return Math.floor(diff / 86400000) + 'd';
     return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
@@ -644,16 +643,16 @@ function renderEmptyAvatar(size = 32) {
 function renderSnsIcons(snsLinks, size = 28) {
     if (!snsLinks || snsLinks.length === 0) return '';
     
-    const fallbackSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>';
-    const iconSize = Math.round(size * 0.6);
+    const defaultSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>';
+    const iconSize = Math.floor(size * 0.6);
     
     let html = '<div class="sns-icons" style="display:flex;gap:6px;flex-wrap:wrap;">';
     snsLinks.forEach(link => {
-        if (link.url) {
-            const platform = SNS_PLATFORMS.find(p => p.id === link.platform) || SNS_PLATFORMS.find(p => p.id === 'other');
-            const svgIcon = platform && platform.svg ? platform.svg : fallbackSvg;
-            const platformName = platform && platform.name ? platform.name : 'Link';
-            html += `<a href="${link.url}" target="_blank" onclick="event.stopPropagation();" style="display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;background:var(--surface);border-radius:50%;text-decoration:none;" title="${platformName}"><span style="width:${iconSize}px;height:${iconSize}px;display:flex;align-items:center;justify-content:center;color:#A0A0B8;">${svgIcon}</span></a>`;
+        if (link && link.url) {
+            const platform = SNS_PLATFORMS.find(p => p.id === link.platform);
+            const svgIcon = (platform && platform.svg) ? platform.svg : defaultSvg;
+            const platformName = (platform && platform.name) ? platform.name : 'Link';
+            html += `<a href="${link.url}" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="display:inline-flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;background:#1A1A2E;border-radius:50%;text-decoration:none;" title="${platformName}"><svg viewBox="0 0 24 24" width="${iconSize}" height="${iconSize}" style="fill:#A0A0B8;">${svgIcon.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '')}</svg></a>`;
         }
     });
     html += '</div>';

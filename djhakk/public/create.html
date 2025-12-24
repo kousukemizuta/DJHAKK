@@ -103,40 +103,40 @@
 <body>
     <div class="container">
         <div class="header">
-            <button class="back-btn" onclick="history.back()">← 戻る</button>
-            <span class="header-title">作成</span>
+            <button class="back-btn" onclick="history.back()">← Back</button>
+            <span class="header-title">CREATE</span>
         </div>
         
         <div class="type-grid">
             <div class="type-btn active" data-type="A" onclick="selectType('A', this)">
                 <div class="type-btn-icon"></div>
-                <div class="type-btn-label">タイムテーブル</div>
-                <div class="type-btn-desc">スロットを販売</div>
+                <div class="type-btn-label">TIMETABLE</div>
+                <div class="type-btn-desc">Timetable sales</div>
             </div>
             <div class="type-btn" data-type="B" onclick="selectType('B', this)">
                 <div class="type-btn-icon"></div>
-                <div class="type-btn-label">ギャランティー</div>
-                <div class="type-btn-desc">報酬を支払う</div>
+                <div class="type-btn-label">GUARANTEE(ｷﾞｬﾗ)</div>
+                <div class="type-btn-desc">Pay guarantee</div>
             </div>
             <div class="type-btn" data-type="C" onclick="selectType('C', this)">
                 <div class="type-btn-icon"></div>
-                <div class="type-btn-label">フライヤー</div>
-                <div class="type-btn-desc">告知のみ</div>
+                <div class="type-btn-label">FLYER</div>
+                <div class="type-btn-desc">Information</div>
             </div>
             <div class="type-btn" data-type="audio" onclick="selectType('audio', this)">
                 <div class="type-btn-icon"></div>
-                <div class="type-btn-label">音源販売</div>
-                <div class="type-btn-desc">ダウンロード販売</div>
+                <div class="type-btn-label">MUSIC SALES</div>
+                <div class="type-btn-desc">Download sales</div>
             </div>
             <div class="type-btn" data-type="goods" onclick="selectType('goods', this)">
                 <div class="type-btn-icon"></div>
-                <div class="type-btn-label">商品販売</div>
-                <div class="type-btn-desc">レコード等の物販</div>
+                <div class="type-btn-label">Product sales</div>
+                <div class="type-btn-desc">Items sales</div>
             </div>
             <div class="type-btn" data-type="produce" onclick="selectType('produce', this)">
                 <div class="type-btn-icon"></div>
-                <div class="type-btn-label">プロデュース</div>
-                <div class="type-btn-desc">アーティスト売り込み</div>
+                <div class="type-btn-label">SELF PRODUCE</div>
+                <div class="type-btn-desc">Self Produce</div>
             </div>
         </div>
         
@@ -144,101 +144,101 @@
         <div id="eventForm" class="form-section active">
             <div class="image-upload" onclick="document.getElementById('eventImage').click()">
                 <img id="eventImagePreview" style="display:none;">
-                <span class="image-upload-text" id="eventImageText">画像をアップロード</span>
+                <span class="image-upload-text" id="eventImageText">Upload image</span>
             </div>
             <input type="file" id="eventImage" accept="image/*" style="display:none;" onchange="previewImage(this,'eventImagePreview','eventImageText')">
             
-            <div class="input-group"><label class="label">タイトル</label><input type="text" id="eventTitle" class="input" placeholder="イベント名"></div>
-            <div class="input-group"><label class="label">日時</label><input type="datetime-local" id="eventDate" class="input"></div>
-            <div class="input-group"><label class="label">場所</label><input type="text" id="eventLocation" class="input" placeholder="会場名"></div>
+            <div class="input-group"><label class="label">TITLE</label><input type="text" id="eventTitle" class="input" placeholder="event name"></div>
+            <div class="input-group"><label class="label">DATE</label><input type="datetime-local" id="eventDate" class="input"></div>
+            <div class="input-group"><label class="label">@</label><input type="text" id="eventLocation" class="input" placeholder="@"></div>
             <div class="input-group">
-                <label class="label">地域</label>
+                <label class="label">AREA</label>
                 <select id="eventRegion" class="input" onchange="handleRegionChange()">
-                    <optgroup label="日本">
-                        <option value="東京">東京</option>
-                        <option value="大阪">大阪</option>
-                        <option value="名古屋">名古屋</option>
-                        <option value="福岡">福岡</option>
-                        <option value="沖縄/那覇">沖縄/那覇</option>
+                    <optgroup label="JAPAN">
+                        <option value="TOKYO">TOKYO</option>
+                        <option value="OSAKA">OSAKA</option>
+                        <option value="NAGOYA">NAGOYA</option>
+                        <option value="FUKUOKA">FUKUOKA</option>
+                        <option value="OKINAWA">OKINAWA</option>
                     </optgroup>
-                    <optgroup label="アジア">
-                        <option value="ソウル">ソウル</option>
-                        <option value="上海">上海</option>
-                        <option value="香港">香港</option>
-                        <option value="バンコク">バンコク</option>
-                        <option value="シンガポール">シンガポール</option>
+                    <optgroup label="ASIA">
+                        <option value="SEOUL">SEOUL</option>
+                        <option value="SHANGHAI">SHANGHAI</option>
+                        <option value="HONG KONG">HONG KONG</option>
+                        <option value="BANGKOK">BANGKOK</option>
+                        <option value="SINGAPORE">SINGAPORE</option>
                     </optgroup>
-                    <optgroup label="北米">
-                        <option value="ニューヨーク">ニューヨーク</option>
-                        <option value="ロサンゼルス">ロサンゼルス</option>
-                        <option value="マイアミ">マイアミ</option>
-                        <option value="シカゴ">シカゴ</option>
-                        <option value="ラスベガス">ラスベガス</option>
+                    <optgroup label="NORTH AMERICA">
+                        <option value="NEW YORK">NEW YORK</option>
+                        <option value="LOS ANGELES">LOS ANGELES</option>
+                        <option value="MIAMI">MIAMI</option>
+                        <option value="CHICAGO">CHICAGO</option>
+                        <option value="LAS VEGAS">LAS VEGAS</option>
                     </optgroup>
-                    <optgroup label="ヨーロッパ">
-                        <option value="ベルリン">ベルリン</option>
-                        <option value="ロンドン">ロンドン</option>
-                        <option value="アムステルダム">アムステルダム</option>
-                        <option value="イビサ">イビサ</option>
-                        <option value="パリ">パリ</option>
-                        <option value="バルセロナ">バルセロナ</option>
+                    <optgroup label="EUROPE">
+                        <option value="BERLIN">BERLIN</option>
+                        <option value="LONDON">LONDON</option>
+                        <option value="AMSTERDAM">AMSTERDAM</option>
+                        <option value="IBIZA">IBIZA</option>
+                        <option value="PARIS">PARIS</option>
+                        <option value="BARCELONA">BARCELONA</option>
                     </optgroup>
-                    <optgroup label="その他">
-                        <option value="other">その他（入力）</option>
+                    <optgroup label="Other">
+                        <option value="other">Other (Input)</option>
                     </optgroup>
                 </select>
-                <input type="text" id="customRegion" class="input custom-region-input" placeholder="地域名を入力">
+                <input type="text" id="customRegion" class="input custom-region-input" placeholder="Area name">
                 <div id="currencySelectRow" class="currency-select-row">
-                    <label class="label" style="margin-top:8px;">通貨</label>
+                    <label class="label" style="margin-top:8px;">Currency</label>
                     <select id="customCurrency" class="input" onchange="handleCustomCurrencyChange()">
-                        <option value="jpy">JPY - 日本円 (¥)</option>
-                        <option value="usd">USD - 米ドル ($)</option>
-                        <option value="eur">EUR - ユーロ (€)</option>
-                        <option value="gbp">GBP - 英ポンド (£)</option>
-                        <option value="krw">KRW - 韓国ウォン (₩)</option>
-                        <option value="cny">CNY - 中国元 (¥)</option>
-                        <option value="hkd">HKD - 香港ドル (HK$)</option>
-                        <option value="thb">THB - タイバーツ (฿)</option>
-                        <option value="sgd">SGD - シンガポールドル (S$)</option>
-                        <option value="twd">TWD - 台湾ドル (NT$)</option>
+                        <option value="jpy">JPY - Japanese Yen (¥)</option>
+                        <option value="usd">USD - US Dollar ($)</option>
+                        <option value="eur">EUR - Euro (€)</option>
+                        <option value="gbp">GBP - British Pound (£)</option>
+                        <option value="krw">KRW - Korean Won (₩)</option>
+                        <option value="cny">CNY - Chinese Yuan (¥)</option>
+                        <option value="hkd">HKD - Hong Kong Dollar (HK$)</option>
+                        <option value="thb">THB - Thai Baht (฿)</option>
+                        <option value="sgd">SGD - Singapore Dollar (S$)</option>
+                        <option value="twd">TWD - Taiwan Dollar (NT$)</option>
                     </select>
                 </div>
                 <div id="currencyInfo" class="currency-info">
-                    <span class="currency-info-text">通貨: <span id="currencyDisplay" class="currency-info-value">JPY (¥)</span></span>
+                    <span class="currency-info-text">Currency: <span id="currencyDisplay" class="currency-info-value">JPY (¥)</span></span>
                 </div>
             </div>
-            <div class="input-group"><label class="label">説明</label><textarea id="eventDesc" class="input" placeholder="イベントの詳細"></textarea></div>
+            <div class="input-group"><label class="label">INFORMATION</label><textarea id="eventDesc" class="input" placeholder="Information"></textarea></div>
             
             <!-- タイムテーブル用スロット -->
             <div id="slotsSection" class="input-group">
-                <label class="label">タイムテーブル</label>
+                <label class="label">TIMETABLE</label>
                 <div id="slotsContainer" class="slots-container"></div>
-                <button type="button" class="add-slot-btn" onclick="addSlot()">+ スロットを追加</button>
+                <button type="button" class="add-slot-btn" onclick="addSlot()">+ Add</button>
             </div>
             
             <!-- ギャランティー用スロット -->
             <div id="gigSlotsSection" class="input-group" style="display:none;">
-                <label class="label">ギャランティー</label>
+                <label class="label">GUARANTEE(ｷﾞｬﾗ)</label>
                 <div id="gigSlotsContainer" class="slots-container"></div>
-                <button type="button" class="add-slot-btn" onclick="addGigSlot()">+ スロットを追加</button>
+                <button type="button" class="add-slot-btn" onclick="addGigSlot()">+ Add</button>
             </div>
             
-            <button class="btn btn-p btn-lg" onclick="submitEvent()">作成する</button>
+            <button class="btn btn-p btn-lg" onclick="submitEvent()">Create</button>
         </div>
         
         <!-- Production Form -->
         <div id="productionForm" class="form-section">
             <div class="image-upload" onclick="document.getElementById('prodImage').click()">
                 <img id="prodImagePreview" style="display:none;">
-                <span class="image-upload-text" id="prodImageText">画像をアップロード</span>
+                <span class="image-upload-text" id="prodImageText">Upload image</span>
             </div>
             <input type="file" id="prodImage" accept="image/*" style="display:none;" onchange="previewImage(this,'prodImagePreview','prodImageText')">
             
-            <div class="input-group"><label class="label">タイトル</label><input type="text" id="prodTitle" class="input" placeholder="商品名"></div>
-            <div class="input-group"><label class="label">価格（円）</label><input type="number" id="prodPrice" class="input" placeholder="1000" min="0"></div>
-            <div class="input-group"><label class="label">説明</label><textarea id="prodDesc" class="input" placeholder="商品の詳細"></textarea></div>
+            <div class="input-group"><label class="label">TITLE</label><input type="text" id="prodTitle" class="input" placeholder="Product name"></div>
+            <div class="input-group"><label class="label">Price (JPY)</label><input type="number" id="prodPrice" class="input" placeholder="1000" min="0"></div>
+            <div class="input-group"><label class="label">INFORMATION</label><textarea id="prodDesc" class="input" placeholder="Information"></textarea></div>
             
-            <button class="btn btn-p btn-lg" onclick="submitProduction()">作成する</button>
+            <button class="btn btn-p btn-lg" onclick="submitProduction()">Create</button>
         </div>
     </div>
     
@@ -246,9 +246,9 @@
     <div class="picker-modal" id="pickerModal">
         <div class="picker-box">
             <div class="picker-header">
-                <button class="picker-cancel" onclick="closePicker()">キャンセル</button>
-                <span class="picker-title" id="pickerTitle">開始時間</span>
-                <button class="picker-done" onclick="confirmPicker()">完了</button>
+                <button class="picker-cancel" onclick="closePicker()">Cancel</button>
+                <span class="picker-title" id="pickerTitle">Start Time</span>
+                <button class="picker-done" onclick="confirmPicker()">Done</button>
             </div>
             <div class="picker-container">
                 <div class="picker-highlight"></div>
@@ -349,7 +349,7 @@
         function getRegionValue() {
             const select = document.getElementById('eventRegion');
             if (select.value === 'other') {
-                return document.getElementById('customRegion').value.trim() || 'その他';
+                return document.getElementById('customRegion').value.trim() || 'Other';
             }
             return select.value;
         }
@@ -382,12 +382,12 @@
             container.innerHTML = slots.map((s, i) => `
                 <div class="slot-item">
                     <div class="slot-header">
-                        <span class="slot-number">スロット ${i + 1}</span>
+                        <span class="slot-number">Slot ${i + 1}</span>
                         ${slots.length > 1 ? `<button class="slot-remove" onclick="removeSlot(${i})">×</button>` : ''}
                     </div>
                     <div class="slot-time-row">
                         <button type="button" class="slot-time-btn" onclick="openPicker(${i}, 'start', 'slot')">${s.start}</button>
-                        <span style="color:var(--text2)">〜</span>
+                        <span style="color:var(--text2)">-</span>
                         <button type="button" class="slot-time-btn" onclick="openPicker(${i}, 'end', 'slot')">${s.end}</button>
                     </div>
                     <div class="slot-price-row">
@@ -398,9 +398,9 @@
                     </div>
                     <div class="slot-price-display">${formatPrice(s.price || 0, currentCurrency)}</div>
                     <div class="slot-capacity-row">
-                        <span class="slot-capacity-label">募集人数:</span>
+                        <span class="slot-capacity-label">Capacity:</span>
                         <select class="slot-capacity-select" onchange="updateSlotCapacity(${i}, this.value)">
-                            ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${s.capacity === n ? 'selected' : ''}>${n}人</option>`).join('')}
+                            ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${s.capacity === n ? 'selected' : ''}>${n}</option>`).join('')}
                         </select>
                     </div>
                 </div>
@@ -435,12 +435,12 @@
             container.innerHTML = gigSlots.map((s, i) => `
                 <div class="slot-item">
                     <div class="slot-header">
-                        <span class="slot-number">スロット ${i + 1}</span>
+                        <span class="slot-number">Slot ${i + 1}</span>
                         ${gigSlots.length > 1 ? `<button class="slot-remove" onclick="removeGigSlot(${i})">×</button>` : ''}
                     </div>
                     <div class="slot-time-row">
                         <button type="button" class="slot-time-btn" onclick="openPicker(${i}, 'start', 'gig')">${s.start}</button>
-                        <span style="color:var(--text2)">〜</span>
+                        <span style="color:var(--text2)">-</span>
                         <button type="button" class="slot-time-btn" onclick="openPicker(${i}, 'end', 'gig')">${s.end}</button>
                     </div>
                     <div class="slot-price-row">
@@ -451,9 +451,9 @@
                     </div>
                     <div class="slot-price-display">${formatPrice(s.price || 0, currentCurrency)}</div>
                     <div class="slot-capacity-row">
-                        <span class="slot-capacity-label">募集人数:</span>
+                        <span class="slot-capacity-label">Capacity:</span>
                         <select class="slot-capacity-select" onchange="updateGigSlotCapacity(${i}, this.value)">
-                            ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${s.capacity === n ? 'selected' : ''}>${n}人</option>`).join('')}
+                            ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${s.capacity === n ? 'selected' : ''}>${n}</option>`).join('')}
                         </select>
                     </div>
                 </div>
@@ -472,7 +472,7 @@
             pickerHour = h;
             pickerMinute = m;
             
-            document.getElementById('pickerTitle').textContent = field === 'start' ? '開始時間' : '終了時間';
+            document.getElementById('pickerTitle').textContent = field === 'start' ? 'Start Time' : 'End Time';
             document.getElementById('pickerModal').classList.add('active');
             initWheels();
         }
@@ -547,7 +547,7 @@
         async function submitEvent() {
             if (!requireLogin()) return;
             const title = document.getElementById('eventTitle').value.trim();
-            if (!title) { toast('タイトルを入力してください','error'); return; }
+            if (!title) { toast('Please enter title','error'); return; }
             
             try {
                 let imageUrl = '';
@@ -588,11 +588,11 @@
                 }
                 
                 await db.collection('events').add(data);
-                toast('イベントを作成しました');
+                toast('Event created');
                 setTimeout(() => location.href = 'events.html', 1000);
             } catch (e) { 
                 log('Error: ' + e.message); 
-                toast('作成に失敗しました','error'); 
+                toast('Failed to create','error'); 
             }
         }
         
@@ -600,7 +600,7 @@
         async function submitProduction() {
             if (!requireLogin()) return;
             const title = document.getElementById('prodTitle').value.trim();
-            if (!title) { toast('タイトルを入力してください','error'); return; }
+            if (!title) { toast('Please enter title','error'); return; }
             
             try {
                 let imageUrl = '';
@@ -621,11 +621,11 @@
                 };
                 
                 await db.collection('productions').add(data);
-                toast('プロダクションを作成しました');
+                toast('Production created');
                 setTimeout(() => location.href = 'productions.html', 1000);
             } catch (e) { 
                 log('Error: ' + e.message); 
-                toast('作成に失敗しました','error'); 
+                toast('Failed to create','error'); 
             }
         }
         

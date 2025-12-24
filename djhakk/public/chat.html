@@ -95,8 +95,8 @@
         let lastMessageDate = null;
         
         function goBack() {
-            // メッセージ一覧に戻る
-            window.location.href = 'messages.html';
+            // メッセージ一覧に戻る（履歴を置き換えて、戻るボタンでここに戻らないようにする）
+            location.replace('messages.html');
         }
         
         function viewPartnerProfile() {
