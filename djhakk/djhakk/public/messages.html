@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>メッセージ - DJHAKK</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+    <style>
+        :root {
+            --primary: #FF6B00; --primary-light: #FF8533; --bg: #0D0D1A; --surface: #1A1A2E;
+            --card: #252538; --text: #FFFFFF; --text2: #A0A0B8; --text3: #6B6B80; --border: #3A3A50;
+            --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
+            --shadow: 0 8px 32px rgba(0,0,0,0.4); --r-md: 12px; --r-lg: 16px; --r-xl: 24px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans JP', 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .container { max-width: 600px; margin: 0 auto; padding: 16px; padding-bottom: 100px; }
+        .header { display: flex; align-items: center; gap: 16px; padding: 16px 0; margin-bottom: 16px; }
+        .back-btn { background: none; border: none; color: var(--text); font-size: 16px; cursor: pointer; }
+        .header-title { font-size: 20px; font-weight: 700; flex: 1; }
+        
+        .chat-list { }
+        
+        .chat-item { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--card); border-radius: var(--r-lg); margin-bottom: 12px; cursor: pointer; transition: background 0.2s; }
+        .chat-item:hover { background: var(--surface); }
+        .chat-item.unread { border-left: 3px solid var(--primary); }
+        
+        .chat-avatar { width: 52px; height: 52px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 600; overflow: hidden; flex-shrink: 0; }
+        .chat-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .chat-content { flex: 1; overflow: hidden; }
+        .chat-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+        .chat-name.unread { color: var(--primary); }
+        .chat-preview { color: var(--text2); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        .chat-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+        .chat-time { color: var(--text3); font-size: 11px; }
+        .chat-unread-badge { background: var(--primary); color: white; font-size: 11px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
+        
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text2); }
+        .empty-state-icon { font-size: 64px; margin-bottom: 16px; }
+        .empty-state-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+        .empty-state-text { font-size: 14px; }
+        
+        .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; position: relative; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 20px; }
+        .nav-create { position: relative; top: -20px; }
+        .nav-plus { width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); }
+        .nav-unread-badge { position: absolute; top: -4px; right: 50%; transform: translateX(50%); margin-right: -15px; background: #FF4757; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: none; align-items: center; justify-content: center; padding: 0 4px; }
+        
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 300; transition: opacity 0.3s; }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="back-btn" onclick="location.href='profile.html'">← 戻る</button>
+            <span class="header-title">メッセージ</span>
+        </div>
+        
+        <div id="chatList" class="chat-list"></div>
+    </div>
+    
+    <nav class="nav">
+        <div class="nav-item" onclick="location.href='index.html'"><span>Home</span></div>
+        <div class="nav-item" onclick="location.href='events.html'"><span>Event</span></div>
+        <div class="nav-item nav-create" onclick="handleCreateClick()"><div class="nav-plus">+</div></div>
+        <div class="nav-item" onclick="location.href='productions.html'"><span>Production</span></div>
+        <div class="nav-item active" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
+    </nav>
+    <div class="toast" id="toast"></div>
+    
+    <script src="js/common.js"></script>
+    <script>
+        let chatsUnsub = null;
+        
+        function loadChats() {
+            const container = document.getElementById('chatList');
+            
+            // リアルタイムリスナーを設定
+            if (chatsUnsub) chatsUnsub();
+            
+            chatsUnsub = db.collection('chats')
+                .where('participants', 'array-contains', user.uid)
+                .orderBy('lastMessageAt', 'desc')
+                .onSnapshot(snapshot => {
+                    if (snapshot.empty) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-state-icon"></div>
+                                <div class="empty-state-title">メッセージはありません</div>
+                                <div class="empty-state-text">イベント主催者やアーティストと<br>コミュニケーションを始めましょう</div>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    let html = '';
+                    snapshot.forEach(doc => {
+                        const chat = doc.data();
+                        const partnerId = chat.participants.find(p => p !== user.uid);
+                        const partnerName = chat.participantNames?.[partnerId] || 'ユーザー';
+                        const partnerPhoto = chat.participantPhotos?.[partnerId] || '';
+                        const isUnread = chat.unreadBy === user.uid;
+                        const initial = (partnerName || '?')[0].toUpperCase();
+                        
+                        html += `
+                            <div class="chat-item ${isUnread ? 'unread' : ''}" onclick="openChat('${doc.id}')">
+                                <div class="chat-avatar">
+                                    ${partnerPhoto ? `<img src="${partnerPhoto}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
+                                </div>
+                                <div class="chat-content">
+                                    <div class="chat-name ${isUnread ? 'unread' : ''}">${partnerName}</div>
+                                    <div class="chat-preview">${chat.lastMessage || 'メッセージはありません'}</div>
+                                </div>
+                                <div class="chat-meta">
+                                    <span class="chat-time">${formatDateShort(chat.lastMessageAt)}</span>
+                                    ${isUnread ? '<span class="chat-unread-badge">!</span>' : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                }, error => {
+                    log('Error loading chats: ' + error.message);
+                    container.innerHTML = '<div class="empty-state">読み込みに失敗しました</div>';
+                });
+        }
+        
+        function openChat(chatId) {
+            window.location.href = `chat.html?id=${chatId}`;
+        }
+        
+        function onAuthReady() {
+            if (!user || isGuest) {
+                location.href = 'index.html';
+                return;
+            }
+            loadChats();
+        }
+        
+        // ページ離脱時にリスナーを解除
+        window.addEventListener('beforeunload', () => {
+            if (chatsUnsub) chatsUnsub();
+        });
+    </script>
+</body>
+</html>

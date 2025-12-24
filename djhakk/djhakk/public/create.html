@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>作成 - DJHAKK</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+    <style>
+        :root {
+            --primary: #FF6B00; --primary-light: #FF8533; --bg: #0D0D1A; --surface: #1A1A2E;
+            --card: #252538; --text: #FFFFFF; --text2: #A0A0B8; --text3: #6B6B80; --border: #3A3A50;
+            --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
+            --shadow: 0 8px 32px rgba(0,0,0,0.4); --r-md: 12px; --r-lg: 16px; --r-xl: 24px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans JP', 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .container { max-width: 600px; margin: 0 auto; padding: 16px; padding-bottom: 100px; }
+        .header { display: flex; align-items: center; gap: 16px; padding: 16px 0; margin-bottom: 24px; }
+        .back-btn { background: none; border: none; color: var(--text); font-size: 16px; cursor: pointer; }
+        .header-title { font-size: 20px; font-weight: 700; }
+        .type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+        .type-btn { padding: 16px 8px; background: var(--card); border: 2px solid var(--border); border-radius: var(--r-lg); text-align: center; cursor: pointer; }
+        .type-btn.active { border-color: var(--primary); background: rgba(255,107,0,0.1); }
+        .type-btn-icon { font-size: 28px; margin-bottom: 8px; }
+        .type-btn-label { font-size: 12px; font-weight: 600; }
+        .type-btn-desc { font-size: 10px; color: var(--text2); margin-top: 4px; }
+        .form-section { display: none; }
+        .form-section.active { display: block; }
+        .input-group { margin-bottom: 16px; }
+        .label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text2); font-size: 14px; }
+        .input { width: 100%; padding: 14px 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text); font-size: 16px; }
+        .input:focus { outline: none; border-color: var(--primary); }
+        textarea.input { resize: vertical; min-height: 100px; }
+        select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23A0A0B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; }
+        select.input optgroup { background: var(--card); color: var(--primary); font-weight: 600; }
+        select.input option { background: var(--card); color: var(--text); }
+        .image-upload { width: 100%; aspect-ratio: 1; background: var(--card); border: 2px dashed var(--border); border-radius: var(--r-lg); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; margin-bottom: 16px; }
+        .image-upload img { width: 100%; height: 100%; object-fit: cover; }
+        .image-upload-text { color: var(--text2); font-size: 14px; }
+        .btn { padding: 12px 24px; border-radius: var(--r-lg); font-weight: 600; cursor: pointer; border: none; font-size: 14px; }
+        .btn-p { background: var(--gradient); color: white; }
+        .btn-lg { width: 100%; padding: 16px; font-size: 16px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .slots-container { margin-bottom: 16px; }
+        .slot-item { background: var(--card); padding: 16px; border-radius: var(--r-md); margin-bottom: 12px; }
+        .slot-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .slot-number { font-weight: 600; color: var(--primary); }
+        .slot-remove { background: #FF4757; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; }
+        .slot-time-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+        .slot-time-btn { flex: 1; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 16px; text-align: center; cursor: pointer; }
+        .slot-time-btn:active { background: var(--card); }
+        .slot-price-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+        .slot-currency { padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--primary); font-weight: 600; font-size: 14px; min-width: 60px; text-align: center; }
+        .slot-price-input { flex: 1; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 16px; text-align: right; }
+        .slot-price-input:focus { outline: none; border-color: var(--primary); }
+        .slot-price-display { font-size: 12px; color: var(--text2); text-align: right; margin-top: 4px; }
+        .slot-capacity-row { display: flex; gap: 8px; align-items: center; }
+        .slot-capacity-label { color: var(--text2); font-size: 14px; }
+        .slot-capacity-select { padding: 10px 32px 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23A0A0B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+        .add-slot-btn { background: var(--surface); border: 1px dashed var(--border); color: var(--text2); width: 100%; padding: 12px; border-radius: var(--r-md); cursor: pointer; }
+        .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; position: relative; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 20px; }
+        .nav-create { position: relative; top: -20px; }
+        .nav-plus { width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); }
+        .nav-unread-badge { position: absolute; top: -4px; right: 50%; transform: translateX(50%); margin-right: -15px; background: #FF4757; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: none; align-items: center; justify-content: center; padding: 0 4px; }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 300; }
+        .toast.show { opacity: 1; }
+        .toast.error { background: #FF4757; }
+        
+        .custom-region-input { display: none; margin-top: 8px; }
+        .custom-region-input.active { display: block; }
+        .currency-select-row { display: none; margin-top: 8px; }
+        .currency-select-row.active { display: block; }
+        .currency-info { display: flex; align-items: center; gap: 8px; padding: 12px; background: var(--surface); border-radius: 8px; margin-top: 8px; }
+        .currency-info-icon { font-size: 20px; }
+        .currency-info-text { font-size: 13px; color: var(--text2); }
+        .currency-info-value { font-weight: 600; color: var(--primary); }
+        
+        .picker-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 500; align-items: flex-end; justify-content: center; }
+        .picker-modal.active { display: flex; }
+        .picker-box { background: var(--surface); width: 100%; max-width: 600px; border-radius: 20px 20px 0 0; padding: 20px; }
+        .picker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .picker-title { font-size: 18px; font-weight: 600; }
+        .picker-done { background: var(--gradient); color: white; border: none; padding: 8px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; }
+        .picker-cancel { background: none; border: none; color: var(--text2); font-size: 16px; cursor: pointer; }
+        .picker-wheels { display: flex; justify-content: center; gap: 8px; height: 200px; }
+        .picker-wheel { flex: 1; max-width: 80px; overflow-y: scroll; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; }
+        .picker-wheel::-webkit-scrollbar { display: none; }
+        .picker-item { height: 40px; display: flex; align-items: center; justify-content: center; scroll-snap-align: center; color: var(--text3); font-size: 20px; }
+        .picker-item.selected { color: var(--text); font-weight: 600; }
+        .picker-highlight { position: absolute; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 560px; height: 40px; top: 50%; margin-top: -20px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); pointer-events: none; }
+        .picker-container { position: relative; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="back-btn" onclick="history.back()">← Back</button>
+            <span class="header-title">CREATE</span>
+        </div>
+        
+        <div class="type-grid">
+            <div class="type-btn active" data-type="A" onclick="selectType('A', this)">
+                <div class="type-btn-icon"></div>
+                <div class="type-btn-label">TIMETABLE</div>
+                <div class="type-btn-desc">Timetable sales</div>
+            </div>
+            <div class="type-btn" data-type="B" onclick="selectType('B', this)">
+                <div class="type-btn-icon"></div>
+                <div class="type-btn-label">GUARANTEE(ｷﾞｬﾗ)</div>
+                <div class="type-btn-desc">Pay guarantee</div>
+            </div>
+            <div class="type-btn" data-type="C" onclick="selectType('C', this)">
+                <div class="type-btn-icon"></div>
+                <div class="type-btn-label">FLYER</div>
+                <div class="type-btn-desc">Information</div>
+            </div>
+            <div class="type-btn" data-type="audio" onclick="selectType('audio', this)">
+                <div class="type-btn-icon"></div>
+                <div class="type-btn-label">MUSIC SALES</div>
+                <div class="type-btn-desc">Download sales</div>
+            </div>
+            <div class="type-btn" data-type="goods" onclick="selectType('goods', this)">
+                <div class="type-btn-icon"></div>
+                <div class="type-btn-label">Product sales</div>
+                <div class="type-btn-desc">Items sales</div>
+            </div>
+            <div class="type-btn" data-type="produce" onclick="selectType('produce', this)">
+                <div class="type-btn-icon"></div>
+                <div class="type-btn-label">SELF PRODUCE</div>
+                <div class="type-btn-desc">Self Produce</div>
+            </div>
+        </div>
+        
+        <!-- Event Form -->
+        <div id="eventForm" class="form-section active">
+            <div class="image-upload" onclick="document.getElementById('eventImage').click()">
+                <img id="eventImagePreview" style="display:none;">
+                <span class="image-upload-text" id="eventImageText">Upload image</span>
+            </div>
+            <input type="file" id="eventImage" accept="image/*" style="display:none;" onchange="previewImage(this,'eventImagePreview','eventImageText')">
+            
+            <div class="input-group"><label class="label">TITLE</label><input type="text" id="eventTitle" class="input" placeholder="event name"></div>
+            <div class="input-group"><label class="label">DATE</label><input type="datetime-local" id="eventDate" class="input"></div>
+            <div class="input-group"><label class="label">@</label><input type="text" id="eventLocation" class="input" placeholder="@"></div>
+            <div class="input-group">
+                <label class="label">AREA</label>
+                <select id="eventRegion" class="input" onchange="handleRegionChange()">
+                    <optgroup label="JAPAN">
+                        <option value="TOKYO">TOKYO</option>
+                        <option value="OSAKA">OSAKA</option>
+                        <option value="NAGOYA">NAGOYA</option>
+                        <option value="FUKUOKA">FUKUOKA</option>
+                        <option value="OKINAWA">OKINAWA</option>
+                    </optgroup>
+                    <optgroup label="ASIA">
+                        <option value="SEOUL">SEOUL</option>
+                        <option value="SHANGHAI">SHANGHAI</option>
+                        <option value="HONG KONG">HONG KONG</option>
+                        <option value="BANGKOK">BANGKOK</option>
+                        <option value="SINGAPORE">SINGAPORE</option>
+                    </optgroup>
+                    <optgroup label="NORTH AMERICA">
+                        <option value="NEW YORK">NEW YORK</option>
+                        <option value="LOS ANGELES">LOS ANGELES</option>
+                        <option value="MIAMI">MIAMI</option>
+                        <option value="CHICAGO">CHICAGO</option>
+                        <option value="LAS VEGAS">LAS VEGAS</option>
+                    </optgroup>
+                    <optgroup label="EUROPE">
+                        <option value="BERLIN">BERLIN</option>
+                        <option value="LONDON">LONDON</option>
+                        <option value="AMSTERDAM">AMSTERDAM</option>
+                        <option value="IBIZA">IBIZA</option>
+                        <option value="PARIS">PARIS</option>
+                        <option value="BARCELONA">BARCELONA</option>
+                    </optgroup>
+                    <optgroup label="Other">
+                        <option value="other">Other (Input)</option>
+                    </optgroup>
+                </select>
+                <input type="text" id="customRegion" class="input custom-region-input" placeholder="Area name">
+                <div id="currencySelectRow" class="currency-select-row">
+                    <label class="label" style="margin-top:8px;">Currency</label>
+                    <select id="customCurrency" class="input" onchange="handleCustomCurrencyChange()">
+                        <option value="jpy">JPY - Japanese Yen (¥)</option>
+                        <option value="usd">USD - US Dollar ($)</option>
+                        <option value="eur">EUR - Euro (€)</option>
+                        <option value="gbp">GBP - British Pound (£)</option>
+                        <option value="krw">KRW - Korean Won (₩)</option>
+                        <option value="cny">CNY - Chinese Yuan (¥)</option>
+                        <option value="hkd">HKD - Hong Kong Dollar (HK$)</option>
+                        <option value="thb">THB - Thai Baht (฿)</option>
+                        <option value="sgd">SGD - Singapore Dollar (S$)</option>
+                        <option value="twd">TWD - Taiwan Dollar (NT$)</option>
+                    </select>
+                </div>
+                <div id="currencyInfo" class="currency-info">
+                    <span class="currency-info-text">Currency: <span id="currencyDisplay" class="currency-info-value">JPY (¥)</span></span>
+                </div>
+            </div>
+            <div class="input-group"><label class="label">INFORMATION</label><textarea id="eventDesc" class="input" placeholder="Information"></textarea></div>
+            
+            <!-- タイムテーブル用スロット -->
+            <div id="slotsSection" class="input-group">
+                <label class="label">TIMETABLE</label>
+                <div id="slotsContainer" class="slots-container"></div>
+                <button type="button" class="add-slot-btn" onclick="addSlot()">+ Add</button>
+            </div>
+            
+            <!-- ギャランティー用スロット -->
+            <div id="gigSlotsSection" class="input-group" style="display:none;">
+                <label class="label">GUARANTEE(ｷﾞｬﾗ)</label>
+                <div id="gigSlotsContainer" class="slots-container"></div>
+                <button type="button" class="add-slot-btn" onclick="addGigSlot()">+ Add</button>
+            </div>
+            
+            <button class="btn btn-p btn-lg" onclick="submitEvent()">Create</button>
+        </div>
+        
+        <!-- Production Form -->
+        <div id="productionForm" class="form-section">
+            <div class="image-upload" onclick="document.getElementById('prodImage').click()">
+                <img id="prodImagePreview" style="display:none;">
+                <span class="image-upload-text" id="prodImageText">Upload image</span>
+            </div>
+            <input type="file" id="prodImage" accept="image/*" style="display:none;" onchange="previewImage(this,'prodImagePreview','prodImageText')">
+            
+            <div class="input-group"><label class="label">TITLE</label><input type="text" id="prodTitle" class="input" placeholder="Product name"></div>
+            <div class="input-group"><label class="label">Price (JPY)</label><input type="number" id="prodPrice" class="input" placeholder="1000" min="0"></div>
+            <div class="input-group"><label class="label">INFORMATION</label><textarea id="prodDesc" class="input" placeholder="Information"></textarea></div>
+            
+            <button class="btn btn-p btn-lg" onclick="submitProduction()">Create</button>
+        </div>
+    </div>
+    
+    <!-- ドラムピッカーモーダル -->
+    <div class="picker-modal" id="pickerModal">
+        <div class="picker-box">
+            <div class="picker-header">
+                <button class="picker-cancel" onclick="closePicker()">Cancel</button>
+                <span class="picker-title" id="pickerTitle">Start Time</span>
+                <button class="picker-done" onclick="confirmPicker()">Done</button>
+            </div>
+            <div class="picker-container">
+                <div class="picker-highlight"></div>
+                <div class="picker-wheels">
+                    <div class="picker-wheel" id="hourWheel"></div>
+                    <div style="display:flex;align-items:center;font-size:24px;color:var(--text);">:</div>
+                    <div class="picker-wheel" id="minuteWheel"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <nav class="nav">
+        <div class="nav-item" onclick="location.href='index.html'"><span>Home</span></div>
+        <div class="nav-item" onclick="location.href='events.html'"><span>Event</span></div>
+        <div class="nav-item nav-create active"><div class="nav-plus">+</div></div>
+        <div class="nav-item" onclick="location.href='productions.html'"><span>Production</span></div>
+        <div class="nav-item" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
+    </nav>
+    <div class="toast" id="toast"></div>
+    
+    <script src="js/common.js"></script>
+    <script>
+        let currentType = 'A';
+        let eventImageFile = null;
+        let prodImageFile = null;
+        let slots = [];
+        let gigSlots = [];
+        let currentCurrency = 'jpy';
+        let pickerSlotIndex = 0;
+        let pickerField = 'start';
+        let pickerSlotType = 'slot';
+        let pickerHour = 22;
+        let pickerMinute = 0;
+        
+        function selectType(type, el) {
+            currentType = type;
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            
+            const isEvent = ['A','B','C'].includes(type);
+            document.getElementById('eventForm').classList.toggle('active', isEvent);
+            document.getElementById('productionForm').classList.toggle('active', !isEvent);
+            
+            if (isEvent) {
+                document.getElementById('slotsSection').style.display = type === 'A' ? 'block' : 'none';
+                document.getElementById('gigSlotsSection').style.display = type === 'B' ? 'block' : 'none';
+            }
+        }
+        
+        function previewImage(input, previewId, textId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    document.getElementById(previewId).src = e.target.result;
+                    document.getElementById(previewId).style.display = 'block';
+                    document.getElementById(textId).style.display = 'none';
+                };
+                reader.readAsDataURL(input.files[0]);
+                if (previewId === 'eventImagePreview') eventImageFile = input.files[0];
+                else prodImageFile = input.files[0];
+            }
+        }
+        
+        function handleRegionChange() {
+            const select = document.getElementById('eventRegion');
+            const customInput = document.getElementById('customRegion');
+            const currencySelectRow = document.getElementById('currencySelectRow');
+            
+            if (select.value === 'other') {
+                customInput.classList.add('active');
+                currencySelectRow.classList.add('active');
+                customInput.focus();
+                currentCurrency = document.getElementById('customCurrency').value;
+            } else {
+                customInput.classList.remove('active');
+                currencySelectRow.classList.remove('active');
+                customInput.value = '';
+                currentCurrency = getCurrencyFromRegion(select.value);
+            }
+            updateCurrencyDisplay();
+            renderSlots();
+            renderGigSlots();
+        }
+        
+        function handleCustomCurrencyChange() {
+            currentCurrency = document.getElementById('customCurrency').value;
+            updateCurrencyDisplay();
+            renderSlots();
+            renderGigSlots();
+        }
+        
+        function updateCurrencyDisplay() {
+            const config = CURRENCY_CONFIG[currentCurrency];
+            document.getElementById('currencyDisplay').textContent = `${currentCurrency.toUpperCase()} (${config.symbol})`;
+        }
+        
+        function getRegionValue() {
+            const select = document.getElementById('eventRegion');
+            if (select.value === 'other') {
+                return document.getElementById('customRegion').value.trim() || 'Other';
+            }
+            return select.value;
+        }
+        
+        // ========== タイムテーブル用スロット ==========
+        function addSlot() {
+            slots.push({ start: '22:00', end: '22:30', price: 0, capacity: 1 });
+            renderSlots();
+        }
+        
+        function removeSlot(i) {
+            slots.splice(i, 1);
+            renderSlots();
+        }
+        
+        function updateSlotPrice(index, value) {
+            slots[index].price = parsePrice(value, currentCurrency);
+            renderSlots();
+        }
+        
+        function updateSlotCapacity(index, value) {
+            slots[index].capacity = parseInt(value) || 1;
+        }
+        
+        function renderSlots() {
+            const container = document.getElementById('slotsContainer');
+            const symbol = getCurrencySymbol(currentCurrency);
+            const config = CURRENCY_CONFIG[currentCurrency];
+            
+            container.innerHTML = slots.map((s, i) => `
+                <div class="slot-item">
+                    <div class="slot-header">
+                        <span class="slot-number">Slot ${i + 1}</span>
+                        ${slots.length > 1 ? `<button class="slot-remove" onclick="removeSlot(${i})">×</button>` : ''}
+                    </div>
+                    <div class="slot-time-row">
+                        <button type="button" class="slot-time-btn" onclick="openPicker(${i}, 'start', 'slot')">${s.start}</button>
+                        <span style="color:var(--text2)">-</span>
+                        <button type="button" class="slot-time-btn" onclick="openPicker(${i}, 'end', 'slot')">${s.end}</button>
+                    </div>
+                    <div class="slot-price-row">
+                        <span class="slot-currency">${symbol}</span>
+                        <input type="number" class="slot-price-input" value="${s.price || ''}" 
+                               placeholder="0" min="0" step="${config.decimal ? '0.01' : '1'}"
+                               onchange="updateSlotPrice(${i}, this.value)">
+                    </div>
+                    <div class="slot-price-display">${formatPrice(s.price || 0, currentCurrency)}</div>
+                    <div class="slot-capacity-row">
+                        <span class="slot-capacity-label">Capacity:</span>
+                        <select class="slot-capacity-select" onchange="updateSlotCapacity(${i}, this.value)">
+                            ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${s.capacity === n ? 'selected' : ''}>${n}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // ========== ギャランティー用スロット ==========
+        function addGigSlot() {
+            gigSlots.push({ start: '22:00', end: '23:00', price: 0, capacity: 1 });
+            renderGigSlots();
+        }
+        
+        function removeGigSlot(i) {
+            gigSlots.splice(i, 1);
+            renderGigSlots();
+        }
+        
+        function updateGigSlotPrice(index, value) {
+            gigSlots[index].price = parsePrice(value, currentCurrency);
+            renderGigSlots();
+        }
+        
+        function updateGigSlotCapacity(index, value) {
+            gigSlots[index].capacity = parseInt(value) || 1;
+        }
+        
+        function renderGigSlots() {
+            const container = document.getElementById('gigSlotsContainer');
+            const symbol = getCurrencySymbol(currentCurrency);
+            const config = CURRENCY_CONFIG[currentCurrency];
+            
+            container.innerHTML = gigSlots.map((s, i) => `
+                <div class="slot-item">
+                    <div class="slot-header">
+                        <span class="slot-number">Slot ${i + 1}</span>
+                        ${gigSlots.length > 1 ? `<button class="slot-remove" onclick="removeGigSlot(${i})">×</button>` : ''}
+                    </div>
+                    <div class="slot-time-row">
+                        <button type="button" class="slot-time-btn" onclick="openPicker(${i}, 'start', 'gig')">${s.start}</button>
+                        <span style="color:var(--text2)">-</span>
+                        <button type="button" class="slot-time-btn" onclick="openPicker(${i}, 'end', 'gig')">${s.end}</button>
+                    </div>
+                    <div class="slot-price-row">
+                        <span class="slot-currency">${symbol}</span>
+                        <input type="number" class="slot-price-input" value="${s.price || ''}" 
+                               placeholder="0" min="0" step="${config.decimal ? '0.01' : '1'}"
+                               onchange="updateGigSlotPrice(${i}, this.value)">
+                    </div>
+                    <div class="slot-price-display">${formatPrice(s.price || 0, currentCurrency)}</div>
+                    <div class="slot-capacity-row">
+                        <span class="slot-capacity-label">Capacity:</span>
+                        <select class="slot-capacity-select" onchange="updateGigSlotCapacity(${i}, this.value)">
+                            ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${s.capacity === n ? 'selected' : ''}>${n}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // ========== ドラムピッカー ==========
+        function openPicker(index, field, slotType) {
+            pickerSlotIndex = index;
+            pickerField = field;
+            pickerSlotType = slotType;
+            
+            const targetSlots = slotType === 'gig' ? gigSlots : slots;
+            const timeStr = field === 'start' ? targetSlots[index].start : targetSlots[index].end;
+            const [h, m] = timeStr.split(':').map(Number);
+            pickerHour = h;
+            pickerMinute = m;
+            
+            document.getElementById('pickerTitle').textContent = field === 'start' ? 'Start Time' : 'End Time';
+            document.getElementById('pickerModal').classList.add('active');
+            initWheels();
+        }
+        
+        function initWheels() {
+            const hourWheel = document.getElementById('hourWheel');
+            const minuteWheel = document.getElementById('minuteWheel');
+            
+            hourWheel.innerHTML = '<div style="height:80px"></div>' + 
+                Array.from({length: 24}, (_, i) => 
+                    `<div class="picker-item" data-value="${i}">${String(i).padStart(2, '0')}</div>`
+                ).join('') + '<div style="height:80px"></div>';
+            
+            minuteWheel.innerHTML = '<div style="height:80px"></div>' + 
+                Array.from({length: 12}, (_, i) => {
+                    const m = i * 5;
+                    return `<div class="picker-item" data-value="${m}">${String(m).padStart(2, '0')}</div>`;
+                }).join('') + '<div style="height:80px"></div>';
+            
+            setTimeout(() => {
+                hourWheel.scrollTop = pickerHour * 40;
+                minuteWheel.scrollTop = (pickerMinute / 5) * 40;
+                updateSelection();
+            }, 50);
+            
+            hourWheel.onscroll = () => {
+                pickerHour = Math.round(hourWheel.scrollTop / 40);
+                if (pickerHour < 0) pickerHour = 0;
+                if (pickerHour > 23) pickerHour = 23;
+                updateSelection();
+            };
+            
+            minuteWheel.onscroll = () => {
+                const idx = Math.round(minuteWheel.scrollTop / 40);
+                pickerMinute = Math.max(0, Math.min(11, idx)) * 5;
+                updateSelection();
+            };
+        }
+        
+        function updateSelection() {
+            document.querySelectorAll('#hourWheel .picker-item').forEach((el, i) => {
+                el.classList.toggle('selected', i === pickerHour);
+            });
+            document.querySelectorAll('#minuteWheel .picker-item').forEach((el, i) => {
+                el.classList.toggle('selected', i * 5 === pickerMinute);
+            });
+        }
+        
+        function closePicker() {
+            document.getElementById('pickerModal').classList.remove('active');
+        }
+        
+        function confirmPicker() {
+            const timeStr = `${String(pickerHour).padStart(2, '0')}:${String(pickerMinute).padStart(2, '0')}`;
+            const targetSlots = pickerSlotType === 'gig' ? gigSlots : slots;
+            
+            if (pickerField === 'start') {
+                targetSlots[pickerSlotIndex].start = timeStr;
+            } else {
+                targetSlots[pickerSlotIndex].end = timeStr;
+            }
+            
+            if (pickerSlotType === 'gig') {
+                renderGigSlots();
+            } else {
+                renderSlots();
+            }
+            closePicker();
+        }
+        
+        // ========== イベント送信 ==========
+        async function submitEvent() {
+            if (!requireLogin()) return;
+            const title = document.getElementById('eventTitle').value.trim();
+            if (!title) { toast('Please enter title','error'); return; }
+            
+            try {
+                let imageUrl = '';
+                if (eventImageFile) {
+                    const blob = await compressImage(eventImageFile);
+                    imageUrl = await uploadImageToStorage(blob, `events/${Date.now()}.jpg`);
+                }
+                
+                const data = {
+                    type: currentType, 
+                    title,
+                    date: new Date(document.getElementById('eventDate').value),
+                    location: document.getElementById('eventLocation').value,
+                    region: getRegionValue(),
+                    currency: currentCurrency,
+                    description: document.getElementById('eventDesc').value,
+                    imageUrl, 
+                    organizerId: user.uid, 
+                    organizerName: userData.name || '',
+                    organizerPhoto: userData.photoURL || '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                if (currentType === 'A') {
+                    data.slots = slots.map(s => ({
+                        time: `${s.start}-${s.end}`,
+                        price: s.price,
+                        capacity: s.capacity || 1,
+                        applicants: []
+                    }));
+                } else if (currentType === 'B') {
+                    data.slots = gigSlots.map(s => ({
+                        time: `${s.start}-${s.end}`,
+                        price: s.price,
+                        capacity: s.capacity || 1,
+                        applicants: []
+                    }));
+                }
+                
+                await db.collection('events').add(data);
+                toast('Event created');
+                setTimeout(() => location.href = 'events.html', 1000);
+            } catch (e) { 
+                log('Error: ' + e.message); 
+                toast('Failed to create','error'); 
+            }
+        }
+        
+        // ========== プロダクション送信 ==========
+        async function submitProduction() {
+            if (!requireLogin()) return;
+            const title = document.getElementById('prodTitle').value.trim();
+            if (!title) { toast('Please enter title','error'); return; }
+            
+            try {
+                let imageUrl = '';
+                if (prodImageFile) {
+                    const blob = await compressImage(prodImageFile);
+                    imageUrl = await uploadImageToStorage(blob, `productions/${Date.now()}.jpg`);
+                }
+                
+                const data = {
+                    type: currentType, 
+                    title,
+                    price: parseInt(document.getElementById('prodPrice').value) || 0,
+                    description: document.getElementById('prodDesc').value,
+                    imageUrl, 
+                    artistId: user.uid, 
+                    artistName: userData.name || '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await db.collection('productions').add(data);
+                toast('Production created');
+                setTimeout(() => location.href = 'productions.html', 1000);
+            } catch (e) { 
+                log('Error: ' + e.message); 
+                toast('Failed to create','error'); 
+            }
+        }
+        
+        function onAuthReady() {
+            if (!user || isGuest) { location.href = 'index.html'; return; }
+            addSlot();
+            addGigSlot();
+            updateCurrencyDisplay();
+        }
+    </script>
+</body>
+</html>

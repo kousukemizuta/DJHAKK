@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>チャット - DJHAKK</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+    <style>
+        :root {
+            --primary: #FF6B00; --primary-light: #FF8533; --bg: #0D0D1A; --surface: #1A1A2E;
+            --card: #252538; --text: #FFFFFF; --text2: #A0A0B8; --text3: #6B6B80; --border: #3A3A50;
+            --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
+            --shadow: 0 8px 32px rgba(0,0,0,0.4); --r-md: 12px; --r-lg: 16px; --r-xl: 24px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans JP', 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+        
+        .chat-container { max-width: 600px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; height: 100vh; }
+        
+        .chat-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: var(--surface); position: sticky; top: 0; z-index: 10; }
+        .back-btn { background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; padding: 4px; }
+        .chat-header-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; overflow: hidden; cursor: pointer; }
+        .chat-header-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .chat-header-info { flex: 1; cursor: pointer; }
+        .chat-header-name { font-weight: 600; font-size: 16px; }
+        .chat-header-status { font-size: 12px; color: var(--text3); }
+        
+        .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+        
+        .message { max-width: 80%; display: flex; flex-direction: column; }
+        .message.mine { align-self: flex-end; align-items: flex-end; }
+        .message.other { align-self: flex-start; align-items: flex-start; }
+        
+        .message-bubble { padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.4; word-break: break-word; }
+        .message.mine .message-bubble { background: var(--gradient); color: white; border-bottom-right-radius: 4px; }
+        .message.other .message-bubble { background: var(--card); color: var(--text); border-bottom-left-radius: 4px; }
+        
+        .message-time { font-size: 10px; color: var(--text3); margin-top: 4px; padding: 0 4px; }
+        
+        .date-divider { text-align: center; margin: 16px 0; }
+        .date-divider-text { background: var(--surface); padding: 6px 16px; border-radius: 20px; font-size: 12px; color: var(--text3); display: inline-block; }
+        
+        .chat-input-area { padding: 12px 16px; border-top: 1px solid var(--border); background: var(--surface); display: flex; gap: 8px; align-items: flex-end; }
+        .chat-input { flex: 1; padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 24px; color: var(--text); font-size: 16px; resize: none; max-height: 120px; line-height: 1.4; }
+        .chat-input:focus { outline: none; border-color: var(--primary); }
+        .chat-input::placeholder { color: var(--text3); }
+        .chat-send { background: var(--gradient); border: none; border-radius: 50%; width: 44px; height: 44px; color: white; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
+        .chat-send:active:not(:disabled) { transform: scale(0.95); }
+        
+        .loading { text-align: center; padding: 40px; color: var(--text2); }
+        
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 300; transition: opacity 0.3s; }
+        .toast.show { opacity: 1; }
+        .toast.error { background: #FF4757; }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <button class="back-btn" onclick="goBack()">←</button>
+            <div class="chat-header-avatar" id="partnerAvatar" onclick="viewPartnerProfile()"></div>
+            <div class="chat-header-info" onclick="viewPartnerProfile()">
+                <div class="chat-header-name" id="partnerName">読み込み中...</div>
+                <div class="chat-header-status">タップしてプロフィールを見る</div>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="loading">読み込み中...</div>
+        </div>
+        
+        <div class="chat-input-area">
+            <textarea class="chat-input" id="messageInput" placeholder="メッセージを入力..." rows="1" 
+                      oninput="autoResize(this)" onkeydown="handleKeyDown(event)"></textarea>
+            <button class="chat-send" id="sendBtn" onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+    
+    <script src="js/common.js"></script>
+    <script>
+        let chatId = null;
+        let partnerId = null;
+        let partnerName = '';
+        let partnerPhoto = '';
+        let messagesUnsub = null;
+        let lastMessageDate = null;
+        
+        function goBack() {
+            // メッセージ一覧に戻る（履歴を置き換えて、戻るボタンでここに戻らないようにする）
+            location.replace('messages.html');
+        }
+        
+        function viewPartnerProfile() {
+            if (partnerId) {
+                window.location.href = `profile.html?uid=${partnerId}`;
+            }
+        }
+        
+        async function initChat() {
+            const params = new URLSearchParams(location.search);
+            chatId = params.get('id');
+            const targetUserId = params.get('with');
+            
+            if (targetUserId) {
+                // 新規または既存チャットを開始
+                const targetUser = await getUserById(targetUserId);
+                if (!targetUser) {
+                    toast('ユーザーが見つかりません', 'error');
+                    setTimeout(() => goBack(), 1500);
+                    return;
+                }
+                
+                chatId = await startOrGetChat(targetUserId, targetUser.name || 'ユーザー');
+                if (!chatId) {
+                    toast('チャットを開始できませんでした', 'error');
+                    setTimeout(() => goBack(), 1500);
+                    return;
+                }
+                
+                // URLを更新
+                history.replaceState(null, '', `chat.html?id=${chatId}`);
+            }
+            
+            if (!chatId) {
+                toast('チャットが見つかりません', 'error');
+                setTimeout(() => goBack(), 1500);
+                return;
+            }
+            
+            // チャット情報を取得
+            const chatDoc = await db.collection('chats').doc(chatId).get();
+            if (!chatDoc.exists) {
+                toast('チャットが見つかりません', 'error');
+                setTimeout(() => goBack(), 1500);
+                return;
+            }
+            
+            const chatData = chatDoc.data();
+            partnerId = chatData.participants.find(p => p !== user.uid);
+            partnerName = chatData.participantNames?.[partnerId] || 'ユーザー';
+            partnerPhoto = chatData.participantPhotos?.[partnerId] || '';
+            
+            // ヘッダーを更新
+            document.getElementById('partnerName').textContent = partnerName;
+            const avatarEl = document.getElementById('partnerAvatar');
+            if (partnerPhoto) {
+                avatarEl.innerHTML = `<img src="${partnerPhoto}" onerror="this.style.display='none';this.parentElement.textContent='${partnerName[0]}'">`;
+            } else {
+                avatarEl.textContent = partnerName[0].toUpperCase();
+            }
+            
+            // 未読を解除
+            if (chatData.unreadBy === user.uid) {
+                await db.collection('chats').doc(chatId).update({ unreadBy: null });
+            }
+            
+            // メッセージを読み込み
+            loadMessages();
+        }
+        
+        function loadMessages() {
+            const container = document.getElementById('chatMessages');
+            
+            if (messagesUnsub) messagesUnsub();
+            
+            messagesUnsub = db.collection('chats').doc(chatId).collection('messages')
+                .orderBy('createdAt', 'asc')
+                .onSnapshot(snapshot => {
+                    container.innerHTML = '';
+                    lastMessageDate = null;
+                    
+                    if (snapshot.empty) {
+                        container.innerHTML = '<div class="loading" style="color:var(--text3);">メッセージを送ってみましょう</div>';
+                        return;
+                    }
+                    
+                    snapshot.forEach(doc => {
+                        const msg = doc.data();
+                        const isMine = msg.senderId === user.uid;
+                        const msgDate = msg.createdAt?.toDate ? msg.createdAt.toDate() : new Date();
+                        
+                        // 日付が変わったら区切りを表示
+                        const dateStr = formatDateForDivider(msgDate);
+                        if (dateStr !== lastMessageDate) {
+                            container.innerHTML += `
+                                <div class="date-divider">
+                                    <span class="date-divider-text">${dateStr}</span>
+                                </div>
+                            `;
+                            lastMessageDate = dateStr;
+                        }
+                        
+                        container.innerHTML += `
+                            <div class="message ${isMine ? 'mine' : 'other'}">
+                                <div class="message-bubble">${escapeHtml(msg.text)}</div>
+                                <div class="message-time">${formatTime(msgDate)}</div>
+                            </div>
+                        `;
+                    });
+                    
+                    // 最下部にスクロール
+                    container.scrollTop = container.scrollHeight;
+                }, error => {
+                    log('Error loading messages: ' + error.message);
+                    container.innerHTML = '<div class="loading">読み込みに失敗しました</div>';
+                });
+        }
+        
+        function formatDateForDivider(date) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const yesterday = new Date(today.getTime() - 86400000);
+            const msgDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            
+            if (msgDay.getTime() === today.getTime()) {
+                return '今日';
+            } else if (msgDay.getTime() === yesterday.getTime()) {
+                return '昨日';
+            } else {
+                return `${date.getMonth() + 1}月${date.getDate()}日`;
+            }
+        }
+        
+        function formatTime(date) {
+            return `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/\n/g, '<br>');
+        }
+        
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+        }
+        
+        function handleKeyDown(e) {
+            // Enterで送信（Shift+Enterで改行）
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text || !chatId) return;
+            
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = true;
+            input.value = '';
+            autoResize(input);
+            
+            try {
+                // メッセージを追加
+                await db.collection('chats').doc(chatId).collection('messages').add({
+                    text,
+                    senderId: user.uid,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // チャットのメタ情報を更新
+                await db.collection('chats').doc(chatId).update({
+                    lastMessage: text.substring(0, 50),
+                    lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    unreadBy: partnerId,
+                    [`participantNames.${user.uid}`]: userData.name || 'User',
+                    [`participantPhotos.${user.uid}`]: userData.photoURL || ''
+                });
+            } catch (e) {
+                log('Error sending message: ' + e.message);
+                toast('送信に失敗しました', 'error');
+                input.value = text; // 復元
+            }
+            
+            sendBtn.disabled = false;
+            input.focus();
+        }
+        
+        function onAuthReady() {
+            if (!user || isGuest) {
+                location.href = 'index.html';
+                return;
+            }
+            initChat();
+        }
+        
+        // ページ離脱時にリスナーを解除
+        window.addEventListener('beforeunload', () => {
+            if (messagesUnsub) messagesUnsub();
+        });
+    </script>
+</body>
+</html>

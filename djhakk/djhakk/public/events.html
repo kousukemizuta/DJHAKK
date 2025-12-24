@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>イベント - DJHAKK</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+    <style>
+        :root {
+            --primary: #FF6B00; --primary-light: #FF8533; --bg: #0D0D1A; --surface: #1A1A2E;
+            --card: #252538; --text: #FFFFFF; --text2: #A0A0B8; --text3: #6B6B80; --border: #3A3A50;
+            --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
+            --shadow: 0 8px 32px rgba(0,0,0,0.4); --r-md: 12px; --r-lg: 16px; --r-xl: 24px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans JP', 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .container { max-width: 600px; margin: 0 auto; padding: 16px; padding-bottom: 100px; }
+        .header { display: flex; align-items: center; gap: 16px; padding: 16px 0; margin-bottom: 16px; }
+        .header-logo { height: 40px; width: 40px; object-fit: contain; cursor: pointer; border-radius: 8px; }
+        .header-title { font-size: 20px; font-weight: 700; flex: 1; }
+        .search-box { position: relative; margin-bottom: 16px; }
+        .search-input { width: 100%; padding: 14px 16px 14px 44px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); color: var(--text); font-size: 16px; }
+        .search-input:focus { outline: none; border-color: var(--primary); }
+        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text3); }
+        
+        .filter-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+        .filter-label { font-size: 12px; color: var(--text3); min-width: 40px; }
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+        .filter-btn { padding: 8px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; white-space: nowrap; }
+        .filter-btn.active { background: var(--gradient); color: white; border-color: transparent; }
+        
+        .region-select { padding: 8px 32px 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%23A0A0B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+        .region-select:focus { outline: none; border-color: var(--primary); }
+        .region-select.active { background-color: rgba(255,107,0,0.2); border-color: var(--primary); color: var(--primary); }
+        
+        /* カード（高さ可変） */
+        .card { background: var(--card); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 16px; }
+        .card-main { display: flex; cursor: pointer; }
+        .card-img { width: 120px; min-width: 120px; height: 140px; object-fit: cover; }
+        .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
+        .card-title { font-size: 15px; font-weight: 700; margin: 4px 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .card-region { font-size: 11px; color: var(--primary); background: rgba(255,107,0,0.15); padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 4px; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .badge.a { background: rgba(255,107,0,0.2); color: #FF6B00; }
+        .badge.b { background: rgba(0,217,255,0.2); color: #00D9FF; }
+        .badge.c { background: rgba(157,78,221,0.2); color: #9D4EDD; }
+        
+        .card-organizer { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+        .card-organizer-name { font-size: 12px; color: var(--text2); }
+        
+        /* カード内スロット */
+        .card-slots { padding: 12px; border-top: 1px solid var(--border); }
+        .card-slot { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .card-slot:last-child { margin-bottom: 0; }
+        .card-slot-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 200px; }
+        .card-slot-time { font-size: 12px; color: var(--text2); }
+        .card-slot-price { font-size: 12px; font-weight: 600; color: var(--primary); }
+        .card-slot-price.free { color: #00D9FF; }
+        .card-slot-count { font-size: 11px; color: var(--text3); }
+        .card-slot-count.full { color: #FF4757; }
+        .card-slot-avatars { display: flex; gap: -8px; align-items: center; flex-wrap: wrap; }
+        .card-slot-avatars > * { margin-left: -6px; }
+        .card-slot-avatars > *:first-child { margin-left: 0; }
+        .card-slot-buy { padding: 6px 12px; background: var(--gradient); color: white; border: none; border-radius: 14px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .card-slot-buy.free { background: #00D9FF; color: #0D0D1A; }
+        .card-slot-buy.full { background: var(--border); color: var(--text3); cursor: not-allowed; }
+        
+        .avatar-empty { width: 24px; height: 24px; border-radius: 50%; background: var(--border); border: 2px solid var(--card); }
+        
+        .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; position: relative; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 20px; }
+        .nav-create { position: relative; top: -20px; }
+        .nav-plus { width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); }
+        .nav-unread-badge { position: absolute; top: -4px; right: 50%; transform: translateX(50%); margin-right: -15px; background: #FF4757; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: none; align-items: center; justify-content: center; padding: 0 4px; }
+        
+        /* モーダル */
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 200; overflow-y: auto; }
+        .modal.active { display: block; }
+        .modal-content { max-width: 600px; margin: 0 auto; min-height: 100vh; background: var(--bg); }
+        .modal-header { position: sticky; top: 0; background: var(--bg); padding: 16px; display: flex; align-items: center; gap: 16px; z-index: 10; border-bottom: 1px solid var(--border); }
+        .modal-close { background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; }
+        .modal-img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+        .modal-body { padding: 20px; }
+        .modal-title { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
+        .modal-info { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+        .modal-info-item { display: flex; align-items: center; gap: 8px; color: var(--text2); }
+        
+        /* 主催者セクション */
+        .organizer-section { background: var(--card); border-radius: var(--r-lg); padding: 16px; margin-bottom: 20px; }
+        .organizer-header { font-size: 12px; color: var(--text3); margin-bottom: 12px; }
+        .organizer-row { display: flex; align-items: center; gap: 12px; }
+        .organizer-info { flex: 1; }
+        .organizer-name { font-weight: 600; font-size: 15px; }
+        .organizer-actions { display: flex; gap: 8px; }
+        .organizer-btn { padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+        .organizer-btn.profile { background: var(--surface); color: var(--text2); }
+        .organizer-btn.dm { background: var(--gradient); color: white; }
+        
+        /* スロットカード */
+        .section-title { font-size: 14px; font-weight: 600; color: var(--text3); margin: 20px 0 12px; }
+        .slot-card { background: var(--card); border-radius: var(--r-lg); padding: 16px; margin-bottom: 12px; }
+        .slot-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .slot-time { font-weight: 600; font-size: 15px; }
+        .slot-price { font-size: 18px; font-weight: 700; color: var(--primary); }
+        .slot-price.free { color: #00D9FF; }
+        .slot-applicants { margin-bottom: 12px; }
+        .slot-applicants-label { font-size: 12px; color: var(--text3); margin-bottom: 8px; }
+        .slot-applicants-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .slot-count { font-size: 13px; color: var(--text2); margin-left: 8px; }
+        .slot-count.full { color: #FF4757; font-weight: 600; }
+        .slot-buy-btn { width: 100%; padding: 12px; border-radius: var(--r-md); font-weight: 600; font-size: 14px; cursor: pointer; border: none; }
+        .slot-buy-btn.primary { background: var(--gradient); color: white; }
+        .slot-buy-btn.free { background: #00D9FF; color: #0D0D1A; }
+        .slot-buy-btn.full { background: var(--border); color: var(--text3); cursor: not-allowed; }
+        
+        .btn { padding: 12px 24px; border-radius: var(--r-lg); font-weight: 600; cursor: pointer; border: none; font-size: 14px; }
+        .btn-p { background: var(--gradient); color: white; }
+        .btn-s { background: var(--card); color: var(--text); }
+        .btn-lg { width: 100%; padding: 16px; font-size: 16px; }
+        
+        .date-separator { display: flex; align-items: center; gap: 16px; margin: 28px 0 16px; }
+        .date-separator:first-child { margin-top: 0; }
+        .date-separator::before, .date-separator::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+        .date-separator-inner { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--surface); border-radius: 20px; border: 1px solid var(--border); }
+        .date-separator-date { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; color: var(--primary); letter-spacing: 1px; }
+        .date-separator-day { font-size: 12px; color: var(--text2); font-weight: 500; }
+        
+        /* 購入モーダル */
+        .purchase-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
+        .purchase-modal.active { display: flex; }
+        .purchase-box { background: var(--surface); border-radius: 20px; padding: 28px; max-width: 340px; width: 100%; text-align: center; }
+        .purchase-icon { font-size: 56px; margin-bottom: 16px; }
+        .purchase-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+        .purchase-detail { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .purchase-time { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+        .purchase-price { font-size: 32px; font-weight: 700; color: var(--primary); }
+        .purchase-price.free { color: #00D9FF; }
+        .purchase-note { color: var(--text2); font-size: 13px; margin-bottom: 20px; }
+        .purchase-btn { width: 100%; padding: 16px; border-radius: 14px; font-weight: 600; font-size: 16px; cursor: pointer; border: none; margin-bottom: 10px; }
+        .purchase-btn.primary { background: var(--gradient); color: white; }
+        .purchase-btn.free { background: #00D9FF; color: #0D0D1A; }
+        .purchase-btn.cancel { background: var(--card); color: var(--text2); }
+        
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 400; transition: opacity 0.3s; }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="logo.png" class="header-logo" onclick="window.location.href='index.html'">
+            <span class="header-title">EVENT</span>
+        </div>
+        <div class="search-box">
+            <span class="search-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></span>
+            <input type="text" class="search-input" placeholder="EVENT SEARCH" id="searchInput" oninput="filterEvents()">
+        </div>
+        
+        <div class="filter-row">
+            <span class="filter-label">Type</span>
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all" onclick="setTypeFilter('all')">All</button>
+                <button class="filter-btn" data-filter="A" onclick="setTypeFilter('A')">TIMETABLE</button>
+                <button class="filter-btn" data-filter="B" onclick="setTypeFilter('B')">GUARANTEE(ｷﾞｬﾗ)</button>
+                <button class="filter-btn" data-filter="C" onclick="setTypeFilter('C')">FLYER</button>
+            </div>
+        </div>
+        
+        <div class="filter-row">
+            <span class="filter-label">AREA</span>
+            <select id="regionFilter" class="region-select" onchange="setRegionFilter()">
+                <option value="all">ALL AREA</option>
+                <optgroup label="JAPAN">
+                    <option value="TOKYO">TOKYO</option>
+                    <option value="OSAKA">OSAKA</option>
+                    <option value="NAGOYA">NAGOYA</option>
+                    <option value="FUKUOKA">FUKUOKA</option>
+                    <option value="OKINAWA">OKINAWA</option>
+                </optgroup>
+                <optgroup label="ASIA">
+                    <option value="SEOUL">SEOUL</option>
+                    <option value="SHANGHAI">SHANGHAI</option>
+                    <option value="HONG KONG">HONG KONG</option>
+                    <option value="BANGKOK">BANGKOK</option>
+                    <option value="SINGAPORE">SINGAPORE</option>
+                </optgroup>
+                <optgroup label="NORTH AMERICA">
+                    <option value="NEW YORK">NEW YORK</option>
+                    <option value="LOS ANGELES">LOS ANGELES</option>
+                    <option value="MIAMI">MIAMI</option>
+                    <option value="CHICAGO">CHICAGO</option>
+                    <option value="LAS VEGAS">LAS VEGAS</option>
+                </optgroup>
+                <optgroup label="EUROPE">
+                    <option value="BERLIN">BERLIN</option>
+                    <option value="LONDON">LONDON</option>
+                    <option value="AMSTERDAM">AMSTERDAM</option>
+                    <option value="IBIZA">IBIZA</option>
+                    <option value="PARIS">PARIS</option>
+                    <option value="BARCELONA">BARCELONA</option>
+                </optgroup>
+            </select>
+        </div>
+        
+        <div id="eventsList"></div>
+    </div>
+    
+    <!-- イベント詳細モーダル -->
+    <div class="modal" id="eventModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="modal-close" onclick="closeEventModal()">← Back</button>
+            </div>
+            <img id="modalImg" class="modal-img" src="logo.png">
+            <div class="modal-body">
+                <span class="badge a" id="modalBadge">TIMETABLE</span>
+                <h1 class="modal-title" id="modalTitle"></h1>
+                <div class="modal-info">
+                    <div class="modal-info-item" id="modalDate">DATE </div>
+                    <div class="modal-info-item" id="modalLocation">@ </div>
+                    <div class="modal-info-item" id="modalRegion">AREA </div>
+                </div>
+                
+                <div id="modalOrganizer" class="organizer-section"></div>
+                <div id="modalSlots"></div>
+                <div id="modalAction"></div>
+                <p id="modalDesc" style="color: var(--text2); margin-top: 20px; white-space: pre-wrap;"></p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 購入確認モーダル -->
+    <div class="purchase-modal" id="purchaseModal">
+        <div class="purchase-box">
+            <div class="purchase-icon" id="purchaseIcon"></div>
+            <div class="purchase-title" id="purchaseTitle">Buy Timetable</div>
+            <div class="purchase-detail">
+                <div class="purchase-time" id="purchaseTime">22:00-22:30</div>
+                <div class="purchase-price" id="purchasePrice">¥3,000</div>
+            </div>
+            <p class="purchase-note" id="purchaseNote">Buy this slot to perform at the event?</p>
+            <button class="purchase-btn primary" id="purchaseConfirmBtn" onclick="confirmPurchase()">Confirm Purchase</button>
+            <button class="purchase-btn cancel" onclick="closePurchaseModal()">Cancel</button>
+        </div>
+    </div>
+    
+    <nav class="nav">
+        <div class="nav-item" onclick="window.location.href='index.html'"><span>Home</span></div>
+        <div class="nav-item active"><span>Event</span></div>
+        <div class="nav-item nav-create" onclick="handleCreateClick()"><div class="nav-plus">+</div></div>
+        <div class="nav-item" onclick="window.location.href='productions.html'"><span>Production</span></div>
+        <div class="nav-item" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
+    </nav>
+    <div class="toast" id="toast"></div>
+    
+    <script src="js/common.js"></script>
+    <script>
+        let allEvents = [];
+        let currentTypeFilter = 'all';
+        let currentRegionFilter = 'all';
+        let currentEvent = null;
+        let selectedSlotIndex = -1;
+        let usersCache = {};
+        const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+        
+        function setTypeFilter(f) {
+            currentTypeFilter = f;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
+            renderEvents();
+        }
+        
+        function setRegionFilter() {
+            const select = document.getElementById('regionFilter');
+            currentRegionFilter = select.value;
+            select.classList.toggle('active', currentRegionFilter !== 'all');
+            renderEvents();
+        }
+        
+        function filterEvents() { renderEvents(); }
+        
+        async function loadAllEvents() {
+            allEvents = await loadEvents();
+            
+            // 応募者のユーザー情報を一括取得
+            const allUserIds = new Set();
+            allEvents.forEach(ev => {
+                if (ev.organizerId) allUserIds.add(ev.organizerId);
+                if (ev.slots) {
+                    ev.slots.forEach(slot => {
+                        if (slot.applicants) {
+                            slot.applicants.forEach(uid => allUserIds.add(uid));
+                        }
+                    });
+                }
+            });
+            usersCache = await getUsersByIds([...allUserIds]);
+            
+            renderEvents();
+            checkUrlParam();
+        }
+        
+        function getDateKey(date) {
+            const d = date.toDate ? date.toDate() : new Date(date);
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+        
+        function createDateSeparator(dateKey) {
+            const d = new Date(dateKey);
+            const month = d.getMonth() + 1;
+            const day = d.getDate();
+            const dayName = dayNames[d.getDay()];
+            return `
+                <div class="date-separator">
+                    <div class="date-separator-inner">
+                        <span class="date-separator-date">${month}.${day}</span>
+                        <span class="date-separator-day">${dayName}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function formatTimeOnly(date) {
+            if (!date) return '';
+            const d = date.toDate ? date.toDate() : new Date(date);
+            return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+        
+        function renderSlotAvatars(applicants, capacity) {
+            let html = '';
+            const count = applicants ? applicants.length : 0;
+            
+            // 応募者のアバター
+            if (applicants) {
+                applicants.forEach(uid => {
+                    const u = usersCache[uid] || {};
+                    html += renderAvatar(u.photoURL, u.name || '?', 24, true, uid);
+                });
+            }
+            
+            // 空き枠
+            for (let i = count; i < capacity; i++) {
+                html += `<div class="avatar-empty"></div>`;
+            }
+            
+            return html;
+        }
+        
+        function renderEvents() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            
+            let filtered = allEvents.filter(ev => {
+                const evDate = ev.date?.toDate ? ev.date.toDate() : new Date(ev.date);
+                if (evDate < now) return false;
+                if (currentTypeFilter !== 'all' && ev.type !== currentTypeFilter) return false;
+                if (currentRegionFilter !== 'all' && ev.region !== currentRegionFilter) return false;
+                if (search && !ev.title.toLowerCase().includes(search)) return false;
+                return true;
+            });
+            
+            filtered.sort((a, b) => {
+                const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
+                const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
+                return dateA - dateB;
+            });
+            
+            const container = document.getElementById('eventsList');
+            if (filtered.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color: var(--text2); padding: 40px;">No events</p>';
+                return;
+            }
+            
+            const byDate = {};
+            filtered.forEach(ev => {
+                const key = getDateKey(ev.date);
+                if (!byDate[key]) byDate[key] = [];
+                byDate[key].push(ev);
+            });
+            
+            const labels = {A:'TIMETABLE', B:'GUARANTEE(ｷﾞｬﾗ)', C:'FLYER'};
+            const cls = {A:'a', B:'b', C:'c'};
+            let html = '';
+            
+            for (const dateKey in byDate) {
+                html += createDateSeparator(dateKey);
+                
+                byDate[dateKey].forEach(ev => {
+                    const currency = ev.currency || 'jpy';
+                    const organizer = usersCache[ev.organizerId] || {};
+                    
+                    html += `<div class="card">
+                        <div class="card-main" onclick="showDetail('${ev.id}')">
+                            <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                            <div class="card-body">
+                                <span class="card-region">@ ${ev.region||'N/A'}</span>
+                                <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'TIMETABLE'}</span>
+                                <h3 class="card-title">${ev.title}</h3>
+                                <p style="color:var(--text2);font-size:13px;">${formatTimeOnly(ev.date)} ${ev.location||''}</p>
+                                <div class="card-organizer" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${ev.organizerId}'">
+                                    ${renderAvatar(organizer.photoURL || ev.organizerPhoto, organizer.name || ev.organizerName || '?', 28, false)}
+                                    <span class="card-organizer-name">${organizer.name || ev.organizerName || 'Organizer'}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                    
+                    // スロット表示（Type A, B のみ）
+                    if ((ev.type === 'A' || ev.type === 'B') && ev.slots && ev.slots.length > 0) {
+                        html += `<div class="card-slots">`;
+                        ev.slots.forEach((slot, i) => {
+                            const price = slot.price || 0;
+                            const capacity = slot.capacity || 1;
+                            const applicants = slot.applicants || [];
+                            const count = applicants.length;
+                            const isFull = count >= capacity;
+                            const isFree = price === 0;
+                            
+                            html += `<div class="card-slot">
+                                <div class="card-slot-info">
+                                    <span class="card-slot-time">${slot.time || 'TBD'}</span>
+                                    <span class="card-slot-price ${isFree ? 'free' : ''}">${formatPrice(price, currency)}</span>
+                                    <span class="card-slot-count ${isFull ? 'full' : ''}">${count}/${capacity}${isFull ? ' FULL' : ''}</span>
+                                </div>
+                                <div class="card-slot-avatars">${renderSlotAvatars(applicants, capacity)}</div>
+                                <button class="card-slot-buy ${isFree ? 'free' : ''} ${isFull ? 'full' : ''}" 
+                                        onclick="event.stopPropagation(); openPurchaseFromCard('${ev.id}', ${i})"
+                                        ${isFull ? 'disabled' : ''}>
+                                    ${isFull ? 'FULL' : (isFree ? 'FREE' : formatPriceShort(price, currency))}
+                                </button>
+                            </div>`;
+                        });
+                        html += `</div>`;
+                    }
+                    
+                    html += `</div>`;
+                });
+            }
+            container.innerHTML = html;
+        }
+        
+        function checkUrlParam() {
+            const id = new URLSearchParams(location.search).get('id');
+            if (id) showDetail(id);
+        }
+        
+        function showDetail(id) {
+            currentEvent = allEvents.find(e => e.id === id);
+            if (!currentEvent) return;
+            
+            const labels = {A:'TIMETABLE', B:'GUARANTEE(ｷﾞｬﾗ)', C:'FLYER'};
+            const cls = {A:'a', B:'b', C:'c'};
+            const currency = currentEvent.currency || 'jpy';
+            
+            document.getElementById('modalImg').src = currentEvent.imageUrl || 'logo.png';
+            document.getElementById('modalBadge').textContent = labels[currentEvent.type] || 'TIMETABLE';
+            document.getElementById('modalBadge').className = 'badge ' + (cls[currentEvent.type] || 'a');
+            document.getElementById('modalTitle').textContent = currentEvent.title;
+            document.getElementById('modalDate').textContent = 'DATE ' + formatDateFull(currentEvent.date);
+            document.getElementById('modalLocation').textContent = '@ ' + (currentEvent.location || 'N/A');
+            document.getElementById('modalRegion').textContent = 'AREA ' + (currentEvent.region || 'N/A');
+            document.getElementById('modalDesc').textContent = currentEvent.description || '';
+            
+            // 主催者セクション
+            const organizer = usersCache[currentEvent.organizerId] || {};
+            const organizerName = organizer.name || currentEvent.organizerName || '主催者';
+            const organizerPhoto = organizer.photoURL || currentEvent.organizerPhoto || '';
+            
+            document.getElementById('modalOrganizer').innerHTML = `
+                <div class="organizer-header">ORGANIZER</div>
+                <div class="organizer-row">
+                    ${renderAvatar(organizerPhoto, organizerName, 48, true, currentEvent.organizerId)}
+                    <div class="organizer-info">
+                        <div class="organizer-name">${organizerName}</div>
+                    </div>
+                    <div class="organizer-actions">
+                        <button class="organizer-btn profile" onclick="window.location.href='profile.html?uid=${currentEvent.organizerId}'">PROFILE</button>
+                        <button class="organizer-btn dm" onclick="openDM('${currentEvent.organizerId}', '${organizerName}')">DM</button>
+                    </div>
+                </div>
+            `;
+            
+            // スロット
+            let slotsHtml = '';
+            if ((currentEvent.type === 'A' || currentEvent.type === 'B') && currentEvent.slots && currentEvent.slots.length > 0) {
+                const title = currentEvent.type === 'A' ? 'TIMETABLE' : 'GUARANTEE(ｷﾞｬﾗ)';
+                slotsHtml = `<div class="section-title">${title}</div>`;
+                
+                currentEvent.slots.forEach((slot, i) => {
+                    const price = slot.price || 0;
+                    const capacity = slot.capacity || 1;
+                    const applicants = slot.applicants || [];
+                    const count = applicants.length;
+                    const isFull = count >= capacity;
+                    const isFree = price === 0;
+                    
+                    let btnClass = 'primary';
+                    let btnText = currentEvent.type === 'A' ? 'Buy' : 'Apply';
+                    if (isFree) {
+                        btnClass = 'free';
+                        btnText = currentEvent.type === 'A' ? 'Reserve Free' : 'Apply Free';
+                    }
+                    if (isFull) {
+                        btnClass = 'full';
+                        btnText = 'FULL';
+                    }
+                    
+                    slotsHtml += `
+                        <div class="slot-card">
+                            <div class="slot-header">
+                                <span class="slot-time">${slot.time || 'TBD'}</span>
+                                <span class="slot-price ${isFree ? 'free' : ''}">${formatPrice(price, currency)}</span>
+                            </div>
+                            <div class="slot-applicants">
+                                <div class="slot-applicants-label">Applicants</div>
+                                <div class="slot-applicants-row">
+                                    ${renderSlotAvatars(applicants, capacity)}
+                                    <span class="slot-count ${isFull ? 'full' : ''}">${count}/${capacity}${isFull ? ' FULL' : ''}</span>
+                                </div>
+                            </div>
+                            <button class="slot-buy-btn ${btnClass}" onclick="openPurchaseModal(${i})" ${isFull ? 'disabled' : ''}>${btnText}</button>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('modalSlots').innerHTML = slotsHtml;
+            
+            // アクションボタン
+            let actionHtml = '';
+            if (currentEvent.type === 'C') {
+                actionHtml = `<button class="btn btn-s btn-lg" onclick="shareEvent()">📤 Share</button>`;
+            }
+            document.getElementById('modalAction').innerHTML = actionHtml;
+            
+            document.getElementById('eventModal').classList.add('active');
+            history.replaceState(null, '', `events.html?id=${id}`);
+        }
+        
+        function closeEventModal() {
+            document.getElementById('eventModal').classList.remove('active');
+            history.replaceState(null, '', 'events.html');
+        }
+        
+        // カードから直接購入
+        function openPurchaseFromCard(eventId, slotIndex) {
+            currentEvent = allEvents.find(e => e.id === eventId);
+            if (!currentEvent) return;
+            openPurchaseModal(slotIndex);
+        }
+        
+        function openPurchaseModal(index) {
+            if (!requireLogin()) return;
+            
+            selectedSlotIndex = index;
+            const slot = currentEvent.slots[index];
+            const currency = currentEvent.currency || 'jpy';
+            const price = slot.price || 0;
+            const isFree = price === 0;
+            const capacity = slot.capacity || 1;
+            const count = (slot.applicants || []).length;
+            
+            if (count >= capacity) {
+                toast('This slot is full', 'error');
+                return;
+            }
+            
+            // 既に応募済みかチェック
+            if (user && slot.applicants && slot.applicants.includes(user.uid)) {
+                toast('Already applied', 'error');
+                return;
+            }
+            
+            if (currentEvent.type === 'A') {
+                document.getElementById('purchaseIcon').textContent = '';
+                document.getElementById('purchaseTitle').textContent = 'Buy Timetable';
+                document.getElementById('purchaseNote').textContent = isFree 
+                    ? 'Reserve this slot for free?' 
+                    : 'Buy this slot to perform at the event?';
+            } else {
+                document.getElementById('purchaseIcon').textContent = '';
+                document.getElementById('purchaseTitle').textContent = 'Apply for GUARANTEE';
+                document.getElementById('purchaseNote').textContent = isFree 
+                    ? 'Apply for this slot for free?' 
+                    : 'Apply for this slot? (You will be paid)';
+            }
+            
+            document.getElementById('purchaseTime').textContent = '' + (slot.time || 'TBD');
+            document.getElementById('purchasePrice').textContent = formatPrice(price, currency);
+            document.getElementById('purchasePrice').className = 'purchase-price' + (isFree ? ' free' : '');
+            
+            const confirmBtn = document.getElementById('purchaseConfirmBtn');
+            if (isFree) {
+                confirmBtn.textContent = currentEvent.type === 'A' ? 'Reserve Free' : 'Apply Free';
+                confirmBtn.className = 'purchase-btn free';
+            } else {
+                confirmBtn.textContent = currentEvent.type === 'A' ? 'Confirm Purchase' : 'Apply';
+                confirmBtn.className = 'purchase-btn primary';
+            }
+            
+            document.getElementById('purchaseModal').classList.add('active');
+        }
+        
+        function closePurchaseModal() {
+            document.getElementById('purchaseModal').classList.remove('active');
+            selectedSlotIndex = -1;
+        }
+        
+        async function confirmPurchase() {
+            if (!currentEvent || selectedSlotIndex < 0) return;
+            
+            const slot = currentEvent.slots[selectedSlotIndex];
+            const isFree = (slot.price || 0) === 0;
+            
+            if (isFree) {
+                // 無料の場合は直接予約
+                const success = await applyToSlot(currentEvent.id, selectedSlotIndex);
+                if (success) {
+                    toast('Reserved (Free)');
+                    // データを再読み込み
+                    await loadAllEvents();
+                    // モーダルを更新
+                    if (document.getElementById('eventModal').classList.contains('active')) {
+                        showDetail(currentEvent.id);
+                    }
+                }
+            } else {
+                // 有料の場合はStripe決済（TODO）
+                toast('Coming soon');
+            }
+            closePurchaseModal();
+        }
+        
+        function shareEvent() {
+            if (navigator.share) {
+                navigator.share({
+                    title: currentEvent.title,
+                    text: `${currentEvent.title} - ${currentEvent.location}`,
+                    url: window.location.href
+                });
+            } else {
+                navigator.clipboard.writeText(window.location.href);
+                toast('URL copied');
+            }
+        }
+        
+        function onAuthReady() { loadAllEvents(); }
+    </script>
+</body>
+</html>
