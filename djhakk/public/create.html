@@ -109,32 +109,32 @@
         
         <div class="type-grid">
             <div class="type-btn active" data-type="A" onclick="selectType('A', this)">
-                <div class="type-btn-icon">🎫</div>
+                <div class="type-btn-icon"></div>
                 <div class="type-btn-label">タイムテーブル</div>
                 <div class="type-btn-desc">スロットを販売</div>
             </div>
             <div class="type-btn" data-type="B" onclick="selectType('B', this)">
-                <div class="type-btn-icon">💰</div>
+                <div class="type-btn-icon"></div>
                 <div class="type-btn-label">ギャランティー</div>
                 <div class="type-btn-desc">報酬を支払う</div>
             </div>
             <div class="type-btn" data-type="C" onclick="selectType('C', this)">
-                <div class="type-btn-icon">📢</div>
+                <div class="type-btn-icon"></div>
                 <div class="type-btn-label">フライヤー</div>
                 <div class="type-btn-desc">告知のみ</div>
             </div>
             <div class="type-btn" data-type="audio" onclick="selectType('audio', this)">
-                <div class="type-btn-icon">🎵</div>
+                <div class="type-btn-icon"></div>
                 <div class="type-btn-label">音源販売</div>
                 <div class="type-btn-desc">ダウンロード販売</div>
             </div>
             <div class="type-btn" data-type="goods" onclick="selectType('goods', this)">
-                <div class="type-btn-icon">💿</div>
+                <div class="type-btn-icon"></div>
                 <div class="type-btn-label">商品販売</div>
                 <div class="type-btn-desc">レコード等の物販</div>
             </div>
             <div class="type-btn" data-type="produce" onclick="selectType('produce', this)">
-                <div class="type-btn-icon">🎤</div>
+                <div class="type-btn-icon"></div>
                 <div class="type-btn-label">プロデュース</div>
                 <div class="type-btn-desc">アーティスト売り込み</div>
             </div>
@@ -144,7 +144,7 @@
         <div id="eventForm" class="form-section active">
             <div class="image-upload" onclick="document.getElementById('eventImage').click()">
                 <img id="eventImagePreview" style="display:none;">
-                <span class="image-upload-text" id="eventImageText">📷 画像をアップロード</span>
+                <span class="image-upload-text" id="eventImageText">画像をアップロード</span>
             </div>
             <input type="file" id="eventImage" accept="image/*" style="display:none;" onchange="previewImage(this,'eventImagePreview','eventImageText')">
             
@@ -154,28 +154,28 @@
             <div class="input-group">
                 <label class="label">地域</label>
                 <select id="eventRegion" class="input" onchange="handleRegionChange()">
-                    <optgroup label="🇯🇵 日本">
+                    <optgroup label="日本">
                         <option value="東京">東京</option>
                         <option value="大阪">大阪</option>
                         <option value="名古屋">名古屋</option>
                         <option value="福岡">福岡</option>
                         <option value="沖縄/那覇">沖縄/那覇</option>
                     </optgroup>
-                    <optgroup label="🌏 アジア">
+                    <optgroup label="アジア">
                         <option value="ソウル">ソウル</option>
                         <option value="上海">上海</option>
                         <option value="香港">香港</option>
                         <option value="バンコク">バンコク</option>
                         <option value="シンガポール">シンガポール</option>
                     </optgroup>
-                    <optgroup label="🌎 北米">
+                    <optgroup label="北米">
                         <option value="ニューヨーク">ニューヨーク</option>
                         <option value="ロサンゼルス">ロサンゼルス</option>
                         <option value="マイアミ">マイアミ</option>
                         <option value="シカゴ">シカゴ</option>
                         <option value="ラスベガス">ラスベガス</option>
                     </optgroup>
-                    <optgroup label="🌍 ヨーロッパ">
+                    <optgroup label="ヨーロッパ">
                         <option value="ベルリン">ベルリン</option>
                         <option value="ロンドン">ロンドン</option>
                         <option value="アムステルダム">アムステルダム</option>
@@ -183,7 +183,7 @@
                         <option value="パリ">パリ</option>
                         <option value="バルセロナ">バルセロナ</option>
                     </optgroup>
-                    <optgroup label="🌐 その他">
+                    <optgroup label="その他">
                         <option value="other">その他（入力）</option>
                     </optgroup>
                 </select>
@@ -204,7 +204,6 @@
                     </select>
                 </div>
                 <div id="currencyInfo" class="currency-info">
-                    <span class="currency-info-icon">💱</span>
                     <span class="currency-info-text">通貨: <span id="currencyDisplay" class="currency-info-value">JPY (¥)</span></span>
                 </div>
             </div>
@@ -231,7 +230,7 @@
         <div id="productionForm" class="form-section">
             <div class="image-upload" onclick="document.getElementById('prodImage').click()">
                 <img id="prodImagePreview" style="display:none;">
-                <span class="image-upload-text" id="prodImageText">📷 画像をアップロード</span>
+                <span class="image-upload-text" id="prodImageText">画像をアップロード</span>
             </div>
             <input type="file" id="prodImage" accept="image/*" style="display:none;" onchange="previewImage(this,'prodImagePreview','prodImageText')">
             
@@ -263,11 +262,11 @@
     </div>
     
     <nav class="nav">
-        <div class="nav-item" onclick="location.href='index.html'"><span class="nav-icon">🏠</span><span>Home</span></div>
-        <div class="nav-item" onclick="location.href='events.html'"><span class="nav-icon">🎵</span><span>Event</span></div>
+        <div class="nav-item" onclick="location.href='index.html'"><span>Home</span></div>
+        <div class="nav-item" onclick="location.href='events.html'"><span>Event</span></div>
         <div class="nav-item nav-create active"><div class="nav-plus">+</div></div>
-        <div class="nav-item" onclick="location.href='productions.html'"><span class="nav-icon">💿</span><span>Production</span></div>
-        <div class="nav-item" onclick="handleProfileClick()"><span class="nav-icon">👤</span><span>Profile</span><span class="nav-unread-badge"></span></div>
+        <div class="nav-item" onclick="location.href='productions.html'"><span>Production</span></div>
+        <div class="nav-item" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
     </nav>
     <div class="toast" id="toast"></div>
     

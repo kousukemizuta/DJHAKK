@@ -131,7 +131,7 @@
                         </div>
                         <div style="flex: 1;">
                             <button type="button" class="btn btn-s" onclick="document.getElementById('avatarInput').click()" style="padding: 10px 20px; margin-bottom: 8px;">
-                                📷 画像を変更
+                                画像を変更
                             </button>
                             <p style="color: var(--text3); font-size: 12px; margin: 0;">ヘッダーのアイコンタップでも変更できます</p>
                         </div>
@@ -173,11 +173,11 @@
     </div>
     
     <nav class="nav">
-        <div class="nav-item" onclick="location.href='index.html'"><span class="nav-icon">🏠</span><span>Home</span></div>
-        <div class="nav-item" onclick="location.href='events.html'"><span class="nav-icon">🎵</span><span>Event</span></div>
+        <div class="nav-item" onclick="location.href='index.html'"><span>Home</span></div>
+        <div class="nav-item" onclick="location.href='events.html'"><span>Event</span></div>
         <div class="nav-item nav-create" onclick="handleCreateClick()"><div class="nav-plus">+</div></div>
-        <div class="nav-item" onclick="location.href='productions.html'"><span class="nav-icon">💿</span><span>Production</span></div>
-        <div class="nav-item active" onclick="handleProfileClick()"><span class="nav-icon">👤</span><span>Profile</span><span class="nav-unread-badge"></span></div>
+        <div class="nav-item" onclick="location.href='productions.html'"><span>Production</span></div>
+        <div class="nav-item active" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
     </nav>
     <div class="toast" id="toast"></div>
     
@@ -250,7 +250,7 @@
             }
             
             document.getElementById('profileName').textContent = name;
-            document.getElementById('profileRegion').textContent = userData.region ? `📍 ${userData.region}` : '';
+            document.getElementById('profileRegion').textContent = userData.region ? `${userData.region}` : '';
             document.getElementById('profileBio').textContent = userData.bio || '';
             document.getElementById('profileActions').innerHTML = '';
             
@@ -305,7 +305,7 @@
             }
             
             document.getElementById('profileName').textContent = name;
-            document.getElementById('profileRegion').textContent = targetUserData.region ? `📍 ${targetUserData.region}` : '';
+            document.getElementById('profileRegion').textContent = targetUserData.region ? `${targetUserData.region}` : '';
             document.getElementById('profileBio').textContent = targetUserData.bio || '';
             
             // SNS表示
@@ -313,7 +313,7 @@
             
             // アクションボタン
             document.getElementById('profileActions').innerHTML = `
-                <button class="profile-btn dm" onclick="openDM('${uid}', '${name}')">💬 DMを送る</button>
+                <button class="profile-btn dm" onclick="openDM('${uid}', '${name}')">DMを送る</button>
             `;
             
             // 主催イベントを取得
@@ -359,7 +359,7 @@
                             <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
                             <div class="card-body">
                                 <div class="card-title">${ev.title}</div>
-                                <div class="card-meta">📅 ${formatDate(ev.date)}</div>
+                                <div class="card-meta">${formatDate(ev.date)}</div>
                             </div>
                         </div>
                     `;
@@ -452,7 +452,7 @@
             };
             if (await updateUserData(data)) {
                 document.getElementById('profileName').textContent = data.name || '-';
-                document.getElementById('profileRegion').textContent = data.region ? `📍 ${data.region}` : '';
+                document.getElementById('profileRegion').textContent = data.region ? `${data.region}` : '';
                 document.getElementById('profileBio').textContent = data.bio || '';
                 renderProfileSns(data.snsLinks);
                 toast('プロフィールを保存しました');
@@ -483,7 +483,7 @@
                         <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
                         <div class="card-body">
                             <div class="card-title">${ev.title}</div>
-                            <div class="card-meta">📅 ${formatDate(ev.date)}</div>
+                            <div class="card-meta">${formatDate(ev.date)}</div>
                         </div>
                     </div>
                 `).join('');

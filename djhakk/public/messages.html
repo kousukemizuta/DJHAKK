@@ -71,11 +71,11 @@
     </div>
     
     <nav class="nav">
-        <div class="nav-item" onclick="location.href='index.html'"><span class="nav-icon">🏠</span><span>Home</span></div>
-        <div class="nav-item" onclick="location.href='events.html'"><span class="nav-icon">🎵</span><span>Event</span></div>
+        <div class="nav-item" onclick="location.href='index.html'"><span>Home</span></div>
+        <div class="nav-item" onclick="location.href='events.html'"><span>Event</span></div>
         <div class="nav-item nav-create" onclick="handleCreateClick()"><div class="nav-plus">+</div></div>
-        <div class="nav-item" onclick="location.href='productions.html'"><span class="nav-icon">💿</span><span>Production</span></div>
-        <div class="nav-item active" onclick="handleProfileClick()"><span class="nav-icon">👤</span><span>Profile</span><span class="nav-unread-badge"></span></div>
+        <div class="nav-item" onclick="location.href='productions.html'"><span>Production</span></div>
+        <div class="nav-item active" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
     </nav>
     <div class="toast" id="toast"></div>
     
@@ -96,7 +96,7 @@
                     if (snapshot.empty) {
                         container.innerHTML = `
                             <div class="empty-state">
-                                <div class="empty-state-icon">💬</div>
+                                <div class="empty-state-icon"></div>
                                 <div class="empty-state-title">メッセージはありません</div>
                                 <div class="empty-state-text">イベント主催者やアーティストと<br>コミュニケーションを始めましょう</div>
                             </div>

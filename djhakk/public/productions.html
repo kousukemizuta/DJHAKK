@@ -99,11 +99,11 @@
     </div>
     
     <nav class="nav">
-        <div class="nav-item" onclick="window.location.href='index.html'"><span class="nav-icon">🏠</span><span>Home</span></div>
-        <div class="nav-item" onclick="window.location.href='events.html'"><span class="nav-icon">🎵</span><span>Event</span></div>
+        <div class="nav-item" onclick="window.location.href='index.html'"><span>Home</span></div>
+        <div class="nav-item" onclick="window.location.href='events.html'"><span>Event</span></div>
         <div class="nav-item nav-create" onclick="handleCreateClick()"><div class="nav-plus">+</div></div>
-        <div class="nav-item active"><span class="nav-icon">💿</span><span>Production</span></div>
-        <div class="nav-item" onclick="handleProfileClick()"><span class="nav-icon">👤</span><span>Profile</span><span class="nav-unread-badge"></span></div>
+        <div class="nav-item active"><span>Production</span></div>
+        <div class="nav-item" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
     </nav>
     <div class="toast" id="toast"></div>
     
@@ -172,7 +172,7 @@
             document.getElementById('modalTitle').textContent = currentProduction.title;
             document.getElementById('modalPrice').textContent = '¥' + (currentProduction.price||0).toLocaleString();
             document.getElementById('modalDesc').textContent = currentProduction.description || '';
-            document.getElementById('modalArtist').textContent = currentProduction.artistName ? '👤 ' + currentProduction.artistName : '';
+            document.getElementById('modalArtist').textContent = currentProduction.artistName ? '' + currentProduction.artistName : '';
             
             document.getElementById('productionModal').classList.add('active');
         }
