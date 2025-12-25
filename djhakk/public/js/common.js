@@ -892,6 +892,15 @@ function isNotificationEnabled() {
 // ========================================
 // Auth State Observer
 // ========================================
+let authReady = false;
+let domReady = false;
+
+function tryCallOnAuthReady() {
+    if (authReady && domReady && typeof onAuthReady === 'function') {
+        onAuthReady();
+    }
+}
+
 auth.onAuthStateChanged(async (u) => {
     user = u;
     if (u && !isGuest) {
@@ -910,7 +919,17 @@ auth.onAuthStateChanged(async (u) => {
         log('User logged out or guest mode');
     }
     
-    if (typeof onAuthReady === 'function') {
-        onAuthReady();
-    }
+    authReady = true;
+    tryCallOnAuthReady();
 });
+
+// DOMが準備完了したらonAuthReadyを呼ぶ
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        domReady = true;
+        tryCallOnAuthReady();
+    });
+} else {
+    domReady = true;
+    tryCallOnAuthReady();
+}
