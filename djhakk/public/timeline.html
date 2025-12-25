@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TimeLine - DJHAKK</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+    <style>
+        :root {
+            --primary: #FF6B00;
+            --primary-light: #FF8533;
+            --bg: #0D0D1A;
+            --surface: #1A1A2E;
+            --card: #252538;
+            --text: #FFFFFF;
+            --text2: #A0A0B8;
+            --text3: #6B6B80;
+            --border: #3A3A50;
+            --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+            --r-md: 12px;
+            --r-lg: 16px;
+            --r-xl: 24px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans JP', 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .container { max-width: 600px; margin: 0 auto; padding: 16px; padding-bottom: 100px; }
+        
+        .header { display: flex; align-items: center; gap: 16px; padding: 16px 0; margin-bottom: 16px; }
+        .header-logo { height: 40px; width: 40px; object-fit: contain; cursor: pointer; border-radius: 8px; }
+        .header-title { font-size: 20px; font-weight: 700; flex: 1; }
+        
+        /* Tweet Input Area */
+        .tweet-input-area { background: var(--card); border-radius: var(--r-xl); padding: 16px; margin-bottom: 20px; }
+        .tweet-input-header { display: flex; gap: 12px; }
+        .tweet-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; overflow: hidden; flex-shrink: 0; }
+        .tweet-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .tweet-input-wrapper { flex: 1; }
+        .tweet-input { width: 100%; background: transparent; border: none; color: var(--text); font-size: 16px; resize: none; outline: none; min-height: 60px; line-height: 1.5; }
+        .tweet-input::placeholder { color: var(--text3); }
+        .tweet-input-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+        .tweet-char-count { font-size: 13px; color: var(--text3); }
+        .tweet-char-count.warning { color: #FF4757; }
+        .tweet-submit-btn { padding: 10px 24px; background: var(--gradient); color: white; border: none; border-radius: 20px; font-weight: 600; font-size: 14px; cursor: pointer; transition: opacity 0.2s; }
+        .tweet-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* Cards */
+        .card { background: var(--card); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 16px; }
+        .card-main { display: flex; cursor: pointer; }
+        .card-img { width: 100px; min-width: 100px; height: 120px; object-fit: cover; }
+        .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
+        .card-title { font-size: 15px; font-weight: 700; margin: 4px 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .card-region { font-size: 11px; color: var(--primary); background: rgba(255,107,0,0.15); padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 4px; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+        .badge.a { background: rgba(255,107,0,0.2); color: #FF6B00; }
+        .badge.b { background: rgba(0,217,255,0.2); color: #00D9FF; }
+        .badge.c { background: rgba(157,78,221,0.2); color: #9D4EDD; }
+        .badge.tweet { background: rgba(29,161,242,0.2); color: #1DA1F2; }
+        .badge.user { background: rgba(0,200,83,0.2); color: #00C853; }
+        .badge.audio { background: rgba(255,107,0,0.2); color: #FF6B00; }
+        .badge.goods { background: rgba(0,217,255,0.2); color: #00D9FF; }
+        .badge.produce { background: rgba(157,78,221,0.2); color: #9D4EDD; }
+        
+        /* Tweet Card */
+        .tweet-card { background: var(--card); border-radius: var(--r-xl); padding: 16px; margin-bottom: 16px; }
+        .tweet-card-header { display: flex; gap: 12px; margin-bottom: 12px; }
+        .tweet-card-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 600; overflow: hidden; flex-shrink: 0; cursor: pointer; }
+        .tweet-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .tweet-card-info { flex: 1; }
+        .tweet-card-name { font-weight: 600; font-size: 15px; cursor: pointer; }
+        .tweet-card-name:hover { text-decoration: underline; }
+        .tweet-card-badge { margin-top: 4px; }
+        .tweet-card-text { font-size: 15px; line-height: 1.6; margin-bottom: 12px; word-wrap: break-word; }
+        
+        /* Artist Card */
+        .artist-card { background: var(--card); border-radius: var(--r-xl); padding: 16px; margin-bottom: 16px; cursor: pointer; }
+        .artist-card-header { display: flex; gap: 12px; margin-bottom: 12px; }
+        .artist-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600; overflow: hidden; flex-shrink: 0; }
+        .artist-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .artist-info { flex: 1; min-width: 0; }
+        .artist-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .artist-region { font-size: 12px; color: var(--primary); }
+        .artist-bio { font-size: 13px; color: var(--text2); margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
+        .artist-footer { display: flex; justify-content: space-between; align-items: center; }
+        .artist-dm-btn { padding: 8px 16px; background: var(--gradient); color: white; border: none; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        
+        /* Interaction Buttons */
+        .interaction-buttons { display: flex; gap: 20px; padding-top: 12px; border-top: 1px solid var(--border); }
+        .interaction-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--text3); font-size: 14px; cursor: pointer; padding: 4px 0; transition: color 0.2s; }
+        .interaction-btn:hover { color: var(--text2); }
+        .interaction-btn.like-btn.liked { color: #FF4757; }
+        .interaction-btn svg { flex-shrink: 0; }
+        
+        .card-interaction { padding: 12px 16px; }
+        
+        /* Footer Nav */
+        .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; position: relative; }
+        .nav-item.active { color: var(--primary); }
+        .nav-unread-badge { position: absolute; top: -4px; right: 50%; transform: translateX(50%); margin-right: -15px; background: #FF4757; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: none; align-items: center; justify-content: center; padding: 0 4px; }
+        
+        /* Floating Create Button */
+        .fab { position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); cursor: pointer; z-index: 101; border: none; }
+        @media (min-width: 600px) {
+            .fab { right: calc(50% - 280px); }
+        }
+        
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text2); }
+        .empty-state-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+        
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 300; transition: opacity 0.3s; }
+        .toast.show { opacity: 1; }
+        .toast.error { background: #FF4757; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 200; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--surface); border-radius: var(--r-xl); width: 100%; max-width: 500px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        .modal-close { background: none; border: none; color: var(--text2); font-size: 24px; cursor: pointer; }
+        .modal-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
+        
+        .input { width: 100%; padding: 14px 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text); font-size: 16px; }
+        .input:focus { outline: none; border-color: var(--primary); }
+        .btn { padding: 12px 24px; border-radius: var(--r-lg); font-weight: 600; cursor: pointer; border: none; font-size: 14px; }
+        .btn-p { background: var(--gradient); color: white; }
+        
+        .loading { text-align: center; padding: 40px; color: var(--text2); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="logo.png" class="header-logo" onclick="window.location.href='index.html'">
+            <span class="header-title">TIMELINE</span>
+        </div>
+        
+        <!-- Tweet Input Area -->
+        <div class="tweet-input-area" id="tweetInputArea" style="display:none;">
+            <div class="tweet-input-header">
+                <div class="tweet-avatar" id="tweetAvatar">?</div>
+                <div class="tweet-input-wrapper">
+                    <textarea class="tweet-input" id="tweetInput" placeholder="What's happening?" maxlength="140" oninput="updateCharCount()"></textarea>
+                </div>
+            </div>
+            <div class="tweet-input-footer">
+                <span class="tweet-char-count" id="charCount">0/140</span>
+                <button class="tweet-submit-btn" id="tweetSubmitBtn" onclick="submitTweet()" disabled>Post</button>
+            </div>
+        </div>
+        
+        <!-- Timeline Feed -->
+        <div id="timelineFeed">
+            <div class="loading">Loading...</div>
+        </div>
+    </div>
+    
+    <!-- Floating Action Button -->
+    <button class="fab" onclick="handleCreateClick()">+</button>
+    
+    <nav class="nav">
+        <div class="nav-item" onclick="location.href='index.html'"><span>Home</span></div>
+        <div class="nav-item" onclick="location.href='events.html'"><span>Event</span></div>
+        <div class="nav-item active"><span>TimeLine</span></div>
+        <div class="nav-item" onclick="location.href='productions.html'"><span>Production</span></div>
+        <div class="nav-item" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
+    </nav>
+    <div class="toast" id="toast"></div>
+    
+    <script src="js/common.js"></script>
+    <script>
+        let timelineData = [];
+        let likedMap = {};
+        
+        function updateCharCount() {
+            const input = $('tweetInput');
+            const count = $('charCount');
+            const btn = $('tweetSubmitBtn');
+            const len = input.value.length;
+            
+            count.textContent = `${len}/140`;
+            count.classList.toggle('warning', len > 120);
+            btn.disabled = len === 0 || len > 140;
+        }
+        
+        async function submitTweet() {
+            const input = $('tweetInput');
+            const text = input.value.trim();
+            if (!text || text.length > 140) return;
+            
+            const btn = $('tweetSubmitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Posting...';
+            
+            const result = await postTweet(text);
+            
+            if (result) {
+                input.value = '';
+                updateCharCount();
+                toast('Posted!');
+                loadTimeline(); // リロード
+            } else {
+                toast('Failed to post', 'error');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = 'Post';
+        }
+        
+        async function loadTimeline() {
+            const container = $('timelineFeed');
+            
+            try {
+                timelineData = await loadTimelineData();
+                
+                if (timelineData.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-title">No posts yet</div>
+                            <p>Be the first to post something!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // いいね状態を取得
+                likedMap = await getLikedStatus(timelineData);
+                
+                renderTimeline();
+            } catch (e) {
+                log('Error loading timeline: ' + e.message);
+                container.innerHTML = '<div class="empty-state">Failed to load</div>';
+            }
+        }
+        
+        function renderTimeline() {
+            const container = $('timelineFeed');
+            let html = '';
+            
+            timelineData.forEach(item => {
+                const isLiked = likedMap[`${item._type}_${item.id}`] || false;
+                
+                switch (item._type) {
+                    case 'tweet':
+                        html += renderTweetCard(item, isLiked);
+                        break;
+                    case 'event':
+                        html += renderEventCard(item, isLiked);
+                        break;
+                    case 'production':
+                        html += renderProductionCard(item, isLiked);
+                        break;
+                    case 'user':
+                        html += renderArtistCard(item, isLiked);
+                        break;
+                }
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function renderTweetCard(tweet, isLiked) {
+            const initial = (tweet.userName || '?')[0].toUpperCase();
+            const avatarHtml = tweet.userPhoto 
+                ? `<img src="${tweet.userPhoto}" onerror="this.style.display='none';this.parentElement.innerHTML='${initial}'">`
+                : initial;
+            
+            return `
+                <div class="tweet-card">
+                    <div class="tweet-card-header">
+                        <div class="tweet-card-avatar" onclick="window.location.href='profile.html?uid=${tweet.userId}'">${avatarHtml}</div>
+                        <div class="tweet-card-info">
+                            <div class="tweet-card-name" onclick="window.location.href='profile.html?uid=${tweet.userId}'">${tweet.userName || 'User'}</div>
+                            <div class="tweet-card-badge"><span class="badge tweet">POST</span></div>
+                        </div>
+                    </div>
+                    <div class="tweet-card-text">${escapeHtml(tweet.text)}</div>
+                    ${renderInteractionButtons('tweet', tweet.id, tweet.likesCount, tweet.commentsCount, isLiked)}
+                </div>
+            `;
+        }
+        
+        function renderEventCard(ev, isLiked) {
+            const labels = {A:'TIMETABLE', B:'GUARANTEE(ｷﾞｬﾗ)', C:'FLYER'};
+            const cls = {A:'a', B:'b', C:'c'};
+            const dateStr = ev.date ? formatDate(ev.date) : '';
+            
+            return `
+                <div class="card">
+                    <div class="card-main" onclick="window.location.href='events.html?id=${ev.id}'">
+                        <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                        <div class="card-body">
+                            <span class="card-region">${ev.region||'N/A'}</span>
+                            <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'EVENT'}</span>
+                            <h3 class="card-title">${ev.title}</h3>
+                            <p style="color:var(--text2);font-size:12px;">${dateStr} ${ev.location||''}</p>
+                        </div>
+                    </div>
+                    <div class="card-interaction">
+                        ${renderInteractionButtons('event', ev.id, ev.likesCount, ev.commentsCount, isLiked)}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderProductionCard(p, isLiked) {
+            const typeLabels = {audio: 'DOWNLOAD', goods: 'ITEM', produce: 'PRODUCE'};
+            
+            return `
+                <div class="card">
+                    <div class="card-main" onclick="window.location.href='productions.html?id=${p.id}'">
+                        <img src="${p.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                        <div class="card-body">
+                            <span class="badge ${p.type||'audio'}">${typeLabels[p.type]||'PRODUCTION'}</span>
+                            <h3 class="card-title">${p.title}</h3>
+                            <p style="color:var(--text2);font-size:12px;">¥${(p.price||0).toLocaleString()}</p>
+                        </div>
+                    </div>
+                    <div class="card-interaction">
+                        ${renderInteractionButtons('production', p.id, p.likesCount, p.commentsCount, isLiked)}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderArtistCard(artist, isLiked) {
+            const initial = (artist.name || '?')[0].toUpperCase();
+            const avatarHtml = artist.photoURL 
+                ? `<img src="${artist.photoURL}" onerror="this.style.display='none';this.parentElement.innerHTML='${initial}'">`
+                : initial;
+            
+            return `
+                <div class="artist-card" onclick="window.location.href='profile.html?uid=${artist.id}'">
+                    <div class="artist-card-header">
+                        <div class="artist-avatar">${avatarHtml}</div>
+                        <div class="artist-info">
+                            <div class="artist-name">${artist.name || 'Artist'}</div>
+                            <div class="artist-region">${artist.region || ''}</div>
+                        </div>
+                    </div>
+                    ${artist.bio ? `<div class="artist-bio">${artist.bio}</div>` : ''}
+                    <div class="artist-footer" style="flex-wrap:wrap;gap:12px;">
+                        ${renderSnsIcons(artist.snsLinks, 28)}
+                        <button class="artist-dm-btn" onclick="event.stopPropagation(); openDM('${artist.id}', '${(artist.name||'User').replace(/'/g, "\\'")}')">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                            DM
+                        </button>
+                    </div>
+                    <div style="margin-top:12px;">
+                        ${renderInteractionButtons('user', artist.id, artist.likesCount, artist.commentsCount, isLiked)}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function setupTweetInput() {
+            if (user && !isGuest) {
+                $('tweetInputArea').style.display = 'block';
+                const avatar = $('tweetAvatar');
+                const initial = (userData.name || '?')[0].toUpperCase();
+                if (userData.photoURL) {
+                    avatar.innerHTML = `<img src="${userData.photoURL}" onerror="this.style.display='none';this.parentElement.innerHTML='${initial}'">`;
+                } else {
+                    avatar.textContent = initial;
+                }
+            }
+        }
+        
+        function onAuthReady() {
+            setupTweetInput();
+            loadTimeline();
+        }
+    </script>
+</body>
+</html>

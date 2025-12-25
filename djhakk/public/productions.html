@@ -31,7 +31,8 @@
         .filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
         .filter-btn { padding: 8px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; }
         .filter-btn.active { background: var(--gradient); color: white; border-color: transparent; }
-        .card { background: var(--card); border-radius: var(--r-xl); overflow: hidden; cursor: pointer; margin-bottom: 16px; display: flex; }
+        .card { background: var(--card); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 16px; }
+        .card-main { display: flex; cursor: pointer; }
         .card-img { width: 120px; min-width: 120px; height: 160px; object-fit: cover; }
         .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
         .card-title { font-size: 15px; font-weight: 700; margin: 4px 0 8px; }
@@ -43,9 +44,15 @@
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; position: relative; }
         .nav-item.active { color: var(--primary); }
         .nav-icon { font-size: 20px; }
-        .nav-create { position: relative; top: -20px; }
-        .nav-plus { width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); }
         .nav-unread-badge { position: absolute; top: -4px; right: 50%; transform: translateX(50%); margin-right: -15px; background: #FF4757; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: none; align-items: center; justify-content: center; padding: 0 4px; }
+        .fab { position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); cursor: pointer; z-index: 101; border: none; }
+        @media (min-width: 600px) { .fab { right: calc(50% - 280px); } }
+        /* Interaction Buttons */
+        .interaction-buttons { display: flex; gap: 20px; padding: 12px 0; }
+        .interaction-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--text3); font-size: 14px; cursor: pointer; padding: 4px 0; transition: color 0.2s; }
+        .interaction-btn:hover { color: var(--text2); }
+        .interaction-btn.like-btn.liked { color: #FF4757; }
+        .card-interaction { padding: 0 12px 12px; }
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 200; overflow-y: auto; }
         .modal.active { display: block; }
         .modal-content { max-width: 600px; margin: 0 auto; min-height: 100vh; background: var(--bg); }
@@ -98,10 +105,13 @@
         </div>
     </div>
     
+    <!-- Floating Action Button -->
+    <button class="fab" onclick="handleCreateClick()">+</button>
+    
     <nav class="nav">
         <div class="nav-item" onclick="window.location.href='index.html'"><span>Home</span></div>
         <div class="nav-item" onclick="window.location.href='events.html'"><span>Event</span></div>
-        <div class="nav-item nav-create" onclick="handleCreateClick()"><div class="nav-plus">+</div></div>
+        <div class="nav-item" onclick="window.location.href='timeline.html'"><span>TimeLine</span></div>
         <div class="nav-item active"><span>Production</span></div>
         <div class="nav-item" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
     </nav>
@@ -123,6 +133,10 @@
         
         async function loadAllProductions() {
             allProductions = await loadProductions();
+            
+            // いいね状態を取得
+            await loadLikedStatusByType(allProductions, 'production');
+            
             renderProductions();
             checkUrlParam();
         }
@@ -143,12 +157,18 @@
             
             let html = '';
             filtered.forEach(p => {
-                html += `<div class="card" onclick="showDetail('${p.id}')">
-                    <img src="${p.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
-                    <div class="card-body">
-                        <span class="badge ${p.type||'audio'}">${LABELS.productionTypes[p.type]||'ITEM SALES'}</span>
-                        <h3 class="card-title">${p.title}</h3>
-                        <p style="color:var(--text2);font-size:13px;">¥${(p.price||0).toLocaleString()}</p>
+                const liked = isItemLiked('production', p.id);
+                html += `<div class="card">
+                    <div class="card-main" onclick="showDetail('${p.id}')">
+                        <img src="${p.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                        <div class="card-body">
+                            <span class="badge ${p.type||'audio'}">${LABELS.productionTypes[p.type]||'ITEM SALES'}</span>
+                            <h3 class="card-title">${p.title}</h3>
+                            <p style="color:var(--text2);font-size:13px;">¥${(p.price||0).toLocaleString()}</p>
+                        </div>
+                    </div>
+                    <div class="card-interaction">
+                        ${renderInteractionButtons('production', p.id, p.likesCount || 0, p.commentsCount || 0, liked)}
                     </div>
                 </div>`;
             });

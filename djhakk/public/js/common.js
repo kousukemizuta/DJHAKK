@@ -119,7 +119,19 @@ const LABELS = {
     you: 'You',
     comingSoon: 'Coming soon',
     urlCopied: 'URL copied',
-    failedToStartChat: 'Failed to start chat'
+    failedToStartChat: 'Failed to start chat',
+    
+    // TimeLine
+    timeline: 'TimeLine',
+    tweet: 'Tweet',
+    tweetPlaceholder: "What's happening?",
+    post: 'Post',
+    noTweets: 'No posts yet',
+    comments: 'Comments',
+    addComment: 'Add a comment...',
+    send: 'Send',
+    liked: 'Liked',
+    commented: 'Commented'
 };
 
 // ========================================
@@ -152,6 +164,7 @@ let userData = {};
 let isGuest = false;
 let unreadCount = 0;
 let unreadUnsub = null;
+let likedStatusMap = {}; // いいね状態を保持するマップ {type_id: true/false}
 
 // ========================================
 // Currency Configuration
@@ -304,8 +317,12 @@ async function signup(email, password, name) {
         await db.collection('users').doc(cred.user.uid).set({
             name: name,
             email: email,
+            photoURL: 'https://djhakk-app.web.app/default-avatar.jpg',
+            likesCount: 0,
+            commentsCount: 0,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
+            lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastInteractionAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         isGuest = false;
         toast('Account created');
@@ -327,14 +344,18 @@ async function loginWithGoogle() {
             await db.collection('users').doc(u.uid).set({
                 name: u.displayName || 'User',
                 email: u.email,
-                photoURL: u.photoURL || '',
+                photoURL: 'https://djhakk-app.web.app/default-avatar.jpg',
+                likesCount: 0,
+                commentsCount: 0,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
+                lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastInteractionAt: firebase.firestore.FieldValue.serverTimestamp()
             });
         } else {
-            // 既存ユーザーはlastLoginAtを更新
+            // 既存ユーザーはlastLoginAtとlastInteractionAtを更新
             await db.collection('users').doc(u.uid).update({
-                lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
+                lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastInteractionAt: firebase.firestore.FieldValue.serverTimestamp()
             });
         }
         isGuest = false;
@@ -416,9 +437,10 @@ async function loadUserData() {
         if (doc.exists) {
             userData = doc.data();
         }
-        // lastLoginAtを更新
+        // lastLoginAtとlastInteractionAtを更新（Timelineでも上に表示されるように）
         await db.collection('users').doc(user.uid).update({
-            lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
+            lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastInteractionAt: firebase.firestore.FieldValue.serverTimestamp()
         });
     } catch (e) {
         log('Error loading user data: ' + e.message);
@@ -471,11 +493,11 @@ async function getUsersByIds(uids) {
     }
 }
 
-// 全ユーザーを取得（アーティスト一覧用）- 最近ログイン順
+// 全ユーザーを取得（アーティスト一覧用）- lastInteractionAt優先
 // 新規登録（1分以内）のユーザーは最上位に表示
 async function loadAllUsers() {
     try {
-        // orderByを使わずに全件取得（lastLoginAtがないユーザーも含む）
+        // orderByを使わずに全件取得（lastInteractionAtがないユーザーも含む）
         const snapshot = await db.collection('users')
             .limit(200)
             .get();
@@ -498,15 +520,15 @@ async function loadAllUsers() {
         
         // クライアント側でソート
         // 1. 新規登録ユーザー（1分以内）を最上位に
-        // 2. その後は最近ログイン順
+        // 2. その後はlastInteractionAt優先、なければlastLoginAt
         users.sort((a, b) => {
             // 新規ユーザーを最優先
             if (a._isNewUser && !b._isNewUser) return -1;
             if (!a._isNewUser && b._isNewUser) return 1;
             
-            // 両方新規または両方新規でない場合は、ログイン順
-            const dateA = a.lastLoginAt?.toDate?.() || a.createdAt?.toDate?.() || new Date(0);
-            const dateB = b.lastLoginAt?.toDate?.() || b.createdAt?.toDate?.() || new Date(0);
+            // lastInteractionAt優先でソート
+            const dateA = a.lastInteractionAt?.toDate?.() || a.lastLoginAt?.toDate?.() || a.createdAt?.toDate?.() || new Date(0);
+            const dateB = b.lastInteractionAt?.toDate?.() || b.lastLoginAt?.toDate?.() || b.createdAt?.toDate?.() || new Date(0);
             return dateB - dateA; // 降順（新しい順）
         });
         
@@ -687,12 +709,20 @@ async function loadEvents(filter = 'all') {
 
 async function loadProductions(filter = 'all') {
     try {
-        let query = db.collection('productions').orderBy('createdAt', 'desc');
-        const snapshot = await query.get();
+        // lastInteractionAtがないドキュメントも取得するためorderByを外す
+        const snapshot = await db.collection('productions').get();
         const productions = [];
         snapshot.forEach(doc => {
             productions.push({ id: doc.id, ...doc.data() });
         });
+        
+        // クライアント側でソート（lastInteractionAt優先、なければcreatedAt）
+        productions.sort((a, b) => {
+            const dateA = a.lastInteractionAt?.toDate?.() || a.createdAt?.toDate?.() || new Date(0);
+            const dateB = b.lastInteractionAt?.toDate?.() || b.createdAt?.toDate?.() || new Date(0);
+            return dateB - dateA;
+        });
+        
         return productions;
     } catch (e) {
         log('Error loading productions: ' + e.message);
@@ -932,4 +962,427 @@ if (document.readyState === 'loading') {
 } else {
     domReady = true;
     tryCallOnAuthReady();
+}
+
+// ========================================
+// Like & Comment Functions
+// ========================================
+
+// いいねをトグル
+async function toggleLike(targetType, targetId) {
+    if (!requireLogin()) return false;
+    
+    try {
+        const likeQuery = await db.collection('likes')
+            .where('targetType', '==', targetType)
+            .where('targetId', '==', targetId)
+            .where('userId', '==', user.uid)
+            .get();
+        
+        const targetRef = getTargetRef(targetType, targetId);
+        const now = firebase.firestore.FieldValue.serverTimestamp();
+        
+        if (!likeQuery.empty) {
+            // いいね解除
+            await likeQuery.docs[0].ref.delete();
+            await targetRef.update({
+                likesCount: firebase.firestore.FieldValue.increment(-1)
+            });
+            return false;
+        } else {
+            // いいね追加
+            await db.collection('likes').add({
+                targetType: targetType,
+                targetId: targetId,
+                userId: user.uid,
+                createdAt: now
+            });
+            await targetRef.update({
+                likesCount: firebase.firestore.FieldValue.increment(1),
+                lastInteractionAt: now
+            });
+            return true;
+        }
+    } catch (e) {
+        log('Error toggling like: ' + e.message);
+        return false;
+    }
+}
+
+// 自分がいいね済みか確認
+async function checkIfLiked(targetType, targetId) {
+    if (!user) return false;
+    try {
+        const likeQuery = await db.collection('likes')
+            .where('targetType', '==', targetType)
+            .where('targetId', '==', targetId)
+            .where('userId', '==', user.uid)
+            .get();
+        return !likeQuery.empty;
+    } catch (e) {
+        return false;
+    }
+}
+
+// コメントを追加
+async function addComment(targetType, targetId, text) {
+    if (!requireLogin()) return null;
+    if (!text.trim()) return null;
+    
+    try {
+        const now = firebase.firestore.FieldValue.serverTimestamp();
+        const commentRef = await db.collection('comments').add({
+            targetType: targetType,
+            targetId: targetId,
+            userId: user.uid,
+            userName: userData.name || 'User',
+            userPhoto: userData.photoURL || '',
+            text: text.trim(),
+            createdAt: now
+        });
+        
+        const targetRef = getTargetRef(targetType, targetId);
+        await targetRef.update({
+            commentsCount: firebase.firestore.FieldValue.increment(1),
+            lastInteractionAt: now
+        });
+        
+        return commentRef.id;
+    } catch (e) {
+        log('Error adding comment: ' + e.message);
+        return null;
+    }
+}
+
+// コメント一覧を取得
+async function getComments(targetType, targetId) {
+    try {
+        const snapshot = await db.collection('comments')
+            .where('targetType', '==', targetType)
+            .where('targetId', '==', targetId)
+            .orderBy('createdAt', 'asc')
+            .get();
+        
+        const comments = [];
+        snapshot.forEach(doc => {
+            comments.push({ id: doc.id, ...doc.data() });
+        });
+        return comments;
+    } catch (e) {
+        log('Error loading comments: ' + e.message);
+        return [];
+    }
+}
+
+// ターゲットのRefを取得
+function getTargetRef(targetType, targetId) {
+    switch (targetType) {
+        case 'event': return db.collection('events').doc(targetId);
+        case 'production': return db.collection('productions').doc(targetId);
+        case 'user': return db.collection('users').doc(targetId);
+        case 'tweet': return db.collection('tweets').doc(targetId);
+        default: return null;
+    }
+}
+
+// いいね/コメントボタンのHTML生成
+function renderInteractionButtons(targetType, targetId, likesCount = 0, commentsCount = 0, isLiked = false) {
+    return `
+        <div class="interaction-buttons" data-type="${targetType}" data-id="${targetId}">
+            <button class="interaction-btn like-btn ${isLiked ? 'liked' : ''}" data-type="${targetType}" data-id="${targetId}" onclick="event.stopPropagation(); handleLikeClick('${targetType}', '${targetId}', this)">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                <span class="like-count">${likesCount || 0}</span>
+            </button>
+            <button class="interaction-btn comment-btn" onclick="event.stopPropagation(); openCommentModal('${targetType}', '${targetId}')">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                </svg>
+                <span class="comment-count">${commentsCount || 0}</span>
+            </button>
+        </div>
+    `;
+}
+
+// いいねボタンクリック処理
+async function handleLikeClick(targetType, targetId, btn) {
+    const isNowLiked = await toggleLike(targetType, targetId);
+    const countSpan = btn.querySelector('.like-count');
+    let count = parseInt(countSpan.textContent) || 0;
+    
+    // グローバルマップを更新
+    likedStatusMap[`${targetType}_${targetId}`] = isNowLiked;
+    
+    // 同じターゲットの全てのボタンを更新
+    document.querySelectorAll(`.like-btn[data-type="${targetType}"][data-id="${targetId}"]`).forEach(b => {
+        const cs = b.querySelector('.like-count');
+        const newCount = isNowLiked ? count + 1 : Math.max(0, count - 1);
+        if (isNowLiked) {
+            b.classList.add('liked');
+            b.querySelector('svg').setAttribute('fill', 'currentColor');
+        } else {
+            b.classList.remove('liked');
+            b.querySelector('svg').setAttribute('fill', 'none');
+        }
+        cs.textContent = newCount;
+    });
+}
+
+// コメントモーダルを開く
+let currentCommentTarget = null;
+
+function openCommentModal(targetType, targetId) {
+    currentCommentTarget = { type: targetType, id: targetId };
+    
+    let modal = $('commentModal');
+    if (!modal) {
+        createCommentModal();
+        modal = $('commentModal');
+    }
+    
+    modal.classList.add('active');
+    loadCommentsToModal(targetType, targetId);
+}
+
+function createCommentModal() {
+    const modalHtml = `
+        <div class="modal" id="commentModal">
+            <div class="modal-content" style="max-width:500px;margin:auto;margin-top:60px;max-height:80vh;display:flex;flex-direction:column;">
+                <div class="modal-header">
+                    <h3>${LABELS.comments}</h3>
+                    <button class="modal-close" onclick="closeModal('commentModal')">✕</button>
+                </div>
+                <div class="modal-body" id="commentList" style="flex:1;overflow-y:auto;padding:16px;"></div>
+                <div class="comment-input-area" style="padding:16px;border-top:1px solid var(--border);display:flex;gap:8px;">
+                    <input type="text" id="commentInput" class="input" placeholder="${LABELS.addComment}" maxlength="200" style="flex:1;">
+                    <button class="btn btn-p" onclick="submitComment()">${LABELS.send}</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Enterキーで送信
+    $('commentInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') submitComment();
+    });
+}
+
+async function loadCommentsToModal(targetType, targetId) {
+    const container = $('commentList');
+    container.innerHTML = '<div style="text-align:center;color:var(--text2);padding:20px;">Loading...</div>';
+    
+    const comments = await getComments(targetType, targetId);
+    
+    if (comments.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text2);padding:20px;">No comments yet</div>';
+        return;
+    }
+    
+    let html = '';
+    comments.forEach(c => {
+        const initial = (c.userName || '?')[0].toUpperCase();
+        html += `
+            <div class="comment-item" style="display:flex;gap:12px;margin-bottom:16px;">
+                <div style="width:36px;height:36px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+                    ${c.userPhoto ? `<img src="${c.userPhoto}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentElement.innerHTML='${initial}'">` : initial}
+                </div>
+                <div style="flex:1;">
+                    <div style="font-weight:600;font-size:13px;margin-bottom:4px;">${c.userName || 'User'}</div>
+                    <div style="color:var(--text2);font-size:14px;line-height:1.4;">${escapeHtml(c.text)}</div>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+    container.scrollTop = container.scrollHeight;
+}
+
+async function submitComment() {
+    if (!currentCommentTarget) return;
+    
+    const input = $('commentInput');
+    const text = input.value.trim();
+    if (!text) return;
+    
+    input.disabled = true;
+    const result = await addComment(currentCommentTarget.type, currentCommentTarget.id, text);
+    input.disabled = false;
+    
+    if (result) {
+        input.value = '';
+        loadCommentsToModal(currentCommentTarget.type, currentCommentTarget.id);
+        
+        // カウントを更新
+        const btns = document.querySelectorAll(`.interaction-buttons[data-type="${currentCommentTarget.type}"][data-id="${currentCommentTarget.id}"] .comment-count`);
+        btns.forEach(btn => {
+            btn.textContent = parseInt(btn.textContent || 0) + 1;
+        });
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ========================================
+// Tweet Functions
+// ========================================
+
+// つぶやきを投稿
+async function postTweet(text) {
+    if (!requireLogin()) return null;
+    if (!text.trim() || text.length > 140) return null;
+    
+    try {
+        const now = firebase.firestore.FieldValue.serverTimestamp();
+        const tweetRef = await db.collection('tweets').add({
+            userId: user.uid,
+            userName: userData.name || 'User',
+            userPhoto: userData.photoURL || '',
+            text: text.trim(),
+            likesCount: 0,
+            commentsCount: 0,
+            lastInteractionAt: now,
+            createdAt: now
+        });
+        return tweetRef.id;
+    } catch (e) {
+        log('Error posting tweet: ' + e.message);
+        return null;
+    }
+}
+
+// つぶやき一覧を取得
+async function loadTweets() {
+    try {
+        const snapshot = await db.collection('tweets')
+            .orderBy('lastInteractionAt', 'desc')
+            .limit(50)
+            .get();
+        
+        const tweets = [];
+        snapshot.forEach(doc => {
+            tweets.push({ id: doc.id, ...doc.data(), _type: 'tweet' });
+        });
+        return tweets;
+    } catch (e) {
+        log('Error loading tweets: ' + e.message);
+        return [];
+    }
+}
+
+// タイムライン用に全データを混合して取得
+async function loadTimelineData() {
+    try {
+        // 並列でデータ取得（createdAtでソート - 全ドキュメントに存在するフィールド）
+        const [tweetsSnap, eventsSnap, productionsSnap, usersSnap] = await Promise.all([
+            db.collection('tweets').orderBy('createdAt', 'desc').limit(30).get(),
+            db.collection('events').orderBy('createdAt', 'desc').limit(30).get(),
+            db.collection('productions').orderBy('createdAt', 'desc').limit(30).get(),
+            db.collection('users').orderBy('lastLoginAt', 'desc').limit(30).get()
+        ]);
+        
+        const items = [];
+        
+        tweetsSnap.forEach(doc => {
+            const data = doc.data();
+            items.push({ 
+                id: doc.id, 
+                ...data, 
+                _type: 'tweet',
+                _sortTime: data.lastInteractionAt || data.createdAt
+            });
+        });
+        
+        eventsSnap.forEach(doc => {
+            const data = doc.data();
+            items.push({ 
+                id: doc.id, 
+                ...data, 
+                _type: 'event',
+                _sortTime: data.lastInteractionAt || data.createdAt
+            });
+        });
+        
+        productionsSnap.forEach(doc => {
+            const data = doc.data();
+            items.push({ 
+                id: doc.id, 
+                ...data, 
+                _type: 'production',
+                _sortTime: data.lastInteractionAt || data.createdAt
+            });
+        });
+        
+        usersSnap.forEach(doc => {
+            const data = doc.data();
+            if (data.name) {  // 名前があるユーザーのみ
+                items.push({ 
+                    id: doc.id, 
+                    ...data, 
+                    _type: 'user',
+                    _sortTime: data.lastInteractionAt || data.lastLoginAt || data.createdAt
+                });
+            }
+        });
+        
+        // lastInteractionAt または createdAt でソート（新しい順）
+        // lastInteractionAtがあればそれを優先（いいね/コメントで浮上）
+        items.sort((a, b) => {
+            const timeA = a.lastInteractionAt?.toMillis ? a.lastInteractionAt.toMillis() : 
+                         (a._sortTime?.toMillis ? a._sortTime.toMillis() : 0);
+            const timeB = b.lastInteractionAt?.toMillis ? b.lastInteractionAt.toMillis() : 
+                         (b._sortTime?.toMillis ? b._sortTime.toMillis() : 0);
+            return timeB - timeA;
+        });
+        
+        return items;
+    } catch (e) {
+        log('Error loading timeline: ' + e.message);
+        return [];
+    }
+}
+
+// いいね状態を一括取得してグローバルマップに保存
+async function getLikedStatus(items) {
+    if (!user) return {};
+    
+    const batchSize = 10;
+    
+    for (let i = 0; i < items.length; i += batchSize) {
+        const batch = items.slice(i, i + batchSize);
+        const promises = batch.map(item => 
+            db.collection('likes')
+                .where('targetType', '==', item._type)
+                .where('targetId', '==', item.id)
+                .where('userId', '==', user.uid)
+                .get()
+                .then(snap => ({ key: `${item._type}_${item.id}`, liked: !snap.empty }))
+                .catch(() => ({ key: `${item._type}_${item.id}`, liked: false }))
+        );
+        
+        const results = await Promise.all(promises);
+        results.forEach(r => {
+            likedStatusMap[r.key] = r.liked;
+        });
+    }
+    
+    return likedStatusMap;
+}
+
+// タイプ別にいいね状態を一括取得
+async function loadLikedStatusByType(items, type) {
+    if (!user || !items || items.length === 0) return;
+    
+    const itemsWithType = items.map(item => ({ ...item, _type: type }));
+    await getLikedStatus(itemsWithType);
+}
+
+// アイテムがいいね済みかどうかを確認
+function isItemLiked(type, id) {
+    return likedStatusMap[`${type}_${id}`] === true;
 }
