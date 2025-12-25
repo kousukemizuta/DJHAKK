@@ -63,8 +63,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <button class="back-btn" onclick="location.href='profile.html'">← 戻る</button>
-            <span class="header-title">メッセージ</span>
+            <button class="back-btn" onclick="location.href='profile.html'">← Back</button>
+            <span class="header-title">MESSAGES</span>
         </div>
         
         <div id="chatList" class="chat-list"></div>
@@ -97,8 +97,8 @@
                         container.innerHTML = `
                             <div class="empty-state">
                                 <div class="empty-state-icon"></div>
-                                <div class="empty-state-title">メッセージはありません</div>
-                                <div class="empty-state-text">イベント主催者やアーティストと<br>コミュニケーションを始めましょう</div>
+                                <div class="empty-state-title">${LABELS.noMessages}</div>
+                                <div class="empty-state-text">Start a conversation with<br>event organizers or artists</div>
                             </div>
                         `;
                         return;
@@ -108,7 +108,7 @@
                     snapshot.forEach(doc => {
                         const chat = doc.data();
                         const partnerId = chat.participants.find(p => p !== user.uid);
-                        const partnerName = chat.participantNames?.[partnerId] || 'ユーザー';
+                        const partnerName = chat.participantNames?.[partnerId] || 'User';
                         const partnerPhoto = chat.participantPhotos?.[partnerId] || '';
                         const isUnread = chat.unreadBy === user.uid;
                         const initial = (partnerName || '?')[0].toUpperCase();
@@ -120,7 +120,7 @@
                                 </div>
                                 <div class="chat-content">
                                     <div class="chat-name ${isUnread ? 'unread' : ''}">${partnerName}</div>
-                                    <div class="chat-preview">${chat.lastMessage || 'メッセージはありません'}</div>
+                                    <div class="chat-preview">${chat.lastMessage || LABELS.noMessages}</div>
                                 </div>
                                 <div class="chat-meta">
                                     <span class="chat-time">${formatDateShort(chat.lastMessageAt)}</span>
@@ -132,7 +132,7 @@
                     container.innerHTML = html;
                 }, error => {
                     log('Error loading chats: ' + error.message);
-                    container.innerHTML = '<div class="empty-state">読み込みに失敗しました</div>';
+                    container.innerHTML = '<div class="empty-state">Failed to load</div>';
                 });
         }
         

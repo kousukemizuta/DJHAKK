@@ -68,16 +68,16 @@
             <div class="chat-header-avatar" id="partnerAvatar" onclick="viewPartnerProfile()"></div>
             <div class="chat-header-info" onclick="viewPartnerProfile()">
                 <div class="chat-header-name" id="partnerName">読み込み中...</div>
-                <div class="chat-header-status">タップしてプロフィールを見る</div>
+                <div class="chat-header-status">Tap to view profile</div>
             </div>
         </div>
         
         <div class="chat-messages" id="chatMessages">
-            <div class="loading">読み込み中...</div>
+            <div class="loading">Loading...</div>
         </div>
         
         <div class="chat-input-area">
-            <textarea class="chat-input" id="messageInput" placeholder="メッセージを入力..." rows="1" 
+            <textarea class="chat-input" id="messageInput" placeholder="Type a message..." rows="1" 
                       oninput="autoResize(this)" onkeydown="handleKeyDown(event)"></textarea>
             <button class="chat-send" id="sendBtn" onclick="sendMessage()">➤</button>
         </div>
@@ -179,7 +179,7 @@
                     lastMessageDate = null;
                     
                     if (snapshot.empty) {
-                        container.innerHTML = '<div class="loading" style="color:var(--text3);">メッセージを送ってみましょう</div>';
+                        container.innerHTML = '<div class="loading" style="color:var(--text3);">Send a message to start</div>';
                         return;
                     }
                     
@@ -211,7 +211,7 @@
                     container.scrollTop = container.scrollHeight;
                 }, error => {
                     log('Error loading messages: ' + error.message);
-                    container.innerHTML = '<div class="loading">読み込みに失敗しました</div>';
+                    container.innerHTML = '<div class="loading">Failed to load</div>';
                 });
         }
         
@@ -281,7 +281,7 @@
                 });
             } catch (e) {
                 log('Error sending message: ' + e.message);
-                toast('送信に失敗しました', 'error');
+                toast('Failed to send', 'error');
                 input.value = text; // 復元
             }
             

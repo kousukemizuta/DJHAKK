@@ -607,13 +607,12 @@
             }
             
             let html = '';
-            const labels = {audio:'MUSIC',goods:'GOODS',produce:'PRODUCE'};
             allProductions.forEach(p => {
                 html += `<div class="card" onclick="window.location.href='productions.html?id=${p.id}'">
                     <div class="card-main">
                         <img src="${p.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
                         <div class="card-body">
-                            <span class="badge a">${labels[p.type]||'商品'}</span>
+                            <span class="badge a">${LABELS.productionTypes[p.type]||'ITEM SALES'}</span>
                             <h3 class="card-title">${p.title}</h3>
                             <p style="color:var(--text2);font-size:13px;">¥${(p.price||0).toLocaleString()}</p>
                         </div>

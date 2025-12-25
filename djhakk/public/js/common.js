@@ -3,6 +3,126 @@
 // ========================================
 
 // ========================================
+// UI Labels (Centralized for easy maintenance)
+// ========================================
+const LABELS = {
+    // Common Actions
+    back: 'Back',
+    save: 'SAVE',
+    edit: 'EDIT',
+    create: 'Create',
+    add: 'Add',
+    cancel: 'Cancel',
+    done: 'Done',
+    buy: 'Buy',
+    apply: 'Apply',
+    reserve: 'Reserve',
+    share: 'Share',
+    confirm: 'Confirm',
+    
+    // Auth
+    logIn: 'Log in',
+    logOut: 'LOG OUT',
+    newAccount: 'New',
+    loginFailed: 'Login failed',
+    registrationFailed: 'Registration failed',
+    googleLoginFailed: 'Google login failed',
+    accountCreated: 'Account created',
+    
+    // Form Labels
+    mailAddress: 'Mail Address',
+    password: 'Password',
+    name: 'NAME',
+    title: 'TITLE',
+    
+    // Navigation
+    home: 'Home',
+    event: 'Event',
+    production: 'Production',
+    profile: 'Profile',
+    
+    // Event Types
+    eventTypes: {
+        A: 'TIMETABLE',
+        B: 'GUARANTEE(ｷﾞｬﾗ)',
+        C: 'FLYER'
+    },
+    
+    // Production Types
+    productionTypes: {
+        audio: 'DOWNLOAD SALES',
+        goods: 'ITEM SALES',
+        produce: 'SELF PRODUCE'
+    },
+    
+    // Create Page Type Cards
+    createTypes: {
+        A: { label: 'TIMETABLE', desc: 'Timetable sales' },
+        B: { label: 'GUARANTEE(ｷﾞｬﾗ)', desc: 'Pay guarantee' },
+        C: { label: 'FLYER', desc: 'Information' },
+        audio: { label: 'DOWNLOAD SALES', desc: 'Download sales' },
+        goods: { label: 'ITEM SALES', desc: 'Item sales' },
+        produce: { label: 'SELF PRODUCE', desc: 'Self Produce' }
+    },
+    
+    // Area/Region
+    area: 'AREA',
+    allArea: 'ALL AREA',
+    selectArea: 'Select Area',
+    
+    // Profile
+    myProfile: 'MY PROFILE',
+    myEvent: 'MY EVENT',
+    profilePicture: 'PROFILE PICTURE',
+    changeImage: 'Change image',
+    bio: 'Bio',
+    snsLink: 'SNS LINK',
+    dm: 'DM',
+    
+    // Event/Production Pages
+    date: 'DATE',
+    location: '@',
+    organizer: 'ORGANIZER',
+    applicants: 'Applicants',
+    
+    // Slot
+    slot: 'Slot',
+    capacity: 'Capacity',
+    full: 'FULL',
+    free: 'FREE',
+    tbd: 'TBD',
+    na: 'N/A',
+    
+    // Days
+    days: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
+    
+    // Time
+    startTime: 'Start Time',
+    endTime: 'End Time',
+    
+    // Search
+    eventSearch: 'EVENT SEARCH',
+    productionSearch: 'PRODUCTION SEARCH',
+    
+    // Filters
+    all: 'All',
+    type: 'Type',
+    
+    // Empty States
+    noEvents: 'No events',
+    noArtists: 'No artists',
+    noProductions: 'No productions',
+    noUpcomingEvents: 'No upcoming events',
+    noMessages: 'No messages',
+    
+    // Misc
+    you: 'You',
+    comingSoon: 'Coming soon',
+    urlCopied: 'URL copied',
+    failedToStartChat: 'Failed to start chat'
+};
+
+// ========================================
 // Configuration
 // ========================================
 const APP_URL = location.origin;
@@ -118,7 +238,7 @@ function getCurrencySymbol(currency) {
 
 // 地域選択のHTMLを生成
 function generateRegionOptions(includeAll = false) {
-    let html = includeAll ? '<option value="all">ALL AREA</option>' : '<option value="">Select Area</option>';
+    let html = includeAll ? `<option value="all">${LABELS.allArea}</option>` : `<option value="">${LABELS.selectArea}</option>`;
     REGIONS.forEach(r => {
         html += `<optgroup label="${r.group}">`;
         r.cities.forEach(city => {
@@ -270,12 +390,12 @@ function showLoginModal() {
             <div class="modal" id="loginModal">
                 <div class="modal-content" style="max-width:400px;margin:auto;margin-top:100px;">
                     <div class="modal-header">
-                        <h3>Log in</h3>
+                        <h3>${LABELS.logIn}</h3>
                         <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
                     </div>
                     <div class="modal-body" style="text-align:center; padding: 24px;">
-                        <button class="btn btn-p btn-lg" onclick="window.location.href='index.html?login=true'" style="margin-bottom: 12px;">Log in</button>
-                        <button class="btn btn-s btn-lg" onclick="window.location.href='index.html?signup=true'">New</button>
+                        <button class="btn btn-p btn-lg" onclick="window.location.href='index.html?login=true'" style="margin-bottom: 12px;">${LABELS.logIn}</button>
+                        <button class="btn btn-s btn-lg" onclick="window.location.href='index.html?signup=true'">${LABELS.newAccount}</button>
                     </div>
                 </div>
             </div>
@@ -593,14 +713,14 @@ async function applyToSlot(eventId, slotIndex) {
         
         // 既に応募済みかチェック
         if (slot.applicants && slot.applicants.includes(user.uid)) {
-            toast('既に応募済みです', 'error');
+            toast('Already applied', 'error');
             return false;
         }
         
         // 定員チェック
         const currentCount = slot.applicants ? slot.applicants.length : 0;
         if (currentCount >= (slot.capacity || 1)) {
-            toast('このスロットは満員です', 'error');
+            toast('This slot is full', 'error');
             return false;
         }
         
@@ -743,7 +863,7 @@ async function initializePushNotifications() {
 // 通知許可を手動でリクエスト（設定画面などから）
 async function requestNotificationPermission() {
     if (!user || isGuest) {
-        toast('ログインが必要です', 'error');
+        toast('Login required', 'error');
         return false;
     }
     
@@ -751,15 +871,15 @@ async function requestNotificationPermission() {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
             await initializePushNotifications();
-            toast('通知が有効になりました');
+            toast('Notifications enabled');
             return true;
         } else {
-            toast('通知がブロックされています', 'error');
+            toast('Notifications blocked', 'error');
             return false;
         }
     } catch (error) {
         log('Error requesting notification permission: ' + error.message);
-        toast('通知の設定に失敗しました', 'error');
+        toast('Failed to enable notifications', 'error');
         return false;
     }
 }

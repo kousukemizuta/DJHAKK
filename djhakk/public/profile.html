@@ -96,7 +96,7 @@
     <div class="container">
         <div class="header" id="headerSection">
             <img src="logo.png" class="header-logo" onclick="location.href='index.html'">
-            <span class="header-title">プロフィール</span>
+            <span class="header-title">PROFILE</span>
         </div>
         
         <div class="profile-header">
@@ -115,44 +115,43 @@
         <!-- 自分のプロフィール用タブ -->
         <div id="myProfileTabs" style="display:none;">
             <div class="tabs">
-                <div class="tab active" onclick="switchTab('edit')">編集</div>
-                <div class="tab" onclick="switchTab('events')">マイイベント</div>
+                <div class="tab active" onclick="switchTab('edit')">EDIT</div>
+                <div class="tab" onclick="switchTab('events')">MY EVENT</div>
                 <div class="tab" onclick="switchTab('dm')">DM</div>
             </div>
             
             <div id="editTab" class="tab-content active">
                 <!-- プロフィール画像変更セクション -->
                 <div class="input-group">
-                    <label class="label">プロフィール画像</label>
+                    <label class="label">PROFILE PICTURE</label>
                     <div class="avatar-edit-section" style="display: flex; align-items: center; gap: 16px; background: var(--card); padding: 16px; border-radius: var(--r-md);">
                         <div class="avatar-edit-preview" id="avatarEditPreview" style="width: 64px; height: 64px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 28px; overflow: hidden; flex-shrink: 0;">
                             <img id="avatarEditImg" style="width: 100%; height: 100%; object-fit: cover; display: none;">
                             <span id="avatarEditInitial">?</span>
                         </div>
                         <div style="flex: 1;">
-                            <button type="button" class="btn btn-s" onclick="document.getElementById('avatarInput').click()" style="padding: 10px 20px; margin-bottom: 8px;">
-                                画像を変更
+                            <button type="button" class="btn btn-s" onclick="document.getElementById('avatarInput').click()" style="padding: 10px 20px;">
+                                Change image
                             </button>
-                            <p style="color: var(--text3); font-size: 12px; margin: 0;">ヘッダーのアイコンタップでも変更できます</p>
                         </div>
                     </div>
                 </div>
                 
-                <div class="input-group"><label class="label">名前</label><input type="text" id="editName" class="input"></div>
+                <div class="input-group"><label class="label">NAME</label><input type="text" id="editName" class="input"></div>
                 <div class="input-group">
-                    <label class="label">活動地域</label>
+                    <label class="label">AREA</label>
                     <select id="editRegion" class="input"></select>
                 </div>
-                <div class="input-group"><label class="label">自己紹介</label><textarea id="editBio" class="input" placeholder="自己紹介を入力"></textarea></div>
+                <div class="input-group"><label class="label">Bio</label><textarea id="editBio" class="input" placeholder="Bio"></textarea></div>
                 
                 <div class="input-group">
-                    <label class="label">SNSリンク</label>
+                    <label class="label">SNS LINK</label>
                     <div id="snsLinksContainer"></div>
-                    <button type="button" class="add-sns-btn" onclick="addSnsLink()">+ SNSを追加</button>
+                    <button type="button" class="add-sns-btn" onclick="addSnsLink()">+ Add</button>
                 </div>
                 
-                <button class="btn btn-p btn-lg" onclick="saveProfile()" style="margin-bottom:16px;">保存</button>
-                <button class="btn btn-danger btn-lg" onclick="handleLogout()">ログアウト</button>
+                <button class="btn btn-p btn-lg" onclick="saveProfile()" style="margin-bottom:16px;">SAVE</button>
+                <button class="btn btn-danger btn-lg" onclick="handleLogout()">LOG OUT</button>
             </div>
             
             <div id="eventsTab" class="tab-content">
@@ -161,13 +160,13 @@
             
             <div id="dmTab" class="tab-content">
                 <div id="dmPreviewList"></div>
-                <button class="btn btn-s btn-lg" onclick="location.href='messages.html'" style="margin-top:16px;">すべてのメッセージを見る</button>
+                <button class="btn btn-s btn-lg" onclick="location.href='messages.html'" style="margin-top:16px;">View all messages</button>
             </div>
         </div>
         
         <!-- 他のユーザーのプロフィール用 -->
         <div id="otherProfileContent" style="display:none;">
-            <h3 style="color:var(--text2);font-size:14px;margin-bottom:12px;">主催イベント</h3>
+            <h3 style="color:var(--text2);font-size:14px;margin-bottom:12px;">MY EVENT</h3>
             <div id="otherUserEvents"></div>
         </div>
     </div>
@@ -224,7 +223,7 @@
             // ヘッダーを自分用に
             document.getElementById('headerSection').innerHTML = `
                 <img src="logo.png" class="header-logo" onclick="location.href='index.html'">
-                <span class="header-title">マイプロフィール</span>
+                <span class="header-title">MY PROFILE</span>
             `;
             
             // プロフィール情報を表示
@@ -280,14 +279,14 @@
             
             // ヘッダーを戻るボタン付きに
             document.getElementById('headerSection').innerHTML = `
-                <button class="back-btn" onclick="history.back()">← 戻る</button>
-                <span class="header-title">プロフィール</span>
+                <button class="back-btn" onclick="history.back()">← Back</button>
+                <span class="header-title">PROFILE</span>
             `;
             
             // ユーザー情報を取得
             targetUserData = await getUserById(uid);
             if (!targetUserData) {
-                toast('ユーザーが見つかりません', 'error');
+                toast('User not found', 'error');
                 return;
             }
             
@@ -313,7 +312,7 @@
             
             // アクションボタン
             document.getElementById('profileActions').innerHTML = `
-                <button class="profile-btn dm" onclick="openDM('${uid}', '${name}')">DMを送る</button>
+                <button class="profile-btn dm" onclick="openDM('${uid}', '${name}')">DM</button>
             `;
             
             // 主催イベントを取得
@@ -438,10 +437,10 @@
                 document.getElementById('avatarEditImg').src = url;
                 document.getElementById('avatarEditImg').style.display = 'block';
                 document.getElementById('avatarEditInitial').style.display = 'none';
-                toast('アイコンを更新しました');
+                toast('Icon updated');
             } catch (e) { 
                 log('Avatar upload error: ' + e.message); 
-                toast('アップロードに失敗しました','error'); 
+                toast('Upload failed','error'); 
             }
         }
         
@@ -458,14 +457,14 @@
                 document.getElementById('profileRegion').textContent = data.region ? `${data.region}` : '';
                 document.getElementById('profileBio').textContent = data.bio || '';
                 renderProfileSns(data.snsLinks);
-                toast('プロフィールを保存しました');
+                toast('Profile saved');
             } else { 
-                toast('保存に失敗しました','error'); 
+                toast('Save failed','error'); 
             }
         }
         
         async function handleLogout() {
-            if (confirm('ログアウトしますか？')) await logout();
+            if (confirm('Log out?')) await logout();
         }
         
         // ========== マイイベント ==========
