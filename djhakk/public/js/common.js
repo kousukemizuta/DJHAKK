@@ -161,7 +161,6 @@ const storage = firebase.storage();
 // ========================================
 let user = null;
 let userData = {};
-let isGuest = false;
 let unreadCount = 0;
 let unreadUnsub = null;
 let likedStatusMap = {}; // いいね状態を保持するマップ {type_id: true/false}
@@ -303,7 +302,6 @@ function setupLogo() {
 async function login(email, password) {
     try {
         await auth.signInWithEmailAndPassword(email, password);
-        isGuest = false;
         toast('Log in');
         return true;
     } catch (e) {
@@ -326,7 +324,6 @@ async function signup(email, password, name) {
             lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
             lastInteractionAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        isGuest = false;
         toast('Account created');
         return true;
     } catch (e) {
@@ -360,7 +357,6 @@ async function loginWithGoogle() {
                 lastInteractionAt: firebase.firestore.FieldValue.serverTimestamp()
             });
         }
-        isGuest = false;
         toast('Log in');
         return true;
     } catch (e) {
@@ -377,20 +373,11 @@ async function logout() {
     await auth.signOut();
     user = null;
     userData = {};
-    isGuest = false;
     window.location.href = 'index.html';
 }
 
-function continueAsGuest() {
-    isGuest = true;
-    user = null;
-    userData = {};
-    log('Continuing as guest');
-    return true;
-}
-
 function isLoggedIn() {
-    return user !== null && !isGuest;
+    return user !== null;
 }
 
 function requireLogin(callback) {
@@ -832,7 +819,7 @@ const VAPID_KEY = 'BNKShnq4CdZcJIQp84KRNTJdZ5xi-W-ErYMiDpqp_L9Y-QIxvj-wSluHwSCnM
 let messagingInitialized = false;
 
 async function initializePushNotifications() {
-    if (messagingInitialized || !user || isGuest) return;
+    if (messagingInitialized || !user) return;
     
     try {
         // Service Workerが対応しているか確認
@@ -893,7 +880,7 @@ async function initializePushNotifications() {
 
 // 通知許可を手動でリクエスト（設定画面などから）
 async function requestNotificationPermission() {
-    if (!user || isGuest) {
+    if (!user) {
         toast('Login required', 'error');
         return false;
     }
@@ -934,7 +921,7 @@ function tryCallOnAuthReady() {
 
 auth.onAuthStateChanged(async (u) => {
     user = u;
-    if (u && !isGuest) {
+    if (u) {
         await loadUserData();
         startUnreadListener();
         
@@ -947,7 +934,7 @@ auth.onAuthStateChanged(async (u) => {
         log('User logged in: ' + u.email);
     } else {
         messagingInitialized = false;
-        log('User logged out or guest mode');
+        log('User logged out');
     }
     
     authReady = true;
@@ -1742,7 +1729,47 @@ function handleWaveformEnded(playerId) {
             const progressBar = playerContainer.querySelector(`[data-progress="${playerId}"]`);
             if (progressBar) progressBar.style.width = '0%';
         }
+        
+        // 自動で次の音楽を再生（timeline, home画面用）
+        playNextAudio(playerId);
     }
+}
+
+// 次の音楽プレイヤーを探して再生
+function playNextAudio(currentPlayerId) {
+    // 全ての音声プレイヤーを取得
+    const allPlayers = document.querySelectorAll('audio[data-player-id]');
+    const playerArray = Array.from(allPlayers);
+    
+    // 現在のプレイヤーのインデックスを取得
+    const currentIndex = playerArray.findIndex(p => p.dataset.playerId === currentPlayerId);
+    if (currentIndex === -1) return;
+    
+    // 次のプレイヤーを探す（現在のプレイヤー以降で、音声URLが有効なもの）
+    for (let i = currentIndex + 1; i < playerArray.length; i++) {
+        const nextPlayer = playerArray[i];
+        if (nextPlayer && nextPlayer.src && nextPlayer.src !== '') {
+            // 次のプレイヤーのカードが画面内に表示されるようにスクロール
+            const nextContainer = document.querySelector(`[data-player-container="${nextPlayer.dataset.playerId}"]`);
+            if (nextContainer) {
+                // カード要素を取得してスクロール
+                const card = nextContainer.closest('.artist-card, .card, .tweet-card');
+                if (card) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            
+            // 少し遅延してから再生（スクロールアニメーション後）
+            setTimeout(() => {
+                AudioPlayerManager.play(nextPlayer);
+            }, 500);
+            
+            return;
+        }
+    }
+    
+    // 次のプレイヤーがなければ何もしない（リストの最後に到達）
+    log('No more audio players to play');
 }
 
 // 音声の長さをフォーマット

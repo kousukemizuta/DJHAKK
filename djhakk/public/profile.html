@@ -95,7 +95,7 @@
 <body>
     <div class="container">
         <div class="header" id="headerSection">
-            <img src="logo.png" class="header-logo" onclick="location.href='index.html'">
+            <img src="logo.png" class="header-logo" onclick="location.href='timeline.html'">
             <span class="header-title">PROFILE</span>
         </div>
         
@@ -200,7 +200,7 @@
     <button class="fab" onclick="handleCreateClick()">+</button>
     
     <nav class="nav">
-        <div class="nav-item" onclick="location.href='index.html'"><span>Home</span></div>
+        <div class="nav-item" onclick="location.href='index.html?tab=home'"><span>Home</span></div>
         <div class="nav-item" onclick="location.href='events.html'"><span>Event</span></div>
         <div class="nav-item" onclick="location.href='timeline.html'"><span>TimeLine</span></div>
         <div class="nav-item" onclick="location.href='productions.html'"><span>Production</span></div>
@@ -254,7 +254,7 @@
             
             // ヘッダーを自分用に
             document.getElementById('headerSection').innerHTML = `
-                <img src="logo.png" class="header-logo" onclick="location.href='index.html'">
+                <img src="logo.png" class="header-logo" onclick="location.href='timeline.html'">
                 <span class="header-title">MY PROFILE</span>
             `;
             
@@ -735,7 +735,7 @@
         }
         
         function onAuthReady() {
-            if (!user || isGuest) { 
+            if (!user) { 
                 location.href = 'index.html'; 
                 return; 
             }
