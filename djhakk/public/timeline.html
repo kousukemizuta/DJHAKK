@@ -334,6 +334,10 @@
                 ? `<img src="${artist.photoURL}" onerror="this.style.display='none';this.parentElement.innerHTML='${initial}'">`
                 : initial;
             
+            // 波形プレイヤー（関数が存在する場合のみ）
+            const audioPlayer = (artist.audioUrl && typeof renderWaveformPlayer === 'function') ? 
+                renderWaveformPlayer(artist.audioUrl, artist.audioTitle, artist.audioDuration, `timeline_${artist.id}`) : '';
+            
             return `
                 <div class="artist-card" onclick="window.location.href='profile.html?uid=${artist.id}'">
                     <div class="artist-card-header">
@@ -344,6 +348,7 @@
                         </div>
                     </div>
                     ${artist.bio ? `<div class="artist-bio">${artist.bio}</div>` : ''}
+                    ${audioPlayer}
                     <div class="artist-footer" style="flex-wrap:wrap;gap:12px;">
                         ${renderSnsIcons(artist.snsLinks, 28)}
                         <button class="artist-dm-btn" onclick="event.stopPropagation(); openDM('${artist.id}', '${(artist.name||'User').replace(/'/g, "\\'")}')">

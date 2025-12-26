@@ -108,6 +108,7 @@
             <div class="profile-name" id="profileName">-</div>
             <div class="profile-region" id="profileRegion"></div>
             <div class="profile-bio" id="profileBio"></div>
+            <div id="profileAudioPlayer"></div>
             <div class="profile-sns" id="profileSns"></div>
             <div class="profile-actions" id="profileActions"></div>
         </div>
@@ -143,6 +144,30 @@
                     <select id="editRegion" class="input"></select>
                 </div>
                 <div class="input-group"><label class="label">Bio</label><textarea id="editBio" class="input" placeholder="Bio"></textarea></div>
+                
+                <!-- 音楽アップロードセクション -->
+                <div class="input-group">
+                    <label class="label">MUSIC (MP3/M4A, Max 10min)</label>
+                    <div class="audio-upload-container" id="audioUploadContainer">
+                        <input type="file" id="audioInput" accept=".mp3,.m4a,.aac,audio/mpeg,audio/mp4,audio/aac" style="display:none;" onchange="handleAudioSelect(this)">
+                        <div id="audioUploadPlaceholder">
+                            <button type="button" class="btn btn-s" onclick="document.getElementById('audioInput').click()" style="width:100%;">
+                                Select music file
+                            </button>
+                        </div>
+                        <div id="audioUploadPreview" style="display:none;">
+                            <div class="input-group" style="margin-bottom:8px;">
+                                <input type="text" id="audioTitleInput" class="input" placeholder="Track title" style="font-size:14px;">
+                            </div>
+                            <div class="audio-upload-info">
+                                <span class="audio-name" id="audioFileName"></span>
+                                <span id="audioDurationDisplay" style="color:var(--text3);font-size:12px;"></span>
+                                <button type="button" class="audio-remove" onclick="removeAudioFile()">×</button>
+                            </div>
+                            <div id="audioPreviewPlayer" style="margin-top:8px;"></div>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="input-group">
                     <label class="label">SNS LINK</label>
@@ -190,6 +215,10 @@
         let targetUserData = null;
         let myEvents = [];
         let snsLinks = [];
+        
+        // 音楽関連
+        let pendingAudioFile = null;
+        let pendingAudioDuration = 0;
         
         function switchTab(tabId) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -256,6 +285,14 @@
             document.getElementById('profileBio').textContent = userData.bio || '';
             document.getElementById('profileActions').innerHTML = '';
             
+            // 音楽プレイヤーを表示
+            if (userData.audioUrl && typeof renderWaveformPlayer === 'function') {
+                document.getElementById('profileAudioPlayer').innerHTML = 
+                    renderWaveformPlayer(userData.audioUrl, userData.audioTitle, userData.audioDuration, `profile_${user.uid}`);
+            } else {
+                document.getElementById('profileAudioPlayer').innerHTML = '';
+            }
+            
             // SNS表示
             renderProfileSns(userData.snsLinks);
             
@@ -272,6 +309,9 @@
             // SNSリンク編集
             snsLinks = userData.snsLinks || [];
             renderSnsLinks();
+            
+            // 音楽情報を編集フォームに読み込み
+            loadAudioEditForm();
         }
         
         async function loadOtherProfile(uid) {
@@ -309,6 +349,14 @@
             document.getElementById('profileName').textContent = name;
             document.getElementById('profileRegion').textContent = targetUserData.region ? `${targetUserData.region}` : '';
             document.getElementById('profileBio').textContent = targetUserData.bio || '';
+            
+            // 音楽プレイヤーを表示
+            if (targetUserData.audioUrl && typeof renderWaveformPlayer === 'function') {
+                document.getElementById('profileAudioPlayer').innerHTML = 
+                    renderWaveformPlayer(targetUserData.audioUrl, targetUserData.audioTitle, targetUserData.audioDuration, `profile_${uid}`);
+            } else {
+                document.getElementById('profileAudioPlayer').innerHTML = '';
+            }
             
             // SNS表示
             renderProfileSns(targetUserData.snsLinks);
@@ -455,11 +503,43 @@
                 bio: document.getElementById('editBio').value.trim(),
                 snsLinks: snsLinks.filter(link => link.url) // URLがあるもののみ保存
             };
+            
+            // 音楽ファイルがある場合はアップロード
+            if (pendingAudioFile) {
+                toast('Uploading audio...');
+                const result = await uploadAudioFile(pendingAudioFile);
+                if (result) {
+                    data.audioUrl = result.url;
+                    data.audioDuration = result.duration;
+                    data.audioTitle = document.getElementById('audioTitleInput').value.trim() || 'Untitled';
+                    pendingAudioFile = null;
+                    pendingAudioDuration = 0;
+                } else {
+                    return; // アップロード失敗時は保存を中止
+                }
+            } else if (document.getElementById('audioTitleInput')) {
+                // タイトルのみ更新
+                const titleInput = document.getElementById('audioTitleInput');
+                if (titleInput.value.trim() && userData.audioUrl) {
+                    data.audioTitle = titleInput.value.trim();
+                }
+            }
+            
             if (await updateUserData(data)) {
                 document.getElementById('profileName').textContent = data.name || '-';
                 document.getElementById('profileRegion').textContent = data.region ? `${data.region}` : '';
                 document.getElementById('profileBio').textContent = data.bio || '';
                 renderProfileSns(data.snsLinks);
+                
+                // 音楽プレイヤーを更新
+                if ((data.audioUrl || userData.audioUrl) && typeof renderWaveformPlayer === 'function') {
+                    const audioUrl = data.audioUrl || userData.audioUrl;
+                    const audioTitle = data.audioTitle || userData.audioTitle;
+                    const audioDuration = data.audioDuration || userData.audioDuration;
+                    document.getElementById('profileAudioPlayer').innerHTML = 
+                        renderWaveformPlayer(audioUrl, audioTitle, audioDuration, `profile_${user.uid}`);
+                }
+                
                 toast('Profile saved');
             } else { 
                 toast('Save failed','error'); 
@@ -536,6 +616,121 @@
             } catch (e) { 
                 log('Error loading DMs: ' + e.message); 
                 container.innerHTML = '<div class="empty-state">読み込みに失敗しました</div>'; 
+            }
+        }
+        
+        // ========== 音楽関連 ==========
+        async function handleAudioSelect(input) {
+            if (!input.files || !input.files[0]) return;
+            
+            const file = input.files[0];
+            
+            // ファイルタイプチェック
+            const allowedTypes = ['audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/aac'];
+            if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp3|m4a|aac)$/i)) {
+                toast('MP3 or M4A files only', 'error');
+                input.value = '';
+                return;
+            }
+            
+            // 長さチェック（10分以内）
+            let duration = 0;
+            try {
+                if (typeof getAudioDuration === 'function') {
+                    duration = await getAudioDuration(file);
+                } else {
+                    // フォールバック: 直接計算
+                    duration = await new Promise((resolve) => {
+                        const audio = new Audio();
+                        audio.onloadedmetadata = () => resolve(audio.duration);
+                        audio.onerror = () => resolve(0);
+                        audio.src = URL.createObjectURL(file);
+                    });
+                }
+            } catch (e) {
+                console.error('Error getting audio duration:', e);
+            }
+            
+            if (duration > 600) {
+                toast('Max 10 minutes', 'error');
+                input.value = '';
+                return;
+            }
+            
+            pendingAudioFile = file;
+            pendingAudioDuration = duration;
+            
+            // プレビューを表示
+            document.getElementById('audioUploadPlaceholder').style.display = 'none';
+            document.getElementById('audioUploadPreview').style.display = 'block';
+            document.getElementById('audioFileName').textContent = file.name;
+            
+            // 時間フォーマット
+            const formatDuration = (sec) => {
+                const mins = Math.floor(sec / 60);
+                const secs = Math.floor(sec % 60);
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            };
+            document.getElementById('audioDurationDisplay').textContent = formatDuration(duration);
+            
+            // タイトルをファイル名から設定（拡張子を除く）
+            const titleWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+            document.getElementById('audioTitleInput').value = titleWithoutExt;
+            
+            // プレビュープレイヤー
+            const tempUrl = URL.createObjectURL(file);
+            if (typeof renderWaveformPlayer === 'function') {
+                document.getElementById('audioPreviewPlayer').innerHTML = 
+                    renderWaveformPlayer(tempUrl, titleWithoutExt, duration, 'preview_temp');
+            }
+        }
+        
+        function removeAudioFile() {
+            pendingAudioFile = null;
+            pendingAudioDuration = 0;
+            
+            document.getElementById('audioInput').value = '';
+            document.getElementById('audioUploadPlaceholder').style.display = 'block';
+            document.getElementById('audioUploadPreview').style.display = 'none';
+            document.getElementById('audioTitleInput').value = '';
+            document.getElementById('audioFileName').textContent = '';
+            document.getElementById('audioDurationDisplay').textContent = '';
+            document.getElementById('audioPreviewPlayer').innerHTML = '';
+            
+            // 既存のaudioUrlも削除（保存時）
+            if (userData.audioUrl) {
+                updateUserData({
+                    audioUrl: firebase.firestore.FieldValue.delete(),
+                    audioTitle: firebase.firestore.FieldValue.delete(),
+                    audioDuration: firebase.firestore.FieldValue.delete()
+                }).then(() => {
+                    document.getElementById('profileAudioPlayer').innerHTML = '';
+                    toast('Audio removed');
+                });
+            }
+        }
+        
+        function loadAudioEditForm() {
+            // 時間フォーマット（ローカル関数）
+            const formatDuration = (sec) => {
+                const mins = Math.floor(sec / 60);
+                const secs = Math.floor(sec % 60);
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            };
+            
+            if (userData.audioUrl) {
+                document.getElementById('audioUploadPlaceholder').style.display = 'none';
+                document.getElementById('audioUploadPreview').style.display = 'block';
+                document.getElementById('audioFileName').textContent = 'Current track';
+                document.getElementById('audioDurationDisplay').textContent = formatDuration(userData.audioDuration || 0);
+                document.getElementById('audioTitleInput').value = userData.audioTitle || '';
+                if (typeof renderWaveformPlayer === 'function') {
+                    document.getElementById('audioPreviewPlayer').innerHTML = 
+                        renderWaveformPlayer(userData.audioUrl, userData.audioTitle, userData.audioDuration, 'edit_current');
+                }
+            } else {
+                document.getElementById('audioUploadPlaceholder').style.display = 'block';
+                document.getElementById('audioUploadPreview').style.display = 'none';
             }
         }
         

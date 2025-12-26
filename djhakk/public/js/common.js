@@ -165,6 +165,8 @@ let isGuest = false;
 let unreadCount = 0;
 let unreadUnsub = null;
 let likedStatusMap = {}; // いいね状態を保持するマップ {type_id: true/false}
+let slideUpTimers = {}; // スライドアップ用デバウンスタイマー {type_id: timerId}
+const SLIDE_UP_DELAY = 2000; // スライドアップ遅延（2秒）
 
 // ========================================
 // Currency Configuration
@@ -437,10 +439,9 @@ async function loadUserData() {
         if (doc.exists) {
             userData = doc.data();
         }
-        // lastLoginAtとlastInteractionAtを更新（Timelineでも上に表示されるように）
+        // lastLoginAtのみ更新（lastInteractionAtはいいね/コメント時のみ更新）
         await db.collection('users').doc(user.uid).update({
-            lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastInteractionAt: firebase.firestore.FieldValue.serverTimestamp()
+            lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
         });
     } catch (e) {
         log('Error loading user data: ' + e.message);
@@ -969,44 +970,34 @@ if (document.readyState === 'loading') {
 // ========================================
 
 // いいねをトグル
-async function toggleLike(targetType, targetId) {
+async function addLike(targetType, targetId) {
     if (!requireLogin()) return false;
     
     try {
-        const likeQuery = await db.collection('likes')
-            .where('targetType', '==', targetType)
-            .where('targetId', '==', targetId)
-            .where('userId', '==', user.uid)
-            .get();
-        
         const targetRef = getTargetRef(targetType, targetId);
         const now = firebase.firestore.FieldValue.serverTimestamp();
         
-        if (!likeQuery.empty) {
-            // いいね解除
-            await likeQuery.docs[0].ref.delete();
-            await targetRef.update({
-                likesCount: firebase.firestore.FieldValue.increment(-1)
-            });
-            return false;
-        } else {
-            // いいね追加
-            await db.collection('likes').add({
-                targetType: targetType,
-                targetId: targetId,
-                userId: user.uid,
-                createdAt: now
-            });
-            await targetRef.update({
-                likesCount: firebase.firestore.FieldValue.increment(1),
-                lastInteractionAt: now
-            });
-            return true;
-        }
+        // いいね追加（常に追加、削除なし）
+        await db.collection('likes').add({
+            targetType: targetType,
+            targetId: targetId,
+            userId: user.uid,
+            createdAt: now
+        });
+        await targetRef.update({
+            likesCount: firebase.firestore.FieldValue.increment(1),
+            lastInteractionAt: now
+        });
+        return true;
     } catch (e) {
-        log('Error toggling like: ' + e.message);
+        log('Error adding like: ' + e.message);
         return false;
     }
+}
+
+// 後方互換性のため toggleLike を維持
+async function toggleLike(targetType, targetId) {
+    return addLike(targetType, targetId);
 }
 
 // 自分がいいね済みか確認
@@ -1087,10 +1078,11 @@ function getTargetRef(targetType, targetId) {
 
 // いいね/コメントボタンのHTML生成
 function renderInteractionButtons(targetType, targetId, likesCount = 0, commentsCount = 0, isLiked = false) {
+    // isLikedパラメータは後方互換性のため残すが、常にアウトライン表示
     return `
         <div class="interaction-buttons" data-type="${targetType}" data-id="${targetId}">
-            <button class="interaction-btn like-btn ${isLiked ? 'liked' : ''}" data-type="${targetType}" data-id="${targetId}" onclick="event.stopPropagation(); handleLikeClick('${targetType}', '${targetId}', this)">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+            <button class="interaction-btn like-btn" data-type="${targetType}" data-id="${targetId}" onclick="event.stopPropagation(); handleLikeClick('${targetType}', '${targetId}', this)">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                 </svg>
                 <span class="like-count">${likesCount || 0}</span>
@@ -1107,26 +1099,98 @@ function renderInteractionButtons(targetType, targetId, likesCount = 0, comments
 
 // いいねボタンクリック処理
 async function handleLikeClick(targetType, targetId, btn) {
-    const isNowLiked = await toggleLike(targetType, targetId);
+    // アニメーションを即座に実行（UX向上）
+    playLikeAnimation(btn);
+    
+    // カウントを即座に+1（楽観的更新）
     const countSpan = btn.querySelector('.like-count');
     let count = parseInt(countSpan.textContent) || 0;
-    
-    // グローバルマップを更新
-    likedStatusMap[`${targetType}_${targetId}`] = isNowLiked;
+    const newCount = count + 1;
     
     // 同じターゲットの全てのボタンを更新
     document.querySelectorAll(`.like-btn[data-type="${targetType}"][data-id="${targetId}"]`).forEach(b => {
         const cs = b.querySelector('.like-count');
-        const newCount = isNowLiked ? count + 1 : Math.max(0, count - 1);
-        if (isNowLiked) {
-            b.classList.add('liked');
-            b.querySelector('svg').setAttribute('fill', 'currentColor');
-        } else {
-            b.classList.remove('liked');
-            b.querySelector('svg').setAttribute('fill', 'none');
-        }
         cs.textContent = newCount;
     });
+    
+    // サーバーに保存（バックグラウンド）
+    addLike(targetType, targetId);
+    
+    // スライドアップ処理（デバウンス：連打終了から2秒後に実行）
+    if (shouldSlideUp(targetType, true)) {
+        const timerKey = `${targetType}_${targetId}`;
+        
+        // 既存タイマーをクリア（連打中はリセット）
+        if (slideUpTimers[timerKey]) {
+            clearTimeout(slideUpTimers[timerKey]);
+        }
+        
+        // 2秒後にスライドアップを実行
+        slideUpTimers[timerKey] = setTimeout(() => {
+            const card = findCardElement(targetType, targetId);
+            if (card) {
+                const containerId = findContainerId(card, targetType);
+                if (containerId) {
+                    animateCardToTop(card, containerId);
+                }
+            }
+            delete slideUpTimers[timerKey]; // タイマー削除
+        }, SLIDE_UP_DELAY);
+    }
+}
+
+// いいねアニメーション
+function playLikeAnimation(btn) {
+    // ハートをポップさせる
+    const svg = btn.querySelector('svg');
+    svg.style.transition = 'transform 0.15s ease-out';
+    svg.style.transform = 'scale(1.4)';
+    svg.setAttribute('fill', '#FF4757');
+    
+    setTimeout(() => {
+        svg.style.transform = 'scale(1)';
+    }, 150);
+    
+    setTimeout(() => {
+        svg.setAttribute('fill', 'none');
+    }, 400);
+    
+    // 小さなハートを飛ばす
+    createFloatingHearts(btn);
+}
+
+// 浮遊するハートエフェクト
+function createFloatingHearts(btn) {
+    const rect = btn.getBoundingClientRect();
+    const container = document.body;
+    
+    for (let i = 0; i < 3; i++) {
+        const heart = document.createElement('div');
+        heart.className = 'floating-heart';
+        heart.innerHTML = '❤️';
+        heart.style.cssText = `
+            position: fixed;
+            left: ${rect.left + rect.width / 2 + (Math.random() - 0.5) * 20}px;
+            top: ${rect.top}px;
+            font-size: ${12 + Math.random() * 8}px;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 1;
+            transition: all 0.6s ease-out;
+        `;
+        container.appendChild(heart);
+        
+        // アニメーション開始
+        requestAnimationFrame(() => {
+            heart.style.top = (rect.top - 50 - Math.random() * 30) + 'px';
+            heart.style.left = (rect.left + rect.width / 2 + (Math.random() - 0.5) * 40) + 'px';
+            heart.style.opacity = '0';
+            heart.style.transform = `scale(${0.5 + Math.random() * 0.5}) rotate(${(Math.random() - 0.5) * 30}deg)`;
+        });
+        
+        // 削除
+        setTimeout(() => heart.remove(), 700);
+    }
 }
 
 // コメントモーダルを開く
@@ -1385,4 +1449,485 @@ async function loadLikedStatusByType(items, type) {
 // アイテムがいいね済みかどうかを確認
 function isItemLiked(type, id) {
     return likedStatusMap[`${type}_${id}`] === true;
+}
+
+// ========================================
+// Slide Up Animation (Like → Move to Top)
+// ========================================
+
+// スライドアップ対象のコンテナIDとタイプのマッピング
+const SLIDE_UP_CONTAINERS = {
+    'user': ['artistList', 'timelineFeed'],
+    'production': ['productionList', 'productionsList', 'timelineFeed'],
+    'tweet': ['timelineFeed'],
+    'event': ['timelineFeed'] // TimeLineのEventカードのみ
+};
+
+// カードを一番上にスライドアップアニメーション
+function animateCardToTop(cardElement, containerId) {
+    if (!cardElement) return;
+    
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const firstChild = container.firstElementChild;
+    if (!firstChild || firstChild === cardElement) return;
+    
+    // 現在の位置を記録
+    const cardRect = cardElement.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    
+    // カードをクローンして一時的に配置
+    const placeholder = document.createElement('div');
+    placeholder.style.height = cardRect.height + 'px';
+    placeholder.style.marginBottom = '16px';
+    placeholder.style.transition = 'height 0.3s ease, margin 0.3s ease';
+    
+    // カードを先頭に移動
+    cardElement.style.transition = 'none';
+    cardElement.style.transform = `translateY(${cardRect.top - containerRect.top}px)`;
+    cardElement.style.position = 'relative';
+    cardElement.style.zIndex = '10';
+    
+    // プレースホルダーを元の位置に挿入
+    cardElement.parentNode.insertBefore(placeholder, cardElement.nextSibling);
+    
+    // カードを先頭に移動
+    container.insertBefore(cardElement, firstChild);
+    
+    // 強制リフロー
+    cardElement.offsetHeight;
+    
+    // アニメーション開始
+    requestAnimationFrame(() => {
+        cardElement.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        cardElement.style.transform = 'translateY(0)';
+        
+        // ハイライト効果
+        cardElement.style.boxShadow = '0 0 20px rgba(255, 107, 0, 0.5)';
+        
+        // プレースホルダーを縮小
+        placeholder.style.height = '0px';
+        placeholder.style.marginBottom = '0px';
+    });
+    
+    // アニメーション完了後にクリーンアップ
+    setTimeout(() => {
+        cardElement.style.transition = '';
+        cardElement.style.transform = '';
+        cardElement.style.position = '';
+        cardElement.style.zIndex = '';
+        cardElement.style.boxShadow = '';
+        placeholder.remove();
+        
+        // 画面をカードの位置にスクロール
+        cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 450);
+}
+
+// いいね時にスライドアップを実行するかどうか判定
+function shouldSlideUp(targetType, isNowLiked) {
+    // いいね追加時のみスライドアップ
+    if (!isNowLiked) return false;
+    
+    // スライドアップ対象のタイプかチェック
+    return SLIDE_UP_CONTAINERS.hasOwnProperty(targetType);
+}
+
+// カード要素を取得
+function findCardElement(targetType, targetId) {
+    // interaction-buttons から親のカードを探す
+    const interactionDiv = document.querySelector(`.interaction-buttons[data-type="${targetType}"][data-id="${targetId}"]`);
+    if (!interactionDiv) return null;
+    
+    // 親要素を遡ってカードを見つける
+    let card = interactionDiv.closest('.artist-card, .card, .tweet-card');
+    return card;
+}
+
+// コンテナIDを取得
+function findContainerId(cardElement, targetType) {
+    const containers = SLIDE_UP_CONTAINERS[targetType] || [];
+    
+    for (const containerId of containers) {
+        const container = document.getElementById(containerId);
+        if (container && container.contains(cardElement)) {
+            return containerId;
+        }
+    }
+    return null;
+}
+
+// ========================================
+// Audio Player Manager
+// ========================================
+
+// 現在再生中のオーディオを管理
+let currentPlayingAudio = null;
+
+// オーディオプレイヤーマネージャー
+const AudioPlayerManager = {
+    // 再生を開始（他のプレイヤーは停止）
+    play(audioElement) {
+        if (currentPlayingAudio && currentPlayingAudio !== audioElement) {
+            currentPlayingAudio.pause();
+            // 前のプレイヤーのUIを更新
+            this.updatePlayerUI(currentPlayingAudio, false);
+        }
+        currentPlayingAudio = audioElement;
+        audioElement.play();
+        this.updatePlayerUI(audioElement, true);
+    },
+    
+    // 再生を停止
+    pause(audioElement) {
+        audioElement.pause();
+        this.updatePlayerUI(audioElement, false);
+    },
+    
+    // 再生/一時停止をトグル
+    toggle(audioElement) {
+        if (audioElement.paused) {
+            this.play(audioElement);
+        } else {
+            this.pause(audioElement);
+        }
+    },
+    
+    // プレイヤーUIを更新
+    updatePlayerUI(audioElement, isPlaying) {
+        const playerId = audioElement.dataset.playerId;
+        if (!playerId) return;
+        
+        const playerContainer = document.querySelector(`[data-player-container="${playerId}"]`);
+        if (!playerContainer) return;
+        
+        const playBtn = playerContainer.querySelector('.waveform-play-btn');
+        if (playBtn) {
+            playBtn.innerHTML = isPlaying ? 
+                '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>' :
+                '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+        }
+    },
+    
+    // 全てのプレイヤーを停止
+    stopAll() {
+        if (currentPlayingAudio) {
+            currentPlayingAudio.pause();
+            this.updatePlayerUI(currentPlayingAudio, false);
+            currentPlayingAudio = null;
+        }
+    }
+};
+
+// 波形データを生成（装飾的なランダム波形）
+function generateWaveformBars(count = 40) {
+    const bars = [];
+    for (let i = 0; i < count; i++) {
+        // 自然な波形パターンを生成
+        const height = 20 + Math.random() * 60;
+        bars.push(height);
+    }
+    return bars;
+}
+
+// 波形プレイヤーをレンダリング
+function renderWaveformPlayer(audioUrl, title, duration, uniqueId) {
+    if (!audioUrl) return '';
+    
+    const playerId = `player_${uniqueId}`;
+    const bars = generateWaveformBars(30); // バー数を減らして余裕を持たせる
+    const durationFormatted = formatAudioDuration(duration || 0);
+    
+    let barsHtml = '';
+    bars.forEach((height, index) => {
+        barsHtml += `<div class="waveform-bar" data-index="${index}" style="height:${height}%"></div>`;
+    });
+    
+    return `
+        <div class="waveform-player" data-player-container="${playerId}" onclick="event.stopPropagation()">
+            <div class="waveform-title" onclick="toggleWaveformTitle(this)">${escapeHtml(title || 'Untitled')}</div>
+            <div class="waveform-controls">
+                <button class="waveform-play-btn" onclick="handleWaveformPlay('${playerId}')">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+                <div class="waveform-bars" onclick="handleWaveformSeek(event, '${playerId}')">
+                    ${barsHtml}
+                    <div class="waveform-progress" data-progress="${playerId}"></div>
+                </div>
+                <span class="waveform-time" data-time="${playerId}">${durationFormatted}</span>
+            </div>
+            <audio 
+                data-player-id="${playerId}" 
+                src="${audioUrl}" 
+                preload="metadata"
+                ontimeupdate="updateWaveformProgress('${playerId}')"
+                onended="handleWaveformEnded('${playerId}')"
+            ></audio>
+        </div>
+    `;
+}
+
+// タイトルの展開/折りたたみをトグル
+function toggleWaveformTitle(el) {
+    el.classList.toggle('expanded');
+}
+
+// 再生/一時停止ハンドラ
+function handleWaveformPlay(playerId) {
+    const audio = document.querySelector(`audio[data-player-id="${playerId}"]`);
+    if (audio) {
+        AudioPlayerManager.toggle(audio);
+    }
+}
+
+// シークハンドラ
+function handleWaveformSeek(event, playerId) {
+    const audio = document.querySelector(`audio[data-player-id="${playerId}"]`);
+    if (!audio || !audio.duration) return;
+    
+    const barsContainer = event.currentTarget;
+    const rect = barsContainer.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    
+    audio.currentTime = audio.duration * percentage;
+    
+    // 再生中でなければ再生開始
+    if (audio.paused) {
+        AudioPlayerManager.play(audio);
+    }
+}
+
+// 進捗更新
+function updateWaveformProgress(playerId) {
+    const audio = document.querySelector(`audio[data-player-id="${playerId}"]`);
+    if (!audio || !audio.duration) return;
+    
+    const progress = (audio.currentTime / audio.duration) * 100;
+    const progressBar = document.querySelector(`[data-progress="${playerId}"]`);
+    if (progressBar) {
+        progressBar.style.width = progress + '%';
+    }
+    
+    // 時間表示更新（現在時間のみ表示）
+    const timeEl = document.querySelector(`[data-time="${playerId}"]`);
+    if (timeEl) {
+        const current = formatAudioDuration(audio.currentTime);
+        timeEl.textContent = current;
+    }
+    
+    // 波形バーの色更新
+    const playerContainer = document.querySelector(`[data-player-container="${playerId}"]`);
+    if (playerContainer) {
+        const bars = playerContainer.querySelectorAll('.waveform-bar');
+        const activeBars = Math.floor((progress / 100) * bars.length);
+        bars.forEach((bar, index) => {
+            bar.classList.toggle('active', index < activeBars);
+        });
+    }
+}
+
+// 再生終了ハンドラ
+function handleWaveformEnded(playerId) {
+    const audio = document.querySelector(`audio[data-player-id="${playerId}"]`);
+    if (audio) {
+        AudioPlayerManager.updatePlayerUI(audio, false);
+        // 波形バーをリセット
+        const playerContainer = document.querySelector(`[data-player-container="${playerId}"]`);
+        if (playerContainer) {
+            playerContainer.querySelectorAll('.waveform-bar').forEach(bar => {
+                bar.classList.remove('active');
+            });
+            const progressBar = playerContainer.querySelector(`[data-progress="${playerId}"]`);
+            if (progressBar) progressBar.style.width = '0%';
+        }
+    }
+}
+
+// 音声の長さをフォーマット
+function formatAudioDuration(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// 音楽ファイルをアップロード
+async function uploadAudioFile(file) {
+    if (!user) return null;
+    
+    // ファイルタイプチェック
+    const allowedTypes = ['audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/aac'];
+    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp3|m4a|aac)$/i)) {
+        toast('MP3 or M4A files only', 'error');
+        return null;
+    }
+    
+    // 長さチェック（10分以内）
+    const duration = await getAudioDuration(file);
+    if (duration > 600) {
+        toast('Max 10 minutes', 'error');
+        return null;
+    }
+    
+    try {
+        const ext = file.name.split('.').pop().toLowerCase();
+        const filename = `${Date.now()}.${ext}`;
+        const path = `audio/${user.uid}/${filename}`;
+        
+        const ref = storage.ref(path);
+        await ref.put(file);
+        const url = await ref.getDownloadURL();
+        
+        return { url, duration };
+    } catch (e) {
+        log('Error uploading audio: ' + e.message);
+        toast('Upload failed', 'error');
+        return null;
+    }
+}
+
+// 音声ファイルの長さを取得
+function getAudioDuration(file) {
+    return new Promise((resolve) => {
+        const audio = new Audio();
+        audio.onloadedmetadata = () => {
+            resolve(audio.duration);
+        };
+        audio.onerror = () => {
+            resolve(0);
+        };
+        audio.src = URL.createObjectURL(file);
+    });
+}
+
+// 波形プレイヤーのCSS（動的に追加）
+function addWaveformPlayerStyles() {
+    if (document.getElementById('waveform-player-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'waveform-player-styles';
+    style.textContent = `
+        .waveform-player {
+            background: var(--surface);
+            border-radius: var(--r-md);
+            padding: 12px;
+            margin-top: 12px;
+        }
+        .waveform-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+        .waveform-title.expanded {
+            white-space: normal;
+            word-break: break-word;
+        }
+        .waveform-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .waveform-play-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gradient);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .waveform-play-btn:hover {
+            transform: scale(1.05);
+        }
+        .waveform-bars {
+            flex: 1;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            cursor: pointer;
+            position: relative;
+            min-width: 0;
+        }
+        .waveform-bar {
+            flex: 1;
+            background: var(--border);
+            border-radius: 2px;
+            min-width: 2px;
+            transition: background 0.1s;
+        }
+        .waveform-bar.active {
+            background: var(--primary);
+        }
+        .waveform-progress {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 0%;
+            pointer-events: none;
+        }
+        .waveform-time {
+            font-size: 10px;
+            color: var(--text3);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .waveform-player audio {
+            display: none;
+        }
+        
+        /* アップロードUI用 */
+        .audio-upload-container {
+            background: var(--card);
+            border-radius: var(--r-md);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .audio-upload-preview {
+            margin-top: 12px;
+        }
+        .audio-upload-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .audio-upload-info .audio-name {
+            flex: 1;
+            font-size: 13px;
+            color: var(--text2);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .audio-upload-info .audio-remove {
+            background: #FF4757;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// ページ読み込み時にスタイルを追加
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addWaveformPlayerStyles);
+} else {
+    addWaveformPlayerStyles();
 }

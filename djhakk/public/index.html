@@ -461,6 +461,10 @@
                 const isMe = user && artist.id === user.uid;
                 const liked = isItemLiked('user', artist.id);
                 
+                // 波形プレイヤー（関数が存在する場合のみ）
+                const audioPlayer = (artist.audioUrl && typeof renderWaveformPlayer === 'function') ? 
+                    renderWaveformPlayer(artist.audioUrl, artist.audioTitle, artist.audioDuration, `home_${artist.id}`) : '';
+                
                 html += `
                     <div class="artist-card" onclick="window.location.href='profile.html?uid=${artist.id}'">
                         <div class="artist-card-header">
@@ -473,6 +477,7 @@
                             </div>
                         </div>
                         ${bioPreview ? `<div class="artist-bio">${bioPreview}</div>` : ''}
+                        ${audioPlayer}
                         <div class="artist-footer">
                             ${renderSnsIcons(artist.snsLinks, 28)}
                             ${!isMe ? `<button class="artist-dm-btn" onclick="event.stopPropagation(); openDM('${artist.id}', '${artist.name}')">DM</button>` : '<div></div>'}
