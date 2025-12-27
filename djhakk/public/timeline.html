@@ -134,6 +134,16 @@
         .btn-p { background: var(--gradient); color: white; }
         
         .loading { text-align: center; padding: 40px; color: var(--text2); }
+        
+        /* 無限スクロール用 */
+        .loading-spinner { display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 8px; }
+        .spinner-logo { width: 40px; height: 40px; animation: spinnerRotate 1s linear infinite; }
+        @keyframes spinnerRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .loading-spinner span { color: var(--text3); font-size: 12px; }
+        .load-more-btn { width: 100%; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); color: var(--text); font-weight: 600; cursor: pointer; margin: 16px 0; }
+        .load-more-btn:hover { background: var(--card); }
+        .no-more-data { text-align: center; padding: 30px; }
+        .no-more-data img { width: 48px; height: 48px; opacity: 0.4; }
     </style>
 </head>
 <body>
@@ -161,6 +171,14 @@
         <div id="timelineFeed">
             <div class="loading">Loading...</div>
         </div>
+        
+        <!-- 無限スクロール用UI -->
+        <div id="loadingSpinner" class="loading-spinner" style="display:none;">
+            <img src="logo.png" class="spinner-logo">
+            <span>Loading...</span>
+        </div>
+        <button id="loadMoreBtn" class="load-more-btn" style="display:none;" onclick="loadMoreTimeline()">もっと見る</button>
+        <div id="noMoreData" class="no-more-data" style="display:none;"><img src="logo.png"></div>
     </div>
     
     <!-- Floating Action Button -->
@@ -227,7 +245,7 @@
             const container = $('timelineFeed');
             
             try {
-                timelineData = await loadTimelineData();
+                timelineData = await loadTimelineInitial();
                 
                 if (timelineData.length === 0) {
                     container.innerHTML = `
@@ -243,9 +261,61 @@
                 likedMap = await getLikedStatus(timelineData);
                 
                 renderTimeline();
+                updatePaginationUI('timeline');
+                setupScrollObserver();
             } catch (e) {
                 log('Error loading timeline: ' + e.message);
                 container.innerHTML = '<div class="empty-state">Failed to load</div>';
+            }
+        }
+        
+        async function loadMoreTimeline() {
+            showLoadingSpinner(true);
+            
+            try {
+                const moreData = await loadTimelineMore();
+                if (moreData.length > 0) {
+                    // いいね状態を取得
+                    const moreLikedMap = await getLikedStatus(moreData);
+                    likedMap = { ...likedMap, ...moreLikedMap };
+                    
+                    timelineData = [...timelineData, ...moreData];
+                    renderTimeline();
+                    setupScrollObserver();
+                }
+            } catch (e) {
+                log('Error loading more timeline: ' + e.message);
+            }
+            
+            showLoadingSpinner(false);
+            updatePaginationUI('timeline');
+        }
+        
+        function showLoadingSpinner(show) {
+            document.getElementById('loadingSpinner').style.display = show ? 'flex' : 'none';
+            document.getElementById('loadMoreBtn').style.display = show ? 'none' : (paginationState.timeline?.hasMore ? 'block' : 'none');
+        }
+        
+        function updatePaginationUI(type) {
+            const state = getPaginationState(type);
+            document.getElementById('loadMoreBtn').style.display = state.hasMore ? 'block' : 'none';
+            document.getElementById('noMoreData').style.display = (!state.hasMore && timelineData.length > 0) ? 'block' : 'none';
+        }
+        
+        let scrollObserver;
+        function setupScrollObserver() {
+            if (scrollObserver) scrollObserver.disconnect();
+            
+            const cards = document.querySelectorAll('#timelineFeed .tweet-card, #timelineFeed .card, #timelineFeed .artist-card');
+            const triggerIndex = cards.length - PAGINATION.triggerOffset;
+            
+            if (triggerIndex > 0 && cards[triggerIndex] && paginationState.timeline?.hasMore) {
+                scrollObserver = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting && !paginationState.timeline?.loading) {
+                        loadMoreTimeline();
+                    }
+                }, { threshold: 0.1 });
+                scrollObserver.observe(cards[triggerIndex]);
             }
         }
         

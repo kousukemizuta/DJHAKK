@@ -219,3 +219,12 @@ const SLIDE_UP_CONTAINERS = {
     'event': ['timelineFeed'],
     'place': ['placeList', 'placesList', 'timelineFeed']
 };
+
+// ========================================
+// Pagination Configuration
+// ========================================
+const PAGINATION = {
+    initialLimit: 30,    // 初期表示件数
+    loadMoreLimit: 20,   // 追加読み込み件数
+    triggerOffset: 10    // 残り何件でトリガーするか
+};

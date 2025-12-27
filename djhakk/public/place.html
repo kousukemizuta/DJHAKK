@@ -102,6 +102,16 @@
         
         .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 400; transition: opacity 0.3s; }
         .toast.show { opacity: 1; }
+        
+        /* 無限スクロール用 */
+        .loading-spinner { display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 8px; }
+        .spinner-logo { width: 40px; height: 40px; animation: spinnerRotate 1s linear infinite; }
+        @keyframes spinnerRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .loading-spinner span { color: var(--text3); font-size: 12px; }
+        .load-more-btn { width: 100%; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); color: var(--text); font-weight: 600; cursor: pointer; margin: 16px 0; }
+        .load-more-btn:hover { background: var(--card); }
+        .no-more-data { text-align: center; padding: 30px; }
+        .no-more-data img { width: 48px; height: 48px; opacity: 0.4; }
     </style>
 </head>
 <body>
@@ -162,6 +172,14 @@
         </div>
         
         <div id="placesList"></div>
+        
+        <!-- 無限スクロール用UI -->
+        <div id="loadingSpinner" class="loading-spinner" style="display:none;">
+            <img src="logo.png" class="spinner-logo">
+            <span>Loading...</span>
+        </div>
+        <button id="loadMoreBtn" class="load-more-btn" style="display:none;" onclick="loadMorePlacesData()">もっと見る</button>
+        <div id="noMoreData" class="no-more-data" style="display:none;"><img src="logo.png"></div>
     </div>
     
     <!-- Place詳細モーダル -->
@@ -223,10 +241,55 @@
         }
         
         async function loadPlacesData() {
-            const places = await loadPlaces();
+            const places = await loadPlacesInitial();
             allPlaces = places;
             await loadLikedStatusByType(places, 'place');
             renderPlaces();
+            updatePaginationUI('places');
+            setupScrollObserver();
+        }
+        
+        async function loadMorePlacesData() {
+            showLoadingSpinner(true);
+            
+            const morePlaces = await loadPlacesMore();
+            if (morePlaces.length > 0) {
+                await loadLikedStatusByType(morePlaces, 'place');
+                allPlaces = [...allPlaces, ...morePlaces];
+                renderPlaces();
+                setupScrollObserver();
+            }
+            
+            showLoadingSpinner(false);
+            updatePaginationUI('places');
+        }
+        
+        function showLoadingSpinner(show) {
+            document.getElementById('loadingSpinner').style.display = show ? 'flex' : 'none';
+            document.getElementById('loadMoreBtn').style.display = show ? 'none' : (paginationState.places?.hasMore ? 'block' : 'none');
+        }
+        
+        function updatePaginationUI(type) {
+            const state = getPaginationState(type);
+            document.getElementById('loadMoreBtn').style.display = state.hasMore ? 'block' : 'none';
+            document.getElementById('noMoreData').style.display = (!state.hasMore && allPlaces.length > 0) ? 'block' : 'none';
+        }
+        
+        let scrollObserver;
+        function setupScrollObserver() {
+            if (scrollObserver) scrollObserver.disconnect();
+            
+            const cards = document.querySelectorAll('#placesList .card');
+            const triggerIndex = cards.length - PAGINATION.triggerOffset;
+            
+            if (triggerIndex > 0 && cards[triggerIndex] && paginationState.places?.hasMore) {
+                scrollObserver = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting && !paginationState.places?.loading) {
+                        loadMorePlacesData();
+                    }
+                }, { threshold: 0.1 });
+                scrollObserver.observe(cards[triggerIndex]);
+            }
         }
         
         function setTypeFilter(filter) {

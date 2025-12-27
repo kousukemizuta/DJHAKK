@@ -342,3 +342,439 @@ async function openDM(targetUserId, targetUserName) {
         toast(LABELS.failedToStartChat, 'error');
     }
 }
+
+// ========================================
+// Pagination System
+// ========================================
+const paginationState = {
+    users: { lastDoc: null, hasMore: true, loading: false },
+    events: { lastDoc: null, hasMore: true, loading: false },
+    productions: { lastDoc: null, hasMore: true, loading: false },
+    places: { lastDoc: null, hasMore: true, loading: false },
+    timeline: { lastTimestamp: null, hasMore: true, loading: false }
+};
+
+function resetPagination(type) {
+    if (type === 'all') {
+        Object.keys(paginationState).forEach(key => {
+            paginationState[key] = { lastDoc: null, lastTimestamp: null, hasMore: true, loading: false };
+        });
+    } else if (paginationState[type]) {
+        paginationState[type] = { lastDoc: null, lastTimestamp: null, hasMore: true, loading: false };
+    }
+}
+
+// ========================================
+// Paginated Users (ARTIST)
+// ========================================
+async function loadUsersInitial() {
+    resetPagination('users');
+    try {
+        const snapshot = await db.collection('users')
+            .orderBy('lastInteractionAt', 'desc')
+            .limit(PAGINATION.initialLimit)
+            .get();
+        
+        const users = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.name) {
+                users.push({ id: doc.id, ...data });
+            }
+        });
+        
+        if (snapshot.docs.length > 0) {
+            paginationState.users.lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        }
+        paginationState.users.hasMore = snapshot.docs.length >= PAGINATION.initialLimit;
+        
+        return users;
+    } catch (e) {
+        log('Error loading users initial: ' + e.message);
+        return [];
+    }
+}
+
+async function loadUsersMore() {
+    if (!paginationState.users.hasMore || paginationState.users.loading) return [];
+    if (!paginationState.users.lastDoc) return [];
+    
+    paginationState.users.loading = true;
+    try {
+        const snapshot = await db.collection('users')
+            .orderBy('lastInteractionAt', 'desc')
+            .startAfter(paginationState.users.lastDoc)
+            .limit(PAGINATION.loadMoreLimit)
+            .get();
+        
+        const users = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.name) {
+                users.push({ id: doc.id, ...data });
+            }
+        });
+        
+        if (snapshot.docs.length > 0) {
+            paginationState.users.lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        }
+        paginationState.users.hasMore = snapshot.docs.length >= PAGINATION.loadMoreLimit;
+        paginationState.users.loading = false;
+        
+        return users;
+    } catch (e) {
+        log('Error loading users more: ' + e.message);
+        paginationState.users.loading = false;
+        return [];
+    }
+}
+
+// ========================================
+// Paginated Events
+// ========================================
+async function loadEventsInitial() {
+    resetPagination('events');
+    try {
+        const snapshot = await db.collection('events')
+            .orderBy('lastInteractionAt', 'desc')
+            .limit(PAGINATION.initialLimit)
+            .get();
+        
+        const events = [];
+        snapshot.forEach(doc => {
+            events.push({ id: doc.id, ...doc.data() });
+        });
+        
+        if (snapshot.docs.length > 0) {
+            paginationState.events.lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        }
+        paginationState.events.hasMore = snapshot.docs.length >= PAGINATION.initialLimit;
+        
+        return events;
+    } catch (e) {
+        log('Error loading events initial: ' + e.message);
+        return [];
+    }
+}
+
+async function loadEventsMore() {
+    if (!paginationState.events.hasMore || paginationState.events.loading) return [];
+    if (!paginationState.events.lastDoc) return [];
+    
+    paginationState.events.loading = true;
+    try {
+        const snapshot = await db.collection('events')
+            .orderBy('lastInteractionAt', 'desc')
+            .startAfter(paginationState.events.lastDoc)
+            .limit(PAGINATION.loadMoreLimit)
+            .get();
+        
+        const events = [];
+        snapshot.forEach(doc => {
+            events.push({ id: doc.id, ...doc.data() });
+        });
+        
+        if (snapshot.docs.length > 0) {
+            paginationState.events.lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        }
+        paginationState.events.hasMore = snapshot.docs.length >= PAGINATION.loadMoreLimit;
+        paginationState.events.loading = false;
+        
+        return events;
+    } catch (e) {
+        log('Error loading events more: ' + e.message);
+        paginationState.events.loading = false;
+        return [];
+    }
+}
+
+// ========================================
+// Paginated Productions
+// ========================================
+async function loadProductionsInitial() {
+    resetPagination('productions');
+    try {
+        const snapshot = await db.collection('productions')
+            .orderBy('lastInteractionAt', 'desc')
+            .limit(PAGINATION.initialLimit)
+            .get();
+        
+        const productions = [];
+        snapshot.forEach(doc => {
+            productions.push({ id: doc.id, ...doc.data() });
+        });
+        
+        if (snapshot.docs.length > 0) {
+            paginationState.productions.lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        }
+        paginationState.productions.hasMore = snapshot.docs.length >= PAGINATION.initialLimit;
+        
+        return productions;
+    } catch (e) {
+        log('Error loading productions initial: ' + e.message);
+        return [];
+    }
+}
+
+async function loadProductionsMore() {
+    if (!paginationState.productions.hasMore || paginationState.productions.loading) return [];
+    if (!paginationState.productions.lastDoc) return [];
+    
+    paginationState.productions.loading = true;
+    try {
+        const snapshot = await db.collection('productions')
+            .orderBy('lastInteractionAt', 'desc')
+            .startAfter(paginationState.productions.lastDoc)
+            .limit(PAGINATION.loadMoreLimit)
+            .get();
+        
+        const productions = [];
+        snapshot.forEach(doc => {
+            productions.push({ id: doc.id, ...doc.data() });
+        });
+        
+        if (snapshot.docs.length > 0) {
+            paginationState.productions.lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        }
+        paginationState.productions.hasMore = snapshot.docs.length >= PAGINATION.loadMoreLimit;
+        paginationState.productions.loading = false;
+        
+        return productions;
+    } catch (e) {
+        log('Error loading productions more: ' + e.message);
+        paginationState.productions.loading = false;
+        return [];
+    }
+}
+
+// ========================================
+// Paginated Places
+// ========================================
+async function loadPlacesInitial() {
+    resetPagination('places');
+    try {
+        const snapshot = await db.collection('places')
+            .orderBy('lastInteractionAt', 'desc')
+            .limit(PAGINATION.initialLimit)
+            .get();
+        
+        const places = [];
+        snapshot.forEach(doc => {
+            places.push({ id: doc.id, ...doc.data() });
+        });
+        
+        if (snapshot.docs.length > 0) {
+            paginationState.places.lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        }
+        paginationState.places.hasMore = snapshot.docs.length >= PAGINATION.initialLimit;
+        
+        return places;
+    } catch (e) {
+        log('Error loading places initial: ' + e.message);
+        return [];
+    }
+}
+
+async function loadPlacesMore() {
+    if (!paginationState.places.hasMore || paginationState.places.loading) return [];
+    if (!paginationState.places.lastDoc) return [];
+    
+    paginationState.places.loading = true;
+    try {
+        const snapshot = await db.collection('places')
+            .orderBy('lastInteractionAt', 'desc')
+            .startAfter(paginationState.places.lastDoc)
+            .limit(PAGINATION.loadMoreLimit)
+            .get();
+        
+        const places = [];
+        snapshot.forEach(doc => {
+            places.push({ id: doc.id, ...doc.data() });
+        });
+        
+        if (snapshot.docs.length > 0) {
+            paginationState.places.lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        }
+        paginationState.places.hasMore = snapshot.docs.length >= PAGINATION.loadMoreLimit;
+        paginationState.places.loading = false;
+        
+        return places;
+    } catch (e) {
+        log('Error loading places more: ' + e.message);
+        paginationState.places.loading = false;
+        return [];
+    }
+}
+
+// ========================================
+// Paginated Timeline (Mixed)
+// ========================================
+async function loadTimelineInitial() {
+    resetPagination('timeline');
+    try {
+        const [tweetsSnap, eventsSnap, productionsSnap, placesSnap, usersSnap] = await Promise.all([
+            db.collection('tweets').orderBy('lastInteractionAt', 'desc').limit(PAGINATION.initialLimit).get(),
+            db.collection('events').orderBy('lastInteractionAt', 'desc').limit(PAGINATION.initialLimit).get(),
+            db.collection('productions').orderBy('lastInteractionAt', 'desc').limit(PAGINATION.initialLimit).get(),
+            db.collection('places').orderBy('lastInteractionAt', 'desc').limit(PAGINATION.initialLimit).get(),
+            db.collection('users').orderBy('lastInteractionAt', 'desc').limit(PAGINATION.initialLimit).get()
+        ]);
+        
+        const items = [];
+        
+        tweetsSnap.forEach(doc => {
+            const data = doc.data();
+            items.push({ 
+                id: doc.id, ...data, _type: 'tweet',
+                _sortTime: data.lastInteractionAt || data.createdAt
+            });
+        });
+        
+        eventsSnap.forEach(doc => {
+            const data = doc.data();
+            items.push({ 
+                id: doc.id, ...data, _type: 'event',
+                _sortTime: data.lastInteractionAt || data.createdAt
+            });
+        });
+        
+        productionsSnap.forEach(doc => {
+            const data = doc.data();
+            items.push({ 
+                id: doc.id, ...data, _type: 'production',
+                _sortTime: data.lastInteractionAt || data.createdAt
+            });
+        });
+        
+        placesSnap.forEach(doc => {
+            const data = doc.data();
+            items.push({ 
+                id: doc.id, ...data, _type: 'place',
+                _sortTime: data.lastInteractionAt || data.createdAt
+            });
+        });
+        
+        usersSnap.forEach(doc => {
+            const data = doc.data();
+            if (data.name) {
+                items.push({ 
+                    id: doc.id, ...data, _type: 'user',
+                    _sortTime: data.lastInteractionAt || data.lastLoginAt || data.createdAt
+                });
+            }
+        });
+        
+        // lastInteractionAtでソート
+        items.sort((a, b) => {
+            const timeA = a._sortTime?.toDate?.() || new Date(0);
+            const timeB = b._sortTime?.toDate?.() || new Date(0);
+            return timeB - timeA;
+        });
+        
+        // 最初の30件を返す
+        const result = items.slice(0, PAGINATION.initialLimit);
+        
+        if (result.length > 0) {
+            const lastItem = result[result.length - 1];
+            paginationState.timeline.lastTimestamp = lastItem._sortTime;
+        }
+        paginationState.timeline.hasMore = items.length >= PAGINATION.initialLimit;
+        
+        return result;
+    } catch (e) {
+        log('Error loading timeline initial: ' + e.message);
+        return [];
+    }
+}
+
+async function loadTimelineMore() {
+    if (!paginationState.timeline.hasMore || paginationState.timeline.loading) return [];
+    if (!paginationState.timeline.lastTimestamp) return [];
+    
+    paginationState.timeline.loading = true;
+    try {
+        const lastTs = paginationState.timeline.lastTimestamp;
+        
+        const [tweetsSnap, eventsSnap, productionsSnap, placesSnap, usersSnap] = await Promise.all([
+            db.collection('tweets').orderBy('lastInteractionAt', 'desc').where('lastInteractionAt', '<', lastTs).limit(PAGINATION.loadMoreLimit).get(),
+            db.collection('events').orderBy('lastInteractionAt', 'desc').where('lastInteractionAt', '<', lastTs).limit(PAGINATION.loadMoreLimit).get(),
+            db.collection('productions').orderBy('lastInteractionAt', 'desc').where('lastInteractionAt', '<', lastTs).limit(PAGINATION.loadMoreLimit).get(),
+            db.collection('places').orderBy('lastInteractionAt', 'desc').where('lastInteractionAt', '<', lastTs).limit(PAGINATION.loadMoreLimit).get(),
+            db.collection('users').orderBy('lastInteractionAt', 'desc').where('lastInteractionAt', '<', lastTs).limit(PAGINATION.loadMoreLimit).get()
+        ]);
+        
+        const items = [];
+        
+        tweetsSnap.forEach(doc => {
+            const data = doc.data();
+            items.push({ 
+                id: doc.id, ...data, _type: 'tweet',
+                _sortTime: data.lastInteractionAt || data.createdAt
+            });
+        });
+        
+        eventsSnap.forEach(doc => {
+            const data = doc.data();
+            items.push({ 
+                id: doc.id, ...data, _type: 'event',
+                _sortTime: data.lastInteractionAt || data.createdAt
+            });
+        });
+        
+        productionsSnap.forEach(doc => {
+            const data = doc.data();
+            items.push({ 
+                id: doc.id, ...data, _type: 'production',
+                _sortTime: data.lastInteractionAt || data.createdAt
+            });
+        });
+        
+        placesSnap.forEach(doc => {
+            const data = doc.data();
+            items.push({ 
+                id: doc.id, ...data, _type: 'place',
+                _sortTime: data.lastInteractionAt || data.createdAt
+            });
+        });
+        
+        usersSnap.forEach(doc => {
+            const data = doc.data();
+            if (data.name) {
+                items.push({ 
+                    id: doc.id, ...data, _type: 'user',
+                    _sortTime: data.lastInteractionAt || data.lastLoginAt || data.createdAt
+                });
+            }
+        });
+        
+        // ソート
+        items.sort((a, b) => {
+            const timeA = a._sortTime?.toDate?.() || new Date(0);
+            const timeB = b._sortTime?.toDate?.() || new Date(0);
+            return timeB - timeA;
+        });
+        
+        // 上位20件を返す
+        const result = items.slice(0, PAGINATION.loadMoreLimit);
+        
+        if (result.length > 0) {
+            const lastItem = result[result.length - 1];
+            paginationState.timeline.lastTimestamp = lastItem._sortTime;
+        }
+        paginationState.timeline.hasMore = result.length >= PAGINATION.loadMoreLimit;
+        paginationState.timeline.loading = false;
+        
+        return result;
+    } catch (e) {
+        log('Error loading timeline more: ' + e.message);
+        paginationState.timeline.loading = false;
+        return [];
+    }
+}
+
+// ========================================
+// Pagination Helper Functions
+// ========================================
+function getPaginationState(type) {
+    return paginationState[type] || { hasMore: false, loading: false };
+}
