@@ -146,18 +146,6 @@
         .input-group { margin-bottom: 16px; }
         .label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text2); font-size: 14px; }
         
-        /* カード共通 */
-        .card { background: var(--card); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 16px; }
-        .card-main { display: flex; cursor: pointer; }
-        .card-img { width: 120px; min-width: 120px; height: 140px; object-fit: cover; }
-        .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
-        .card-title { font-size: 15px; font-weight: 700; margin: 4px 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .card-region { font-size: 11px; color: var(--primary); background: rgba(255,107,0,0.15); padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 4px; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .badge.a { background: rgba(255,107,0,0.2); color: #FF6B00; }
-        .badge.b { background: rgba(0,217,255,0.2); color: #00D9FF; }
-        .badge.c { background: rgba(157,78,221,0.2); color: #9D4EDD; }
-        
         /* アーティストカード */
         .artist-card { background: var(--card); border-radius: var(--r-xl); padding: 16px; margin-bottom: 16px; cursor: pointer; }
         .artist-card-header { display: flex; gap: 12px; margin-bottom: 12px; }
@@ -169,27 +157,6 @@
         .artist-bio { font-size: 13px; color: var(--text2); margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
         .artist-footer { display: flex; justify-content: space-between; align-items: center; }
         .artist-dm-btn { padding: 8px 16px; background: var(--gradient); color: white; border: none; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-        
-        .card-organizer { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
-        .card-organizer-name { font-size: 12px; color: var(--text2); }
-        
-        .card-slots { padding: 12px; border-top: 1px solid var(--border); }
-        .card-slot { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-        .card-slot:last-child { margin-bottom: 0; }
-        .card-slot-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 200px; }
-        .card-slot-time { font-size: 12px; color: var(--text2); }
-        .card-slot-price { font-size: 12px; font-weight: 600; color: var(--primary); }
-        .card-slot-price.free { color: #00D9FF; }
-        .card-slot-count { font-size: 11px; color: var(--text3); }
-        .card-slot-count.full { color: #FF4757; }
-        .card-slot-avatars { display: flex; gap: -8px; align-items: center; flex-wrap: wrap; }
-        .card-slot-avatars > * { margin-left: -6px; }
-        .card-slot-avatars > *:first-child { margin-left: 0; }
-        .card-slot-buy { padding: 6px 12px; background: var(--gradient); color: white; border: none; border-radius: 14px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-        .card-slot-buy.free { background: #00D9FF; color: #0D0D1A; }
-        .card-slot-buy.full { background: var(--border); color: var(--text3); cursor: not-allowed; }
-        
-        .avatar-empty { width: 24px; height: 24px; border-radius: 50%; background: var(--border); border: 2px solid var(--card); }
         
         .welcome-screen { align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
         .welcome-logo { width: 120px; height: 120px; margin-bottom: 40px; }
@@ -216,10 +183,6 @@
         .region-select { flex: 1; padding: 8px 32px 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%23A0A0B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
         .region-select:focus { outline: none; border-color: var(--primary); }
         .region-select.active { background-color: rgba(255,107,0,0.2); border-color: var(--primary); color: var(--primary); }
-        
-        .date-separator { display: flex; align-items: center; gap: 12px; margin: 20px 0 16px; }
-        .date-separator-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
-        .date-separator-text { font-size: 13px; font-weight: 600; color: var(--text2); background: var(--surface); padding: 4px 12px; border-radius: 12px; }
         
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
     </style>
@@ -274,11 +237,12 @@
                 <img src="logo.png" class="header-logo" onclick="location.reload()">
             </div>
             
-            <!-- タブ（アーティスト/イベント/プロダクション） -->
+            <!-- タブ（アーティスト/イベント/プロダクション/プレイス） -->
             <div class="tabs">
                 <div class="tab active" onclick="switchMainTab('artist')">ARTIST</div>
                 <div class="tab" onclick="switchMainTab('event')">EVENT</div>
                 <div class="tab" onclick="switchMainTab('production')">PRODUCTION</div>
+                <div class="tab" onclick="switchMainTab('place')">PLACE</div>
             </div>
             
             <!-- 地域フィルター -->
@@ -289,12 +253,6 @@
             
             <!-- アーティスト一覧 -->
             <div id="artistList"></div>
-            
-            <!-- イベント一覧 -->
-            <div id="eventList" style="display:none;"></div>
-            
-            <!-- プロダクション一覧 -->
-            <div id="productionList" style="display:none;"></div>
         </div>
     </div>
     
@@ -306,19 +264,23 @@
         <div class="nav-item" onclick="location.href='events.html'"><span>Event</span></div>
         <div class="nav-item" onclick="location.href='timeline.html'"><span>TimeLine</span></div>
         <div class="nav-item" onclick="location.href='productions.html'"><span>Production</span></div>
+        <div class="nav-item" onclick="location.href='place.html'"><span>Place</span></div>
         <div class="nav-item" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
     </nav>
     <div class="toast" id="toast"></div>
     
-    <script src="js/common.js"></script>
+    <!-- Common JS (順序重要: 依存関係順に読み込み) -->
+    <script src="js/config.js"></script>
+    <script src="js/firebase-init.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/interactions.js"></script>
+    <script src="js/audio-player.js"></script>
     <script>
         let allArtists = [];
-        let allEvents = [];
-        let allProductions = [];
-        let usersCache = {};
-        let currentMainTab = 'artist';
         let currentRegion = 'all';
-        let isRedirecting = false; // リダイレクト中フラグ
+        let isRedirecting = false;
         
         // スプラッシュスクリーンのパーティクル生成
         function createSplashParticles() {
@@ -392,56 +354,41 @@
         }
         
         function switchMainTab(tab) {
-            currentMainTab = tab;
-            document.querySelectorAll('.tabs .tab').forEach((t, i) => {
-                t.classList.toggle('active', (i === 0 && tab === 'artist') || (i === 1 && tab === 'event') || (i === 2 && tab === 'production'));
-            });
-            document.getElementById('artistList').style.display = tab === 'artist' ? 'block' : 'none';
-            document.getElementById('eventList').style.display = tab === 'event' ? 'block' : 'none';
-            document.getElementById('productionList').style.display = tab === 'production' ? 'block' : 'none';
-            renderCurrentTab();
+            if (tab === 'event') {
+                window.location.href = 'events.html';
+                return;
+            }
+            if (tab === 'production') {
+                window.location.href = 'productions.html';
+                return;
+            }
+            if (tab === 'place') {
+                window.location.href = 'place.html';
+                return;
+            }
+            // ARTISTタブはそのまま表示
+            renderArtists();
         }
         
         function handleRegionFilter() {
             const select = document.getElementById('regionFilter');
             currentRegion = select.value;
             select.classList.toggle('active', currentRegion !== 'all');
-            renderCurrentTab();
-        }
-        
-        function renderCurrentTab() {
-            if (currentMainTab === 'artist') renderArtists();
-            else if (currentMainTab === 'event') renderEvents();
-            else renderProductions();
+            renderArtists();
         }
         
         async function loadHomeData() {
             // 地域フィルターを初期化
             document.getElementById('regionFilter').innerHTML = generateRegionOptions(true);
             
-            // データを並行読み込み
-            const [artists, events, productions] = await Promise.all([
-                loadAllUsers(),
-                loadEvents(),
-                loadProductions()
-            ]);
-            
+            // アーティストのみ読み込み
+            const artists = await loadAllUsers();
             allArtists = artists;
-            allEvents = events;
-            allProductions = productions;
             
-            // イベント用にユーザー情報を取得
-            const organizerIds = [...new Set(events.map(e => e.organizerId).filter(id => id))];
-            usersCache = await getUsersByIds(organizerIds);
+            // いいね状態を取得
+            await loadLikedStatusByType(artists, 'user');
             
-            // いいね状態を並行取得
-            await Promise.all([
-                loadLikedStatusByType(artists, 'user'),
-                loadLikedStatusByType(events, 'event'),
-                loadLikedStatusByType(productions, 'production')
-            ]);
-            
-            renderCurrentTab();
+            renderArtists();
         }
         
         function renderArtists() {
@@ -495,178 +442,10 @@
             container.innerHTML = html;
         }
         
-        // スロットのアバター表示
-        function renderSlotAvatars(applicants, capacity) {
-            let html = '';
-            const count = applicants.length;
-            for (let i = 0; i < capacity; i++) {
-                if (i < count) {
-                    const uid = applicants[i];
-                    const u = usersCache[uid];
-                    if (u && u.photoURL) {
-                        html += `<div style="width:24px;height:24px;border-radius:50%;overflow:hidden;border:2px solid var(--card);margin-left:${i > 0 ? '-6px' : '0'};">
-                            <img src="${u.photoURL}" style="width:100%;height:100%;object-fit:cover;">
-                        </div>`;
-                    } else {
-                        const initial = u ? (u.name || '?')[0].toUpperCase() : '?';
-                        html += `<div style="width:24px;height:24px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:white;font-size:10px;font-weight:600;border:2px solid var(--card);margin-left:${i > 0 ? '-6px' : '0'};">${initial}</div>`;
-                    }
-                } else {
-                    html += `<div class="avatar-empty" style="margin-left:${i > 0 ? '-6px' : '0'};"></div>`;
-                }
-            }
-            return html;
-        }
-        
-        function formatTimeOnly(date) {
-            if (!date) return '';
-            const d = date.toDate ? date.toDate() : new Date(date);
-            return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
-        }
-        
-        function getDateKey(date) {
-            if (!date) return '';
-            const d = date.toDate ? date.toDate() : new Date(date);
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        }
-        
-        function createDateSeparator(dateKey) {
-            const d = new Date(dateKey);
-            const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-            const dateStr = `${d.getMonth() + 1}.${d.getDate()} ${days[d.getDay()]}`;
-            return `<div class="date-separator">
-                <div class="date-separator-line"></div>
-                <span class="date-separator-text">${dateStr}</span>
-                <div class="date-separator-line"></div>
-            </div>`;
-        }
-        
-        function renderEvents() {
-            const container = document.getElementById('eventList');
-            const now = new Date();
-            
-            let futureEvents = allEvents.filter(ev => {
-                const evDate = ev.date?.toDate ? ev.date.toDate() : new Date(ev.date);
-                if (evDate < now) return false;
-                if (currentRegion !== 'all' && ev.region !== currentRegion) return false;
-                return true;
-            });
-            
-            futureEvents.sort((a, b) => {
-                const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
-                const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
-                return dateA - dateB;
-            });
-            
-            if (futureEvents.length === 0) {
-                container.innerHTML = '<div class="empty-state">No upcoming events</div>';
-                return;
-            }
-            
-            const byDate = {};
-            futureEvents.forEach(ev => {
-                const key = getDateKey(ev.date);
-                if (!byDate[key]) byDate[key] = [];
-                byDate[key].push(ev);
-            });
-            
-            let html = '';
-            const labels = {A:'TIMETABLE', B:'GUARANTEE(ｷﾞｬﾗ)', C:'FLYER'};
-            const cls = {A:'a', B:'b', C:'c'};
-            
-            for (const dateKey in byDate) {
-                html += createDateSeparator(dateKey);
-                byDate[dateKey].forEach(ev => {
-                    const currency = ev.currency || 'jpy';
-                    const organizer = usersCache[ev.organizerId] || {};
-                    const liked = isItemLiked('event', ev.id);
-                    
-                    html += `<div class="card">
-                        <div class="card-main" onclick="window.location.href='events.html?id=${ev.id}'">
-                            <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
-                            <div class="card-body">
-                                <span class="card-region">${ev.region||'N/A'}</span>
-                                <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'TIMETABLE'}</span>
-                                <h3 class="card-title">${ev.title}</h3>
-                                <p style="color:var(--text2);font-size:13px;">${formatTimeOnly(ev.date)} ${ev.location||''}</p>
-                                <div class="card-organizer" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${ev.organizerId}'">
-                                    ${renderAvatar(organizer.photoURL || ev.organizerPhoto, organizer.name || ev.organizerName || '?', 28, false)}
-                                    <span class="card-organizer-name">${organizer.name || ev.organizerName || 'Organizer'}</span>
-                                </div>
-                            </div>
-                        </div>`;
-                    
-                    // スロット表示（Type A, B のみ）
-                    if ((ev.type === 'A' || ev.type === 'B') && ev.slots && ev.slots.length > 0) {
-                        html += `<div class="card-slots">`;
-                        ev.slots.forEach((slot, i) => {
-                            const price = slot.price || 0;
-                            const capacity = slot.capacity || 1;
-                            const applicants = slot.applicants || [];
-                            const count = applicants.length;
-                            const isFull = count >= capacity;
-                            const isFree = price === 0;
-                            
-                            html += `<div class="card-slot">
-                                <div class="card-slot-info">
-                                    <span class="card-slot-time">${slot.time || 'TBD'}</span>
-                                    <span class="card-slot-price ${isFree ? 'free' : ''}">${formatPrice(price, currency)}</span>
-                                    <span class="card-slot-count ${isFull ? 'full' : ''}">${count}/${capacity}${isFull ? ' FULL' : ''}</span>
-                                </div>
-                                <div class="card-slot-avatars">${renderSlotAvatars(applicants, capacity)}</div>
-                                <button class="card-slot-buy ${isFree ? 'free' : ''} ${isFull ? 'full' : ''}" 
-                                        onclick="event.stopPropagation(); window.location.href='events.html?id=${ev.id}'"
-                                        ${isFull ? 'disabled' : ''}>
-                                    ${isFull ? 'FULL' : (isFree ? 'FREE' : formatPriceShort(price, currency))}
-                                </button>
-                            </div>`;
-                        });
-                        html += `</div>`;
-                    }
-                    
-                    // いいね/コメント
-                    html += `<div class="card-interaction">
-                        ${renderInteractionButtons('event', ev.id, ev.likesCount || 0, ev.commentsCount || 0, liked)}
-                    </div>`;
-                    
-                    html += `</div>`;
-                });
-            }
-            container.innerHTML = html;
-        }
-        
-        function renderProductions() {
-            const container = document.getElementById('productionList');
-            
-            if (allProductions.length === 0) {
-                container.innerHTML = '<div class="empty-state">No productions</div>';
-                return;
-            }
-            
-            let html = '';
-            allProductions.forEach(p => {
-                const liked = isItemLiked('production', p.id);
-                html += `<div class="card">
-                    <div class="card-main" onclick="window.location.href='productions.html?id=${p.id}'">
-                        <img src="${p.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
-                        <div class="card-body">
-                            <span class="badge a">${LABELS.productionTypes[p.type]||'ITEM SALES'}</span>
-                            <h3 class="card-title">${p.title}</h3>
-                            <p style="color:var(--text2);font-size:13px;">¥${(p.price||0).toLocaleString()}</p>
-                        </div>
-                    </div>
-                    <div class="card-interaction">
-                        ${renderInteractionButtons('production', p.id, p.likesCount || 0, p.commentsCount || 0, liked)}
-                    </div>
-                </div>`;
-            });
-            container.innerHTML = html;
-        }
-        
         function onAuthReady() {
             const params = new URLSearchParams(location.search);
             
-            if (isRedirecting) return; // リダイレクト中なら何もしない
+            if (isRedirecting) return;
             
             if (user) {
                 if (params.get('tab') === 'home') {

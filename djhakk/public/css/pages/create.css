@@ -1,0 +1,253 @@
+/* ========================================
+   Create Page Specific Styles
+   ======================================== */
+
+/* Type Selection */
+.type-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.type-card {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: var(--r-xl);
+    padding: 20px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.type-card:hover {
+    border-color: var(--primary);
+}
+
+.type-card.active {
+    border-color: var(--primary);
+    background: rgba(255, 107, 0, 0.1);
+}
+
+.type-card-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.type-card-label {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.type-card-desc {
+    font-size: 11px;
+    color: var(--text3);
+}
+
+/* Form Section */
+.form-section {
+    margin-bottom: 24px;
+}
+
+.form-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-bottom: 12px;
+}
+
+/* Image Upload */
+.image-upload {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: var(--card);
+    border: 2px dashed var(--border);
+    border-radius: var(--r-xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+}
+
+.image-upload:hover {
+    border-color: var(--primary);
+}
+
+.image-upload.has-image {
+    border-style: solid;
+}
+
+.image-upload img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.image-upload-icon {
+    font-size: 40px;
+    color: var(--text3);
+    margin-bottom: 8px;
+}
+
+.image-upload-text {
+    color: var(--text3);
+    font-size: 14px;
+}
+
+/* Slots Editor */
+.slots-editor {
+    margin-bottom: 24px;
+}
+
+.slot-editor-item {
+    background: var(--card);
+    border-radius: var(--r-lg);
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.slot-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.slot-editor-title {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.slot-editor-remove {
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.slot-editor-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.slot-editor-row:last-child {
+    margin-bottom: 0;
+}
+
+.slot-editor-field {
+    flex: 1;
+}
+
+.slot-editor-field label {
+    display: block;
+    font-size: 12px;
+    color: var(--text3);
+    margin-bottom: 4px;
+}
+
+.slot-editor-field input,
+.slot-editor-field select {
+    width: 100%;
+    padding: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    color: var(--text);
+    font-size: 14px;
+}
+
+.slot-editor-field input:focus,
+.slot-editor-field select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.add-slot-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--card);
+    border: 2px dashed var(--border);
+    border-radius: var(--r-lg);
+    color: var(--text3);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.add-slot-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* Preview Section */
+.preview-section {
+    background: var(--surface);
+    border-radius: var(--r-xl);
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.preview-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-bottom: 16px;
+}
+
+/* Submit Button */
+.submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--gradient);
+    color: white;
+    border: none;
+    border-radius: var(--r-lg);
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.submit-btn:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+/* Step Indicator */
+.step-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+}
+
+.step-dot.active {
+    background: var(--primary);
+    width: 24px;
+    border-radius: 4px;
+}
+
+.step-dot.completed {
+    background: var(--success);
+}

@@ -66,6 +66,9 @@
         .badge.audio { background: rgba(255,107,0,0.2); color: #FF6B00; }
         .badge.goods { background: rgba(0,217,255,0.2); color: #00D9FF; }
         .badge.produce { background: rgba(157,78,221,0.2); color: #9D4EDD; }
+        .badge.place { background: rgba(0,217,255,0.2); color: #00D9FF; }
+        .badge.agency { background: rgba(157,78,221,0.2); color: #9D4EDD; }
+        .badge.shop { background: rgba(0,200,83,0.2); color: #00C853; }
         
         /* Tweet Card */
         .tweet-card { background: var(--card); border-radius: var(--r-xl); padding: 16px; margin-bottom: 16px; }
@@ -168,11 +171,19 @@
         <div class="nav-item" onclick="location.href='events.html'"><span>Event</span></div>
         <div class="nav-item active"><span>TimeLine</span></div>
         <div class="nav-item" onclick="location.href='productions.html'"><span>Production</span></div>
+        <div class="nav-item" onclick="location.href='place.html'"><span>Place</span></div>
         <div class="nav-item" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
     </nav>
     <div class="toast" id="toast"></div>
     
-    <script src="js/common.js"></script>
+        <!-- Common JS (順序重要: 依存関係順に読み込み) -->
+    <script src="js/config.js"></script>
+    <script src="js/firebase-init.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/interactions.js"></script>
+    <script src="js/audio-player.js"></script>
     <script>
         let timelineData = [];
         let likedMap = {};
@@ -255,6 +266,9 @@
                     case 'production':
                         html += renderProductionCard(item, isLiked);
                         break;
+                    case 'place':
+                        html += renderPlaceCard(item, isLiked);
+                        break;
                     case 'user':
                         html += renderArtistCard(item, isLiked);
                         break;
@@ -279,7 +293,7 @@
                             <div class="tweet-card-badge"><span class="badge tweet">POST</span></div>
                         </div>
                     </div>
-                    <div class="tweet-card-text">${escapeHtml(tweet.text)}</div>
+                    <div class="tweet-card-text">${linkifyText(tweet.text)}</div>
                     ${renderInteractionButtons('tweet', tweet.id, tweet.likesCount, tweet.commentsCount, isLiked)}
                 </div>
             `;
@@ -323,6 +337,36 @@
                     </div>
                     <div class="card-interaction">
                         ${renderInteractionButtons('production', p.id, p.likesCount, p.commentsCount, isLiked)}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderPlaceCard(place, isLiked) {
+            const typeLabels = {place: 'PLACE', agency: 'AGENCY', shop: 'SHOP'};
+            const initial = (place.userName || '?')[0].toUpperCase();
+            const snsIconsHtml = typeof renderSnsIcons === 'function' ? renderSnsIcons(place.snsLinks, 20) : '';
+            
+            return `
+                <div class="card">
+                    <div class="card-main" onclick="window.location.href='place.html?id=${place.id}'">
+                        <img src="${place.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                        <div class="card-body">
+                            <span class="badge ${place.type||'place'}">${typeLabels[place.type]||'PLACE'}</span>
+                            ${place.region ? `<span class="card-region">${place.region}</span>` : ''}
+                            <h3 class="card-title">${place.name || 'Untitled'}</h3>
+                            ${place.location ? `<p style="color:var(--text2);font-size:12px;">📍 ${place.location}</p>` : ''}
+                            <div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${place.userId}'">
+                                <div style="width:24px;height:24px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;overflow:hidden;">
+                                    ${place.userPhoto ? `<img src="${place.userPhoto}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
+                                </div>
+                                <span style="font-size:12px;color:var(--text2);">${place.userName || 'User'}</span>
+                            </div>
+                            ${snsIconsHtml ? `<div style="display:flex;gap:8px;margin-top:8px;" onclick="event.stopPropagation()">${snsIconsHtml}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="card-interaction">
+                        ${renderInteractionButtons('place', place.id, place.likesCount, place.commentsCount, isLiked)}
                     </div>
                 </div>
             `;

@@ -1,0 +1,10 @@
+/* ========================================
+   Messages Page Specific Styles
+   ======================================== */
+
+/* Chat List - uses component styles from components.css */
+.chat-list {
+    /* Container for chat items */
+}
+
+/* Chat item states and transitions are in components.css */

@@ -1,0 +1,242 @@
+/* ========================================
+   Profile Page Specific Styles
+   ======================================== */
+
+/* Profile Header */
+.profile-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: var(--gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    margin: 0 auto 16px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.profile-avatar.readonly {
+    cursor: default;
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-name {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.profile-region {
+    font-size: 14px;
+    color: var(--primary);
+    margin-bottom: 8px;
+}
+
+.profile-bio {
+    color: var(--text2);
+    font-size: 14px;
+    margin-bottom: 16px;
+    white-space: pre-wrap;
+    line-height: 1.6;
+}
+
+.profile-sns {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.profile-btn {
+    padding: 12px 24px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+}
+
+.profile-btn.dm {
+    background: var(--gradient);
+    color: white;
+}
+
+.profile-btn.secondary {
+    background: var(--card);
+    color: var(--text2);
+}
+
+/* Edit Form */
+.edit-form {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.edit-avatar {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.edit-avatar-img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: var(--gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    margin: 0 auto 12px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.edit-avatar-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.edit-avatar-btn {
+    color: var(--primary);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* SNS Links Editor */
+.sns-links-editor {
+    margin-bottom: 24px;
+}
+
+.sns-link-item {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    align-items: center;
+}
+
+.sns-link-item select {
+    width: 120px;
+    padding: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    color: var(--text);
+    font-size: 14px;
+}
+
+.sns-link-item input {
+    flex: 1;
+    padding: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    color: var(--text);
+    font-size: 14px;
+}
+
+.sns-link-item input:focus,
+.sns-link-item select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.sns-link-remove {
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.sns-link-add {
+    width: 100%;
+    padding: 10px;
+    background: var(--card);
+    border: 1px dashed var(--border);
+    border-radius: var(--r-md);
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.sns-link-add:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* Audio Player Section */
+.audio-section {
+    background: var(--card);
+    border-radius: var(--r-xl);
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.audio-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text2);
+}
+
+/* My Events/Productions Section */
+.my-items-section {
+    margin-top: 24px;
+}
+
+.my-items-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text2);
+}
+
+/* Menu Items */
+.menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: var(--card);
+    border-radius: var(--r-lg);
+    margin-bottom: 12px;
+    cursor: pointer;
+}
+
+.menu-item:hover {
+    background: var(--surface);
+}
+
+.menu-item-text {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.menu-item-arrow {
+    color: var(--text3);
+}

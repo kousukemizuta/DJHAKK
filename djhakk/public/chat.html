@@ -41,6 +41,9 @@
         .message.mine .message-bubble { background: var(--gradient); color: white; border-bottom-right-radius: 4px; }
         .message.other .message-bubble { background: var(--card); color: var(--text); border-bottom-left-radius: 4px; }
         
+        /* チャット内リンクは白色で表示 */
+        .message-bubble a { color: white !important; }
+        
         .message-time { font-size: 10px; color: var(--text3); margin-top: 4px; padding: 0 4px; }
         
         .date-divider { text-align: center; margin: 16px 0; }
@@ -85,7 +88,14 @@
     
     <div class="toast" id="toast"></div>
     
-    <script src="js/common.js"></script>
+        <!-- Common JS (順序重要: 依存関係順に読み込み) -->
+    <script src="js/config.js"></script>
+    <script src="js/firebase-init.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/interactions.js"></script>
+    <script src="js/audio-player.js"></script>
     <script>
         let chatId = null;
         let partnerId = null;
@@ -201,7 +211,7 @@
                         
                         container.innerHTML += `
                             <div class="message ${isMine ? 'mine' : 'other'}">
-                                <div class="message-bubble">${escapeHtml(msg.text)}</div>
+                                <div class="message-bubble">${linkifyText(msg.text)}</div>
                                 <div class="message-time">${formatTime(msgDate)}</div>
                             </div>
                         `;
@@ -232,12 +242,6 @@
         
         function formatTime(date) {
             return `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-        }
-        
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML.replace(/\n/g, '<br>');
         }
         
         function autoResize(el) {

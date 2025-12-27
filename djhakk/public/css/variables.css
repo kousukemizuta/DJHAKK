@@ -1,0 +1,39 @@
+/* ========================================
+   DJHAKK CSS Variables
+   ======================================== */
+
+:root {
+    /* Primary Colors */
+    --primary: #FF6B00;
+    --primary-light: #FF8533;
+    
+    /* Background Colors */
+    --bg: #0D0D1A;
+    --surface: #1A1A2E;
+    --card: #252538;
+    
+    /* Text Colors */
+    --text: #FFFFFF;
+    --text2: #A0A0B8;
+    --text3: #6B6B80;
+    
+    /* Border */
+    --border: #3A3A50;
+    
+    /* Gradient */
+    --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
+    
+    /* Shadow */
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    
+    /* Border Radius */
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --r-xl: 24px;
+    
+    /* Status Colors */
+    --success: #00C853;
+    --warning: #FFB300;
+    --danger: #FF4757;
+}

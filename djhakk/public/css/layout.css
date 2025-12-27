@@ -1,0 +1,313 @@
+/* ========================================
+   DJHAKK Layout Styles
+   ======================================== */
+
+/* ========== Header ========== */
+.header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    margin-bottom: 16px;
+}
+
+.header-logo {
+    height: 40px;
+    width: 40px;
+    object-fit: contain;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.header-title {
+    font-size: 20px;
+    font-weight: 700;
+    flex: 1;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* ========== Navigation ========== */
+.nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 600px;
+    background: var(--surface);
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 11px;
+    position: relative;
+    transition: color 0.2s;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    color: var(--primary);
+}
+
+.nav-icon {
+    font-size: 20px;
+}
+
+.nav-unread-badge {
+    position: absolute;
+    top: -4px;
+    right: 50%;
+    transform: translateX(50%);
+    margin-right: -15px;
+    background: var(--danger);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+/* ========== FAB (Floating Action Button) ========== */
+.fab {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    background: var(--gradient);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: white;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    z-index: 101;
+    border: none;
+    transition: transform 0.2s;
+}
+
+.fab:hover {
+    transform: scale(1.05);
+}
+
+.fab:active {
+    transform: scale(0.95);
+}
+
+@media (min-width: 600px) {
+    .fab {
+        right: calc(50% - 280px);
+    }
+}
+
+/* ========== Toast ========== */
+.toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card);
+    padding: 12px 24px;
+    border-radius: var(--r-lg);
+    opacity: 0;
+    z-index: 300;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.toast.show {
+    opacity: 1;
+}
+
+.toast.error {
+    background: var(--danger);
+}
+
+.toast.success {
+    background: var(--success);
+}
+
+/* ========== Welcome Screen ========== */
+.welcome-screen {
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.welcome-logo {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 40px;
+}
+
+.welcome-title {
+    display: none;
+}
+
+.welcome-subtitle {
+    display: none;
+}
+
+.welcome-buttons {
+    width: 100%;
+    max-width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ========== Splash Screen ========== */
+.splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    overflow: hidden;
+}
+
+.splash-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+.splash-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.splash-logo {
+    width: 120px;
+    height: 120px;
+    animation: logoSpin 1.5s ease-out forwards, logoPulse 0.8s ease-in-out 0.5s;
+    filter: drop-shadow(0 0 30px rgba(255, 107, 0, 0.5));
+}
+
+.splash-ring {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border: 3px solid transparent;
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: ringExpand 1.5s ease-out forwards;
+}
+
+.splash-ring:nth-child(2) {
+    width: 260px;
+    height: 260px;
+    animation-delay: 0.2s;
+    border-top-color: var(--primary-light);
+}
+
+.splash-ring:nth-child(3) {
+    width: 320px;
+    height: 320px;
+    animation-delay: 0.4s;
+    border-top-color: rgba(255, 107, 0, 0.3);
+}
+
+.splash-particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.splash-particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: var(--primary);
+    border-radius: 50%;
+    opacity: 0;
+    animation: particleBurst 1.5s ease-out forwards;
+}
+
+@keyframes logoSpin {
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    50% { transform: scale(1.2) rotate(0deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes logoPulse {
+    0%, 100% { filter: drop-shadow(0 0 30px rgba(255, 107, 0, 0.5)); }
+    50% { filter: drop-shadow(0 0 60px rgba(255, 107, 0, 0.8)); }
+}
+
+@keyframes ringExpand {
+    0% { transform: scale(0.5) rotate(0deg); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: scale(1.5) rotate(360deg); opacity: 0; }
+}
+
+@keyframes particleBurst {
+    0% { transform: translate(0, 0) scale(0); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(1); opacity: 0; }
+}
+
+/* ========== Tab Content ========== */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* ========== Region Filter ========== */
+.region-filter {
+    padding: 10px 32px 10px 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23A0A0B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+
+.region-filter:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.region-filter.active {
+    border-color: var(--primary);
+    color: var(--primary);
+}

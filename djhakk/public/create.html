@@ -138,6 +138,21 @@
                 <div class="type-btn-label">SELF PRODUCE</div>
                 <div class="type-btn-desc">Self Produce</div>
             </div>
+            <div class="type-btn" data-type="place" onclick="selectType('place', this)">
+                <div class="type-btn-icon"></div>
+                <div class="type-btn-label">PLACE</div>
+                <div class="type-btn-desc">Venue/Club</div>
+            </div>
+            <div class="type-btn" data-type="agency" onclick="selectType('agency', this)">
+                <div class="type-btn-icon"></div>
+                <div class="type-btn-label">AGENCY</div>
+                <div class="type-btn-desc">Agency/Management</div>
+            </div>
+            <div class="type-btn" data-type="shop" onclick="selectType('shop', this)">
+                <div class="type-btn-icon"></div>
+                <div class="type-btn-label">SHOP</div>
+                <div class="type-btn-desc">Shop/Store</div>
+            </div>
         </div>
         
         <!-- Event Form -->
@@ -240,6 +255,61 @@
             
             <button class="btn btn-p btn-lg" onclick="submitProduction()">Create</button>
         </div>
+        
+        <!-- Place Form -->
+        <div id="placeForm" class="form-section">
+            <div class="image-upload" onclick="document.getElementById('placeImage').click()">
+                <img id="placeImagePreview" style="display:none;">
+                <span class="image-upload-text" id="placeImageText">Upload image</span>
+            </div>
+            <input type="file" id="placeImage" accept="image/*" style="display:none;" onchange="previewImage(this,'placeImagePreview','placeImageText')">
+            
+            <div class="input-group"><label class="label">NAME</label><input type="text" id="placeName" class="input" placeholder="Place name"></div>
+            <div class="input-group"><label class="label">@</label><input type="text" id="placeLocation" class="input" placeholder="Address / Access"></div>
+            <div class="input-group">
+                <label class="label">AREA</label>
+                <select id="placeRegion" class="input">
+                    <optgroup label="JAPAN">
+                        <option value="TOKYO">TOKYO</option>
+                        <option value="OSAKA">OSAKA</option>
+                        <option value="NAGOYA">NAGOYA</option>
+                        <option value="FUKUOKA">FUKUOKA</option>
+                        <option value="OKINAWA">OKINAWA</option>
+                    </optgroup>
+                    <optgroup label="ASIA">
+                        <option value="SEOUL">SEOUL</option>
+                        <option value="SHANGHAI">SHANGHAI</option>
+                        <option value="HONG KONG">HONG KONG</option>
+                        <option value="BANGKOK">BANGKOK</option>
+                        <option value="SINGAPORE">SINGAPORE</option>
+                    </optgroup>
+                    <optgroup label="NORTH AMERICA">
+                        <option value="NEW YORK">NEW YORK</option>
+                        <option value="LOS ANGELES">LOS ANGELES</option>
+                        <option value="MIAMI">MIAMI</option>
+                        <option value="CHICAGO">CHICAGO</option>
+                        <option value="LAS VEGAS">LAS VEGAS</option>
+                    </optgroup>
+                    <optgroup label="EUROPE">
+                        <option value="BERLIN">BERLIN</option>
+                        <option value="LONDON">LONDON</option>
+                        <option value="AMSTERDAM">AMSTERDAM</option>
+                        <option value="IBIZA">IBIZA</option>
+                        <option value="PARIS">PARIS</option>
+                        <option value="BARCELONA">BARCELONA</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div class="input-group">
+                <label class="label">SNS LINK</label>
+                <div id="placeSnsContainer"></div>
+                <button type="button" class="add-slot-btn" onclick="addPlaceSnsLink()">+ Add SNS</button>
+            </div>
+            <div class="input-group"><label class="label">HP</label><input type="url" id="placeUrl" class="input" placeholder="https://example.com"></div>
+            <div class="input-group"><label class="label">INFORMATION</label><textarea id="placeDesc" class="input" placeholder="Information"></textarea></div>
+            
+            <button class="btn btn-p btn-lg" onclick="submitPlace()">Create</button>
+        </div>
     </div>
     
     <!-- ドラムピッカーモーダル -->
@@ -269,15 +339,24 @@
         <div class="nav-item" onclick="location.href='events.html'"><span>Event</span></div>
         <div class="nav-item" onclick="location.href='timeline.html'"><span>TimeLine</span></div>
         <div class="nav-item" onclick="location.href='productions.html'"><span>Production</span></div>
+        <div class="nav-item" onclick="location.href='place.html'"><span>Place</span></div>
         <div class="nav-item" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
     </nav>
     <div class="toast" id="toast"></div>
     
-    <script src="js/common.js"></script>
+        <!-- Common JS (順序重要: 依存関係順に読み込み) -->
+    <script src="js/config.js"></script>
+    <script src="js/firebase-init.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/interactions.js"></script>
+    <script src="js/audio-player.js"></script>
     <script>
         let currentType = 'A';
         let eventImageFile = null;
         let prodImageFile = null;
+        let placeImageFile = null;
         let slots = [];
         let gigSlots = [];
         let currentCurrency = 'jpy';
@@ -293,8 +372,12 @@
             el.classList.add('active');
             
             const isEvent = ['A','B','C'].includes(type);
+            const isProduction = ['audio','goods','produce'].includes(type);
+            const isPlace = ['place','agency','shop'].includes(type);
+            
             document.getElementById('eventForm').classList.toggle('active', isEvent);
-            document.getElementById('productionForm').classList.toggle('active', !isEvent);
+            document.getElementById('productionForm').classList.toggle('active', isProduction);
+            document.getElementById('placeForm').classList.toggle('active', isPlace);
             
             if (isEvent) {
                 document.getElementById('slotsSection').style.display = type === 'A' ? 'block' : 'none';
@@ -312,7 +395,8 @@
                 };
                 reader.readAsDataURL(input.files[0]);
                 if (previewId === 'eventImagePreview') eventImageFile = input.files[0];
-                else prodImageFile = input.files[0];
+                else if (previewId === 'prodImagePreview') prodImageFile = input.files[0];
+                else if (previewId === 'placeImagePreview') placeImageFile = input.files[0];
             }
         }
         
@@ -637,6 +721,108 @@
                 log('Error: ' + e.message); 
                 toast('Failed to create','error'); 
             }
+        }
+        
+        // ========== プレイス送信 ==========
+        async function submitPlace() {
+            if (!requireLogin()) return;
+            const name = document.getElementById('placeName').value.trim();
+            if (!name) { toast('Please enter name','error'); return; }
+            
+            try {
+                let imageUrl = '';
+                if (placeImageFile) {
+                    const blob = await compressImage(placeImageFile);
+                    imageUrl = await uploadImageToStorage(blob, `places/${Date.now()}.jpg`);
+                }
+                
+                const data = {
+                    type: currentType,
+                    name,
+                    location: document.getElementById('placeLocation').value,
+                    region: document.getElementById('placeRegion').value,
+                    snsLinks: getPlaceSnsLinks(),
+                    url: document.getElementById('placeUrl').value,
+                    description: document.getElementById('placeDesc').value,
+                    imageUrl,
+                    userId: user.uid,
+                    userName: userData.name || '',
+                    userPhoto: userData.photoURL || '',
+                    likesCount: 0,
+                    commentsCount: 0,
+                    lastInteractionAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await db.collection('places').add(data);
+                toast('Place created');
+                setTimeout(() => location.href = 'place.html', 1000);
+            } catch (e) { 
+                log('Error: ' + e.message); 
+                toast('Failed to create','error'); 
+            }
+        }
+        
+        // ========== Place SNS Link Functions ==========
+        let placeSnsCount = 0;
+        
+        function addPlaceSnsLink(platform = '', url = '') {
+            const container = document.getElementById('placeSnsContainer');
+            const index = placeSnsCount++;
+            
+            const platformOptions = SNS_PLATFORMS.map(p => 
+                `<option value="${p.id}" ${p.id === platform ? 'selected' : ''}>${p.name}</option>`
+            ).join('');
+            
+            const html = `
+                <div class="slot-item" id="placeSns_${index}" style="margin-bottom:8px;">
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <select class="input" id="placeSnsPlat_${index}" style="flex:0 0 140px;" onchange="updatePlaceSnsPlaceholder(${index})">
+                            ${platformOptions}
+                        </select>
+                        <input type="url" class="input" id="placeSnsUrl_${index}" placeholder="https://..." value="${url}" style="flex:1;">
+                        <button type="button" class="slot-remove" onclick="removePlaceSnsLink(${index})">×</button>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+            updatePlaceSnsPlaceholder(index);
+        }
+        
+        function removePlaceSnsLink(index) {
+            const el = document.getElementById(`placeSns_${index}`);
+            if (el) el.remove();
+        }
+        
+        function updatePlaceSnsPlaceholder(index) {
+            const platSelect = document.getElementById(`placeSnsPlat_${index}`);
+            const urlInput = document.getElementById(`placeSnsUrl_${index}`);
+            if (!platSelect || !urlInput) return;
+            
+            const platform = SNS_PLATFORMS.find(p => p.id === platSelect.value);
+            if (platform && platform.prefix) {
+                urlInput.placeholder = platform.prefix + 'username';
+            } else {
+                urlInput.placeholder = 'https://...';
+            }
+        }
+        
+        function getPlaceSnsLinks() {
+            const links = [];
+            const container = document.getElementById('placeSnsContainer');
+            const items = container.querySelectorAll('.slot-item');
+            
+            items.forEach(item => {
+                const id = item.id.replace('placeSns_', '');
+                const platform = document.getElementById(`placeSnsPlat_${id}`)?.value;
+                const url = document.getElementById(`placeSnsUrl_${id}`)?.value?.trim();
+                
+                if (platform && url) {
+                    links.push({ platform, url });
+                }
+            });
+            
+            return links;
         }
         
         function onAuthReady() {
