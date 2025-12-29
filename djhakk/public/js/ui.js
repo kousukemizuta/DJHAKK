@@ -380,15 +380,9 @@ function renderProductionCard(production, isLiked = false, userInfo = null) {
                     <h3 class="card-title">${production.title}</h3>
                     <p style="color:var(--text2);font-size:13px;">¥${(production.price || 0).toLocaleString()}</p>
                     ${production.description ? `<p class="card-desc">${escapeHtml(production.description)}</p>` : ''}
-                    <div class="card-creator" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${production.userId}'">
-                        <div class="card-creator-avatar">
-                            ${userPhoto ? `<img src="${userPhoto}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
-                        </div>
-                        <span class="card-creator-name">${userName}</span>
-                    </div>
     `;
     
-    // SNSアイコン
+    // SNSアイコン（作成者より先に表示）
     if (user.sns) {
         const snsHtml = renderSnsIcons(user.sns, 24);
         if (snsHtml) {
@@ -396,7 +390,14 @@ function renderProductionCard(production, isLiked = false, userInfo = null) {
         }
     }
     
+    // 作成者情報
     html += `
+                    <div class="card-creator" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${production.userId}'">
+                        <div class="card-creator-avatar">
+                            ${userPhoto ? `<img src="${userPhoto}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
+                        </div>
+                        <span class="card-creator-name">${userName}</span>
+                    </div>
                 </div>
             </div>
             <div class="card-buy-section">
@@ -431,15 +432,9 @@ function renderPlaceCard(place, isLiked = false) {
                     ${place.location ? `<div class="card-location">📍 ${place.location}</div>` : ''}
                     ${place.url ? `<div class="card-url">🔗 <a href="${place.url}" target="_blank" onclick="event.stopPropagation()">${place.url}</a></div>` : ''}
                     ${place.description ? `<p class="card-desc">${escapeHtml(place.description)}</p>` : ''}
-                    <div class="card-creator" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${place.userId}'">
-                        <div class="card-creator-avatar">
-                            ${place.userPhoto ? `<img src="${place.userPhoto}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
-                        </div>
-                        <span class="card-creator-name">${place.userName || 'User'}</span>
-                    </div>
     `;
     
-    // SNSアイコン
+    // SNSアイコン（作成者より先に表示）
     if (place.snsLinks) {
         const snsHtml = renderSnsIcons(place.snsLinks, 24);
         if (snsHtml) {
@@ -447,7 +442,14 @@ function renderPlaceCard(place, isLiked = false) {
         }
     }
     
+    // 作成者情報
     html += `
+                    <div class="card-creator" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${place.userId}'">
+                        <div class="card-creator-avatar">
+                            ${place.userPhoto ? `<img src="${place.userPhoto}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
+                        </div>
+                        <span class="card-creator-name">${place.userName || 'User'}</span>
+                    </div>
                 </div>
             </div>
             <div class="card-interaction">

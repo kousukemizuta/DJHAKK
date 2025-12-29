@@ -398,8 +398,15 @@
             currentPlaceId = null;
         }
         
+        function checkUrlParam() {
+            const id = new URLSearchParams(location.search).get('id');
+            if (id) openPlaceModal(id);
+        }
+        
         function onAuthReady() {
-            loadPlacesData();
+            loadPlacesData().then(() => {
+                checkUrlParam();
+            });
         }
     </script>
 </body>
