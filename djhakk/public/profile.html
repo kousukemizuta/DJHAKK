@@ -32,7 +32,7 @@
         .avatar-large img { width: 100%; height: 100%; object-fit: cover; }
         .profile-name { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
         .profile-region { font-size: 14px; color: var(--primary); margin-bottom: 8px; }
-        .profile-bio { color: var(--text2); font-size: 14px; margin-bottom: 16px; white-space: pre-wrap; }
+        .profile-bio { color: var(--text2); font-size: 14px; margin-bottom: 16px; white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word; }
         
         .profile-sns { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 20px; }
         .sns-link { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--card); border-radius: 20px; color: var(--text2); text-decoration: none; font-size: 13px; white-space: nowrap; }
@@ -242,7 +242,7 @@
             const params = new URLSearchParams(location.search);
             const uid = params.get('uid');
             
-            if (uid && uid !== user.uid) {
+            if (uid && uid !== (user ? user.uid : null)) {
                 // 他のユーザーのプロフィール
                 isOwnProfile = false;
                 targetUserId = uid;
@@ -290,7 +290,7 @@
             
             document.getElementById('profileName').textContent = name;
             document.getElementById('profileRegion').textContent = userData.region ? `${userData.region}` : '';
-            document.getElementById('profileBio').textContent = userData.bio || '';
+            document.getElementById('profileBio').innerHTML = linkifyText(userData.bio || '');
             document.getElementById('profileActions').innerHTML = '';
             
             // 音楽プレイヤーを表示
@@ -356,7 +356,7 @@
             
             document.getElementById('profileName').textContent = name;
             document.getElementById('profileRegion').textContent = targetUserData.region ? `${targetUserData.region}` : '';
-            document.getElementById('profileBio').textContent = targetUserData.bio || '';
+            document.getElementById('profileBio').innerHTML = linkifyText(targetUserData.bio || '');
             
             // 音楽プレイヤーを表示
             if (targetUserData.audioUrl && typeof renderWaveformPlayer === 'function') {
@@ -390,9 +390,19 @@
             snsLinksData.forEach(link => {
                 if (link && link.url) {
                     const platform = SNS_PLATFORMS.find(p => p.id === link.platform);
-                    const svgContent = (platform && platform.svg) ? platform.svg.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '') : defaultSvg;
-                    const platformName = (platform && platform.name) ? platform.name : 'Link';
-                    html += `<a href="${link.url}" target="_blank" rel="noopener" class="sns-link"><svg viewBox="0 0 24 24" width="16" height="16" style="fill:#A0A0B8;flex-shrink:0;min-width:16px;min-height:16px;">${svgContent}</svg><span>${platformName}</span></a>`;
+                    // customNameがあればそれを使用、なければplatform名
+                    const platformName = (link.platform === 'other' && link.customName) ? link.customName : ((platform && platform.name) ? platform.name : 'Link');
+                    
+                    // PNGアイコンがある場合はimg、なければSVG
+                    let iconHtml;
+                    if (platform && platform.png) {
+                        iconHtml = `<img src="${platform.png}" width="16" height="16" style="flex-shrink:0;min-width:16px;min-height:16px;" alt="${platformName}">`;
+                    } else {
+                        const svgContent = (platform && platform.svg) ? platform.svg.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '') : defaultSvg;
+                        iconHtml = `<svg viewBox="0 0 24 24" width="16" height="16" style="fill:#A0A0B8;flex-shrink:0;min-width:16px;min-height:16px;">${svgContent}</svg>`;
+                    }
+                    
+                    html += `<a href="${link.url}" target="_blank" rel="noopener" class="sns-link">${iconHtml}<span>${platformName}</span></a>`;
                 }
             });
             container.innerHTML = html;
@@ -460,6 +470,14 @@
                     `<option value="${p.id}" ${link.platform === p.id ? 'selected' : ''}>${p.name}</option>`
                 ).join('');
                 
+                const isOther = link.platform === 'other';
+                const customNameInput = isOther ? `
+                    <input type="text" class="input" value="${link.customName || ''}" 
+                           placeholder="タイトル（例: LINE公式）" 
+                           onchange="updateSnsLink(${i}, 'customName', this.value)"
+                           style="margin-bottom: 8px;">
+                ` : '';
+                
                 html += `
                     <div class="sns-item">
                         <div class="sns-item-header">
@@ -467,10 +485,11 @@
                             <button type="button" class="sns-item-remove" onclick="removeSnsLink(${i})">×</button>
                         </div>
                         <div class="sns-select-row">
-                            <select class="sns-select input" onchange="updateSnsLink(${i}, 'platform', this.value)">
+                            <select class="sns-select input" onchange="handleSnsplatformChange(${i}, this.value)">
                                 ${platformOptions}
                             </select>
                         </div>
+                        ${customNameInput}
                         <input type="url" class="input" value="${link.url || ''}" 
                                placeholder="URLを入力" 
                                onchange="updateSnsLink(${i}, 'url', this.value)">
@@ -478,6 +497,15 @@
                 `;
             });
             container.innerHTML = html;
+        }
+        
+        function handleSnsplatformChange(index, value) {
+            snsLinks[index].platform = value;
+            // 「その他」以外に変更した場合はcustomNameをクリア
+            if (value !== 'other') {
+                delete snsLinks[index].customName;
+            }
+            renderSnsLinks();
         }
         
         // ========== アバターアップロード ==========
@@ -536,7 +564,7 @@
             if (await updateUserData(data)) {
                 document.getElementById('profileName').textContent = data.name || '-';
                 document.getElementById('profileRegion').textContent = data.region ? `${data.region}` : '';
-                document.getElementById('profileBio').textContent = data.bio || '';
+                document.getElementById('profileBio').innerHTML = linkifyText(data.bio || '');
                 renderProfileSns(data.snsLinks);
                 
                 // 音楽プレイヤーを更新
@@ -743,8 +771,18 @@
         }
         
         function onAuthReady() {
+            const params = new URLSearchParams(location.search);
+            const uid = params.get('uid');
+            
+            // 他人のプロフィールはゲストでも閲覧可能
+            if (uid && uid !== (user ? user.uid : null)) {
+                loadProfileData();
+                return;
+            }
+            
+            // 自分のプロフィールはログイン必須
             if (!user) { 
-                location.href = 'index.html'; 
+                showLoginModal();
                 return; 
             }
             loadProfileData();

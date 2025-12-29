@@ -14,18 +14,18 @@ let unreadUnsub = null;
 // Like Functions
 // ========================================
 
-// いいねを追加（削除なし、何度でも可能）
+// いいねを追加（削除なし、何度でも可能、ゲストも可能）
 async function addLike(targetType, targetId) {
-    if (!requireLogin()) return false;
-    
     try {
         const targetRef = getTargetRef(targetType, targetId);
         const now = firebase.firestore.FieldValue.serverTimestamp();
+        const userId = getCurrentUserId(); // ログイン中ならuser.uid、未ログインならguestId
         
         await db.collection('likes').add({
             targetType: targetType,
             targetId: targetId,
-            userId: user.uid,
+            userId: userId,
+            isGuest: !user, // ゲストかどうかのフラグ
             createdAt: now
         });
         await targetRef.update({
@@ -44,14 +44,15 @@ async function toggleLike(targetType, targetId) {
     return addLike(targetType, targetId);
 }
 
-// 自分がいいね済みか確認
+// 自分がいいね済みか確認（ゲストも対応）
 async function checkIfLiked(targetType, targetId) {
-    if (!user) return false;
+    const userId = getCurrentUserId();
+    if (!userId) return false;
     try {
         const likeQuery = await db.collection('likes')
             .where('targetType', '==', targetType)
             .where('targetId', '==', targetId)
-            .where('userId', '==', user.uid)
+            .where('userId', '==', userId)
             .get();
         return !likeQuery.empty;
     } catch (e) {

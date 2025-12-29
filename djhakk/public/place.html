@@ -94,8 +94,8 @@
         .modal-body { padding: 20px; }
         .modal-title { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
         .modal-info { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
-        .modal-info-item { display: flex; align-items: center; gap: 8px; color: var(--text2); }
-        .modal-info-item a { color: var(--primary); text-decoration: none; }
+        .modal-info-item { display: flex; align-items: flex-start; gap: 8px; color: var(--text2); word-break: break-word; overflow-wrap: break-word; }
+        .modal-info-item a { color: var(--primary); text-decoration: none; word-break: break-all; }
         .modal-info-item a:hover { text-decoration: underline; }
         
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
@@ -199,7 +199,7 @@
                 </div>
                 <div id="modalCreator" style="background: var(--card); border-radius: 12px; padding: 16px; margin-top: 20px;"></div>
                 <div id="modalSns" style="margin-top: 16px;"></div>
-                <p id="modalDesc" style="color: var(--text2); margin-top: 20px; white-space: pre-wrap;"></p>
+                <p id="modalDesc" style="color: var(--text2); margin-top: 20px; white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word;"></p>
             </div>
         </div>
     </div>
@@ -413,7 +413,7 @@
                 modalSnsEl.style.display = 'none';
             }
             
-            document.getElementById('modalDesc').textContent = place.description || '';
+            document.getElementById('modalDesc').innerHTML = linkifyText(place.description || '');
             
             document.getElementById('placeModal').classList.add('active');
             document.body.style.overflow = 'hidden';

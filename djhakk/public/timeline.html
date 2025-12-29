@@ -218,6 +218,9 @@
         }
         
         async function submitTweet() {
+            // ゲストはログインを促す
+            if (!requireLogin()) return;
+            
             const input = $('tweetInput');
             const text = input.value.trim();
             if (!text || text.length > 140) return;
@@ -478,15 +481,21 @@
         }
         
         function setupTweetInput() {
+            // ゲストでもツイート入力エリアを表示
+            $('tweetInputArea').style.display = 'block';
+            const avatar = $('tweetAvatar');
+            
             if (user) {
-                $('tweetInputArea').style.display = 'block';
-                const avatar = $('tweetAvatar');
+                // ログインユーザーはユーザーアバター
                 const initial = (userData.name || '?')[0].toUpperCase();
                 if (userData.photoURL) {
                     avatar.innerHTML = `<img src="${userData.photoURL}" onerror="this.style.display='none';this.parentElement.innerHTML='${initial}'">`;
                 } else {
                     avatar.textContent = initial;
                 }
+            } else {
+                // ゲストはゲスト用アバター画像を表示
+                avatar.innerHTML = `<img src="guest-avatar.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
             }
         }
         

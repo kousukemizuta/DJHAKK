@@ -295,7 +295,7 @@
         
         function onAuthReady() {
             if (!user) {
-                location.href = 'index.html';
+                showLoginModal();
                 return;
             }
             initChat();

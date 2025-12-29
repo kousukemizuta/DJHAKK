@@ -32,7 +32,10 @@ function toast(msg, type = 'success') {
 // ========================================
 function closeModal(id) {
     const modal = $(id);
-    if (modal) modal.classList.remove('active');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+    }
 }
 
 // ========================================
@@ -155,9 +158,19 @@ function renderSnsIcons(snsLinks, size = 28) {
     snsLinks.forEach(link => {
         if (link && link.url) {
             const platform = SNS_PLATFORMS.find(p => p.id === link.platform);
-            const svgIcon = (platform && platform.svg) ? platform.svg : defaultSvg;
-            const platformName = (platform && platform.name) ? platform.name : 'Link';
-            html += `<a href="${link.url}" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="display:inline-flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;background:#1A1A2E;border-radius:50%;text-decoration:none;flex-shrink:0;" title="${platformName}"><svg viewBox="0 0 24 24" width="${iconSize}" height="${iconSize}" style="fill:#A0A0B8;flex-shrink:0;min-width:${iconSize}px;min-height:${iconSize}px;">${svgIcon.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '')}</svg></a>`;
+            // customNameがあればそれを使用、なければplatform名
+            const platformName = (link.platform === 'other' && link.customName) ? link.customName : ((platform && platform.name) ? platform.name : 'Link');
+            
+            // PNGアイコンがある場合はimg、なければSVG
+            let iconHtml;
+            if (platform && platform.png) {
+                iconHtml = `<img src="${platform.png}" width="${iconSize}" height="${iconSize}" style="flex-shrink:0;min-width:${iconSize}px;min-height:${iconSize}px;" alt="${platformName}">`;
+            } else {
+                const svgIcon = (platform && platform.svg) ? platform.svg : defaultSvg;
+                iconHtml = `<svg viewBox="0 0 24 24" width="${iconSize}" height="${iconSize}" style="fill:#A0A0B8;flex-shrink:0;min-width:${iconSize}px;min-height:${iconSize}px;">${svgIcon.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '')}</svg>`;
+            }
+            
+            html += `<a href="${link.url}" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="display:inline-flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;background:#1A1A2E;border-radius:50%;text-decoration:none;flex-shrink:0;" title="${platformName}">${iconHtml}</a>`;
         }
     });
     html += '</div>';

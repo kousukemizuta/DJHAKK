@@ -256,7 +256,7 @@
                 <div id="modalOrganizer" class="organizer-section"></div>
                 <div id="modalSlots"></div>
                 <div id="modalAction"></div>
-                <p id="modalDesc" style="color: var(--text2); margin-top: 20px; white-space: pre-wrap;"></p>
+                <p id="modalDesc" style="color: var(--text2); margin-top: 20px; white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word;"></p>
             </div>
         </div>
     </div>
@@ -572,7 +572,7 @@
             document.getElementById('modalDate').textContent = 'DATE ' + formatDateFull(currentEvent.date);
             document.getElementById('modalLocation').textContent = '@ ' + (currentEvent.location || 'N/A');
             document.getElementById('modalRegion').textContent = 'AREA ' + (currentEvent.region || 'N/A');
-            document.getElementById('modalDesc').textContent = currentEvent.description || '';
+            document.getElementById('modalDesc').innerHTML = linkifyText(currentEvent.description || '');
             
             // 主催者セクション
             const organizer = usersCache[currentEvent.organizerId] || {};

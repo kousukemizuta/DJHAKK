@@ -77,6 +77,18 @@
         .load-more-btn:hover { background: var(--card); }
         .no-more-data { text-align: center; padding: 30px; }
         .no-more-data img { width: 48px; height: 48px; opacity: 0.4; }
+        
+        /* 作成者セクション */
+        .card-creator { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+        .card-creator-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; overflow: hidden; cursor: pointer; flex-shrink: 0; }
+        .card-creator-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .card-creator-name { font-size: 12px; color: var(--text2); cursor: pointer; }
+        .card-creator-name:hover { color: var(--text); }
+        .card-sns { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        
+        /* URL折り返し */
+        .modal-body { padding: 20px; word-break: break-word; overflow-wrap: break-word; }
+        .modal-body a { word-break: break-all; }
     </style>
 </head>
 <body>
@@ -116,8 +128,9 @@
                 <span class="badge audio" id="modalBadge">DOWNLOAD SALES</span>
                 <h1 class="modal-title" id="modalTitle"></h1>
                 <p class="modal-price" id="modalPrice"></p>
-                <p id="modalDesc" style="color: var(--text2); margin-bottom: 24px;"></p>
-                <p id="modalArtist" style="color: var(--text2); margin-bottom: 24px;"></p>
+                <div id="modalCreator" style="background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 20px;"></div>
+                <div id="modalSns" style="margin-bottom: 16px;"></div>
+                <p id="modalDesc" style="color: var(--text2); margin-bottom: 24px; white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word;"></p>
                 <button class="btn btn-p btn-lg" onclick="handlePurchase()">Buy</button>
             </div>
         </div>
@@ -148,6 +161,7 @@
         let allProductions = [];
         let currentFilter = 'all';
         let currentProduction = null;
+        let usersCache = {}; // ユーザー情報キャッシュ
         
         function setFilter(f) {
             currentFilter = f;
@@ -157,8 +171,28 @@
         
         function filterProductions() { renderProductions(); }
         
+        async function loadUserInfo(userId) {
+            if (!userId) return null;
+            if (usersCache[userId]) return usersCache[userId];
+            
+            try {
+                const doc = await db.collection('users').doc(userId).get();
+                if (doc.exists) {
+                    usersCache[userId] = doc.data();
+                    return usersCache[userId];
+                }
+            } catch (e) {
+                console.log('Error loading user:', e);
+            }
+            return null;
+        }
+        
         async function loadAllProductions() {
             allProductions = await loadProductionsInitial();
+            
+            // ユーザー情報を取得
+            const userIds = [...new Set(allProductions.map(p => p.userId).filter(id => id))];
+            await Promise.all(userIds.map(id => loadUserInfo(id)));
             
             // いいね状態を取得
             await loadLikedStatusByType(allProductions, 'production');
@@ -174,6 +208,10 @@
             
             const moreProductions = await loadProductionsMore();
             if (moreProductions.length > 0) {
+                // ユーザー情報を取得
+                const userIds = [...new Set(moreProductions.map(p => p.userId).filter(id => id))];
+                await Promise.all(userIds.map(id => loadUserInfo(id)));
+                
                 // いいね状態を取得
                 await loadLikedStatusByType(moreProductions, 'production');
                 
@@ -231,6 +269,12 @@
             let html = '';
             filtered.forEach(p => {
                 const liked = isItemLiked('production', p.id);
+                const userInfo = usersCache[p.userId] || {};
+                const userName = userInfo.name || p.artistName || 'User';
+                const userPhoto = userInfo.photoURL || '';
+                const initial = (userName || '?')[0].toUpperCase();
+                const snsIconsHtml = renderSnsIcons(userInfo.sns, 24);
+                
                 html += `<div class="card">
                     <div class="card-main" onclick="showDetail('${p.id}')">
                         <img src="${p.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
@@ -238,6 +282,13 @@
                             <span class="badge ${p.type||'audio'}">${LABELS.productionTypes[p.type]||'ITEM SALES'}</span>
                             <h3 class="card-title">${p.title}</h3>
                             <p style="color:var(--text2);font-size:13px;">¥${(p.price||0).toLocaleString()}</p>
+                            <div class="card-creator" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${p.userId}'">
+                                <div class="card-creator-avatar">
+                                    ${userPhoto ? `<img src="${userPhoto}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
+                                </div>
+                                <span class="card-creator-name">${userName}</span>
+                            </div>
+                            ${snsIconsHtml ? `<div class="card-sns" onclick="event.stopPropagation()">${snsIconsHtml}</div>` : ''}
                         </div>
                     </div>
                     <div class="card-interaction">
@@ -262,8 +313,35 @@
             document.getElementById('modalBadge').className = 'badge ' + (currentProduction.type || 'audio');
             document.getElementById('modalTitle').textContent = currentProduction.title;
             document.getElementById('modalPrice').textContent = '¥' + (currentProduction.price||0).toLocaleString();
-            document.getElementById('modalDesc').textContent = currentProduction.description || '';
-            document.getElementById('modalArtist').textContent = currentProduction.artistName ? '' + currentProduction.artistName : '';
+            
+            // 作成者情報
+            const userInfo = usersCache[currentProduction.userId] || {};
+            const userName = userInfo.name || currentProduction.artistName || 'User';
+            const userPhoto = userInfo.photoURL || '';
+            const initial = (userName || '?')[0].toUpperCase();
+            
+            document.getElementById('modalCreator').innerHTML = `
+                <div style="font-size: 12px; color: var(--text3); margin-bottom: 12px;">CREATED BY</div>
+                <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="window.location.href='profile.html?uid=${currentProduction.userId}'">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; overflow: hidden;">
+                        ${userPhoto ? `<img src="${userPhoto}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
+                    </div>
+                    <div style="font-weight: 600;">${userName}</div>
+                </div>
+            `;
+            
+            // SNSアイコン
+            const snsHtml = renderSnsIcons(userInfo.sns, 32);
+            const modalSnsEl = document.getElementById('modalSns');
+            if (snsHtml) {
+                modalSnsEl.innerHTML = `<div style="font-size: 12px; color: var(--text3); margin-bottom: 8px;">SNS</div><div style="display:flex;gap:12px;flex-wrap:wrap;">${snsHtml}</div>`;
+                modalSnsEl.style.display = 'block';
+            } else {
+                modalSnsEl.style.display = 'none';
+            }
+            
+            // Description（linkify適用）
+            document.getElementById('modalDesc').innerHTML = linkifyText(currentProduction.description || '');
             
             document.getElementById('productionModal').classList.add('active');
         }

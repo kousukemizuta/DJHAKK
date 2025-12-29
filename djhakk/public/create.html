@@ -766,7 +766,7 @@
         // ========== Place SNS Link Functions ==========
         let placeSnsCount = 0;
         
-        function addPlaceSnsLink(platform = '', url = '') {
+        function addPlaceSnsLink(platform = '', url = '', customName = '') {
             const container = document.getElementById('placeSnsContainer');
             const index = placeSnsCount++;
             
@@ -774,15 +774,20 @@
                 `<option value="${p.id}" ${p.id === platform ? 'selected' : ''}>${p.name}</option>`
             ).join('');
             
+            const isOther = platform === 'other';
+            
             const html = `
                 <div class="slot-item" id="placeSns_${index}" style="margin-bottom:8px;">
-                    <div style="display:flex;gap:8px;align-items:center;">
-                        <select class="input" id="placeSnsPlat_${index}" style="flex:0 0 140px;" onchange="updatePlaceSnsPlaceholder(${index})">
+                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+                        <select class="input" id="placeSnsPlat_${index}" style="flex:0 0 140px;" onchange="handlePlaceSnsplatformChange(${index})">
                             ${platformOptions}
                         </select>
-                        <input type="url" class="input" id="placeSnsUrl_${index}" placeholder="https://..." value="${url}" style="flex:1;">
                         <button type="button" class="slot-remove" onclick="removePlaceSnsLink(${index})">×</button>
                     </div>
+                    <div id="placeSnsCustomRow_${index}" style="display:${isOther ? 'block' : 'none'};margin-bottom:8px;">
+                        <input type="text" class="input" id="placeSnsCustom_${index}" placeholder="タイトル（例: LINE公式）" value="${customName}">
+                    </div>
+                    <input type="url" class="input" id="placeSnsUrl_${index}" placeholder="https://..." value="${url}">
                 </div>
             `;
             container.insertAdjacentHTML('beforeend', html);
@@ -792,6 +797,20 @@
         function removePlaceSnsLink(index) {
             const el = document.getElementById(`placeSns_${index}`);
             if (el) el.remove();
+        }
+        
+        function handlePlaceSnsplatformChange(index) {
+            const platSelect = document.getElementById(`placeSnsPlat_${index}`);
+            const customRow = document.getElementById(`placeSnsCustomRow_${index}`);
+            const customInput = document.getElementById(`placeSnsCustom_${index}`);
+            
+            if (platSelect.value === 'other') {
+                customRow.style.display = 'block';
+            } else {
+                customRow.style.display = 'none';
+                if (customInput) customInput.value = '';
+            }
+            updatePlaceSnsPlaceholder(index);
         }
         
         function updatePlaceSnsPlaceholder(index) {
@@ -816,9 +835,14 @@
                 const id = item.id.replace('placeSns_', '');
                 const platform = document.getElementById(`placeSnsPlat_${id}`)?.value;
                 const url = document.getElementById(`placeSnsUrl_${id}`)?.value?.trim();
+                const customName = document.getElementById(`placeSnsCustom_${id}`)?.value?.trim();
                 
                 if (platform && url) {
-                    links.push({ platform, url });
+                    const linkData = { platform, url };
+                    if (platform === 'other' && customName) {
+                        linkData.customName = customName;
+                    }
+                    links.push(linkData);
                 }
             });
             
@@ -826,7 +850,7 @@
         }
         
         function onAuthReady() {
-            if (!user) { location.href = 'index.html'; return; }
+            if (!user) { showLoginModal(); return; }
             addSlot();
             addGigSlot();
             updateCurrencyDisplay();
