@@ -53,7 +53,7 @@
         /* Cards */
         .card { background: var(--card); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 16px; }
         .card-main { display: flex; cursor: pointer; }
-        .card-img { width: 100px; min-width: 100px; height: 120px; object-fit: cover; }
+        .card-img { width: 120px; min-width: 120px; height: 140px; object-fit: cover; }
         .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
         .card-title { font-size: 15px; font-weight: 700; margin: 4px 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .card-region { font-size: 11px; color: var(--primary); background: rgba(255,107,0,0.15); padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 4px; }
@@ -69,6 +69,39 @@
         .badge.place { background: rgba(0,217,255,0.2); color: #00D9FF; }
         .badge.agency { background: rgba(157,78,221,0.2); color: #9D4EDD; }
         .badge.shop { background: rgba(0,200,83,0.2); color: #00C853; }
+        
+        /* Event Card - Organizer & Slots */
+        .card-organizer { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+        .card-organizer-name { font-size: 12px; color: var(--text2); }
+        .card-slots { padding: 12px; border-top: 1px solid var(--border); }
+        .card-slot { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .card-slot:last-child { margin-bottom: 0; }
+        .card-slot-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 200px; }
+        .card-slot-time { font-size: 12px; color: var(--text2); }
+        .card-slot-price { font-size: 12px; font-weight: 600; color: var(--primary); }
+        .card-slot-price.free { color: #00D9FF; }
+        .card-slot-count { font-size: 11px; color: var(--text3); }
+        .card-slot-count.full { color: #FF4757; }
+        .card-slot-avatars { display: flex; gap: -8px; align-items: center; flex-wrap: wrap; }
+        .card-slot-avatars > * { margin-left: -6px; }
+        .card-slot-avatars > *:first-child { margin-left: 0; }
+        .card-slot-buy { padding: 6px 12px; background: var(--gradient); color: white; border: none; border-radius: 14px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .card-slot-buy.free { background: #00D9FF; color: #0D0D1A; }
+        .card-slot-buy.full { background: var(--border); color: var(--text3); cursor: not-allowed; }
+        .avatar-empty { width: 24px; height: 24px; border-radius: 50%; background: var(--border); border: 2px solid var(--card); }
+        
+        /* Production/Place Card - Creator & SNS */
+        .card-creator { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+        .card-creator-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; overflow: hidden; cursor: pointer; }
+        .card-creator-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .card-creator-name { font-size: 12px; color: var(--text2); cursor: pointer; }
+        .card-sns { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        .card-location { color: var(--text2); font-size: 12px; }
+        .card-url { color: var(--primary); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .card-url a { color: var(--primary); text-decoration: none; }
+        .card-desc { font-size: 12px; color: var(--text2); line-height: 1.4; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .card-buy-section { padding: 0 12px 12px; }
+        .card-buy-btn { width: 100%; padding: 12px; background: var(--gradient); color: white; border: none; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer; }
         
         /* Tweet Card */
         .tweet-card { background: var(--card); border-radius: var(--r-xl); padding: 16px; margin-bottom: 16px; }
@@ -205,6 +238,7 @@
     <script>
         let timelineData = [];
         let likedMap = {};
+        let usersCache = {};
         
         function updateCharCount() {
             const input = $('tweetInput');
@@ -260,6 +294,22 @@
                     return;
                 }
                 
+                // ユーザー情報を取得（event, production用）
+                const userIds = new Set();
+                timelineData.forEach(item => {
+                    if (item._type === 'event' && item.organizerId) userIds.add(item.organizerId);
+                    if (item._type === 'production' && item.userId) userIds.add(item.userId);
+                    // スロット応募者
+                    if (item.slots) {
+                        item.slots.forEach(slot => {
+                            (slot.applicants || []).forEach(uid => userIds.add(uid));
+                        });
+                    }
+                });
+                if (userIds.size > 0) {
+                    usersCache = await getUsersByIds([...userIds]);
+                }
+                
                 // いいね状態を取得
                 likedMap = await getLikedStatus(timelineData);
                 
@@ -278,6 +328,22 @@
             try {
                 const moreData = await loadTimelineMore();
                 if (moreData.length > 0) {
+                    // ユーザー情報を取得
+                    const userIds = new Set();
+                    moreData.forEach(item => {
+                        if (item._type === 'event' && item.organizerId) userIds.add(item.organizerId);
+                        if (item._type === 'production' && item.userId) userIds.add(item.userId);
+                        if (item.slots) {
+                            item.slots.forEach(slot => {
+                                (slot.applicants || []).forEach(uid => userIds.add(uid));
+                            });
+                        }
+                    });
+                    if (userIds.size > 0) {
+                        const moreUsers = await getUsersByIds([...userIds]);
+                        usersCache = { ...usersCache, ...moreUsers };
+                    }
+                    
                     // いいね状態を取得
                     const moreLikedMap = await getLikedStatus(moreData);
                     likedMap = { ...likedMap, ...moreLikedMap };
@@ -334,10 +400,10 @@
                         html += renderTweetCard(item, isLiked);
                         break;
                     case 'event':
-                        html += renderEventCard(item, isLiked);
+                        html += renderEventCard(item, isLiked, usersCache);
                         break;
                     case 'production':
-                        html += renderProductionCard(item, isLiked);
+                        html += renderProductionCard(item, isLiked, usersCache[item.userId]);
                         break;
                     case 'place':
                         html += renderPlaceCard(item, isLiked);
@@ -349,135 +415,6 @@
             });
             
             container.innerHTML = html;
-        }
-        
-        function renderTweetCard(tweet, isLiked) {
-            const initial = (tweet.userName || '?')[0].toUpperCase();
-            const avatarHtml = tweet.userPhoto 
-                ? `<img src="${tweet.userPhoto}" onerror="this.style.display='none';this.parentElement.innerHTML='${initial}'">`
-                : initial;
-            
-            return `
-                <div class="tweet-card">
-                    <div class="tweet-card-header">
-                        <div class="tweet-card-avatar" onclick="window.location.href='profile.html?uid=${tweet.userId}'">${avatarHtml}</div>
-                        <div class="tweet-card-info">
-                            <div class="tweet-card-name" onclick="window.location.href='profile.html?uid=${tweet.userId}'">${tweet.userName || 'User'}</div>
-                            <div class="tweet-card-badge"><span class="badge tweet">POST</span></div>
-                        </div>
-                    </div>
-                    <div class="tweet-card-text">${linkifyText(tweet.text)}</div>
-                    ${renderInteractionButtons('tweet', tweet.id, tweet.likesCount, tweet.commentsCount, isLiked)}
-                </div>
-            `;
-        }
-        
-        function renderEventCard(ev, isLiked) {
-            const labels = {A:'TIMETABLE', B:'GUARANTEE(ｷﾞｬﾗ)', C:'FLYER'};
-            const cls = {A:'a', B:'b', C:'c'};
-            const dateStr = ev.date ? formatDate(ev.date) : '';
-            
-            return `
-                <div class="card">
-                    <div class="card-main" onclick="window.location.href='events.html?id=${ev.id}'">
-                        <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
-                        <div class="card-body">
-                            <span class="card-region">${ev.region||'N/A'}</span>
-                            <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'EVENT'}</span>
-                            <h3 class="card-title">${ev.title}</h3>
-                            <p style="color:var(--text2);font-size:12px;">${dateStr} ${ev.location||''}</p>
-                        </div>
-                    </div>
-                    <div class="card-interaction">
-                        ${renderInteractionButtons('event', ev.id, ev.likesCount, ev.commentsCount, isLiked)}
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderProductionCard(p, isLiked) {
-            const typeLabels = {audio: 'DOWNLOAD', goods: 'ITEM', produce: 'PRODUCE'};
-            
-            return `
-                <div class="card">
-                    <div class="card-main" onclick="window.location.href='productions.html?id=${p.id}'">
-                        <img src="${p.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
-                        <div class="card-body">
-                            <span class="badge ${p.type||'audio'}">${typeLabels[p.type]||'PRODUCTION'}</span>
-                            <h3 class="card-title">${p.title}</h3>
-                            <p style="color:var(--text2);font-size:12px;">¥${(p.price||0).toLocaleString()}</p>
-                        </div>
-                    </div>
-                    <div class="card-interaction">
-                        ${renderInteractionButtons('production', p.id, p.likesCount, p.commentsCount, isLiked)}
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderPlaceCard(place, isLiked) {
-            const typeLabels = {place: 'PLACE', agency: 'AGENCY', shop: 'SHOP'};
-            const initial = (place.userName || '?')[0].toUpperCase();
-            const snsIconsHtml = typeof renderSnsIcons === 'function' ? renderSnsIcons(place.snsLinks, 20) : '';
-            
-            return `
-                <div class="card">
-                    <div class="card-main" onclick="window.location.href='place.html?id=${place.id}'">
-                        <img src="${place.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
-                        <div class="card-body">
-                            <span class="badge ${place.type||'place'}">${typeLabels[place.type]||'PLACE'}</span>
-                            ${place.region ? `<span class="card-region">${place.region}</span>` : ''}
-                            <h3 class="card-title">${place.name || 'Untitled'}</h3>
-                            ${place.location ? `<p style="color:var(--text2);font-size:12px;">📍 ${place.location}</p>` : ''}
-                            <div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${place.userId}'">
-                                <div style="width:24px;height:24px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;overflow:hidden;">
-                                    ${place.userPhoto ? `<img src="${place.userPhoto}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
-                                </div>
-                                <span style="font-size:12px;color:var(--text2);">${place.userName || 'User'}</span>
-                            </div>
-                            ${snsIconsHtml ? `<div style="display:flex;gap:8px;margin-top:8px;" onclick="event.stopPropagation()">${snsIconsHtml}</div>` : ''}
-                        </div>
-                    </div>
-                    <div class="card-interaction">
-                        ${renderInteractionButtons('place', place.id, place.likesCount, place.commentsCount, isLiked)}
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderArtistCard(artist, isLiked) {
-            const initial = (artist.name || '?')[0].toUpperCase();
-            const avatarHtml = artist.photoURL 
-                ? `<img src="${artist.photoURL}" onerror="this.style.display='none';this.parentElement.innerHTML='${initial}'">`
-                : initial;
-            
-            // 波形プレイヤー（関数が存在する場合のみ）
-            const audioPlayer = (artist.audioUrl && typeof renderWaveformPlayer === 'function') ? 
-                renderWaveformPlayer(artist.audioUrl, artist.audioTitle, artist.audioDuration, `timeline_${artist.id}`) : '';
-            
-            return `
-                <div class="artist-card" onclick="window.location.href='profile.html?uid=${artist.id}'">
-                    <div class="artist-card-header">
-                        <div class="artist-avatar">${avatarHtml}</div>
-                        <div class="artist-info">
-                            <div class="artist-name">${artist.name || 'Artist'}</div>
-                            <div class="artist-region">${artist.region || ''}</div>
-                        </div>
-                    </div>
-                    ${artist.bio ? `<div class="artist-bio">${artist.bio}</div>` : ''}
-                    ${audioPlayer}
-                    <div class="artist-footer" style="flex-wrap:wrap;gap:12px;">
-                        ${renderSnsIcons(artist.snsLinks, 28)}
-                        <button class="artist-dm-btn" onclick="event.stopPropagation(); openDM('${artist.id}', '${(artist.name||'User').replace(/'/g, "\\'")}')">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-                            DM
-                        </button>
-                    </div>
-                    <div style="margin-top:12px;">
-                        ${renderInteractionButtons('user', artist.id, artist.likesCount, artist.commentsCount, isLiked)}
-                    </div>
-                </div>
-            `;
         }
         
         function setupTweetInput() {

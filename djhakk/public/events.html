@@ -53,6 +53,7 @@
         
         .card-organizer { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
         .card-organizer-name { font-size: 12px; color: var(--text2); }
+        .card-desc { font-size: 12px; color: var(--text2); line-height: 1.4; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         
         /* カード内スロット */
         .card-slots { padding: 12px; border-top: 1px solid var(--border); }
@@ -427,32 +428,6 @@
             `;
         }
         
-        function formatTimeOnly(date) {
-            if (!date) return '';
-            const d = date.toDate ? date.toDate() : new Date(date);
-            return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
-        }
-        
-        function renderSlotAvatars(applicants, capacity) {
-            let html = '';
-            const count = applicants ? applicants.length : 0;
-            
-            // 応募者のアバター
-            if (applicants) {
-                applicants.forEach(uid => {
-                    const u = usersCache[uid] || {};
-                    html += renderAvatar(u.photoURL, u.name || '?', 24, true, uid);
-                });
-            }
-            
-            // 空き枠
-            for (let i = count; i < capacity; i++) {
-                html += `<div class="avatar-empty"></div>`;
-            }
-            
-            return html;
-        }
-        
         function renderEvents() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             const now = new Date();
@@ -486,70 +461,22 @@
                 byDate[key].push(ev);
             });
             
-            const labels = {A:'TIMETABLE', B:'GUARANTEE(ｷﾞｬﾗ)', C:'FLYER'};
-            const cls = {A:'a', B:'b', C:'c'};
             let html = '';
             
             for (const dateKey in byDate) {
                 html += createDateSeparator(dateKey);
                 
                 byDate[dateKey].forEach(ev => {
-                    const currency = ev.currency || 'jpy';
-                    const organizer = usersCache[ev.organizerId] || {};
                     const liked = isItemLiked('event', ev.id);
-                    
-                    html += `<div class="card">
-                        <div class="card-main" onclick="showDetail('${ev.id}')">
-                            <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
-                            <div class="card-body">
-                                <span class="card-region">@ ${ev.region||'N/A'}</span>
-                                <span class="badge ${cls[ev.type]||'a'}">${labels[ev.type]||'TIMETABLE'}</span>
-                                <h3 class="card-title">${ev.title}</h3>
-                                <p style="color:var(--text2);font-size:13px;">${formatTimeOnly(ev.date)} ${ev.location||''}</p>
-                                <div class="card-organizer" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${ev.organizerId}'">
-                                    ${renderAvatar(organizer.photoURL || ev.organizerPhoto, organizer.name || ev.organizerName || '?', 28, false)}
-                                    <span class="card-organizer-name">${organizer.name || ev.organizerName || 'Organizer'}</span>
-                                </div>
-                            </div>
-                        </div>`;
-                    
-                    // スロット表示（Type A, B のみ）
-                    if ((ev.type === 'A' || ev.type === 'B') && ev.slots && ev.slots.length > 0) {
-                        html += `<div class="card-slots">`;
-                        ev.slots.forEach((slot, i) => {
-                            const price = slot.price || 0;
-                            const capacity = slot.capacity || 1;
-                            const applicants = slot.applicants || [];
-                            const count = applicants.length;
-                            const isFull = count >= capacity;
-                            const isFree = price === 0;
-                            
-                            html += `<div class="card-slot">
-                                <div class="card-slot-info">
-                                    <span class="card-slot-time">${slot.time || 'TBD'}</span>
-                                    <span class="card-slot-price ${isFree ? 'free' : ''}">${formatPrice(price, currency)}</span>
-                                    <span class="card-slot-count ${isFull ? 'full' : ''}">${count}/${capacity}${isFull ? ' FULL' : ''}</span>
-                                </div>
-                                <div class="card-slot-avatars">${renderSlotAvatars(applicants, capacity)}</div>
-                                <button class="card-slot-buy ${isFree ? 'free' : ''} ${isFull ? 'full' : ''}" 
-                                        onclick="event.stopPropagation(); openPurchaseFromCard('${ev.id}', ${i})"
-                                        ${isFull ? 'disabled' : ''}>
-                                    ${isFull ? 'FULL' : (isFree ? 'FREE' : formatPriceShort(price, currency))}
-                                </button>
-                            </div>`;
-                        });
-                        html += `</div>`;
-                    }
-                    
-                    // いいね/コメント
-                    html += `<div class="card-interaction">
-                        ${renderInteractionButtons('event', ev.id, ev.likesCount || 0, ev.commentsCount || 0, liked)}
-                    </div>`;
-                    
-                    html += `</div>`;
+                    html += renderEventCard(ev, liked, usersCache);
                 });
             }
             container.innerHTML = html;
+        }
+        
+        // events.html用：スロットクリック時に購入モーダルを開く
+        function handleEventSlotClick(eventId, slotIndex) {
+            openPurchaseFromCard(eventId, slotIndex);
         }
         
         function checkUrlParam() {

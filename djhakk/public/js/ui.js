@@ -257,3 +257,269 @@ function handleProfileClick() {
         window.location.href = 'profile.html';
     }
 }
+
+// ========================================
+// Common Card Components
+// ========================================
+
+// 時間のみフォーマット
+function formatTimeOnly(date) {
+    if (!date) return '';
+    const d = date.toDate ? date.toDate() : new Date(date);
+    return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+// スロット応募者アバター
+function renderSlotAvatars(applicants, capacity, usersCache = {}) {
+    let html = '';
+    applicants.slice(0, 3).forEach(uid => {
+        const u = usersCache[uid];
+        if (u) {
+            html += renderAvatar(u.photoURL, u.name || '?', 24, true, uid);
+        } else {
+            html += `<div class="avatar-empty"></div>`;
+        }
+    });
+    for (let i = applicants.length; i < Math.min(capacity, 3); i++) {
+        html += `<div class="avatar-empty"></div>`;
+    }
+    return html;
+}
+
+/**
+ * EVENT カード
+ */
+function renderEventCard(event, isLiked = false, usersCache = {}) {
+    const labels = { A: 'TIMETABLE', B: 'GUARANTEE(ｷﾞｬﾗ)', C: 'FLYER' };
+    const cls = { A: 'a', B: 'b', C: 'c' };
+    const currency = event.currency || 'jpy';
+    const organizer = usersCache[event.organizerId] || {};
+    const organizerName = organizer.name || event.organizerName || 'Organizer';
+    const organizerPhoto = organizer.photoURL || event.organizerPhoto || '';
+    
+    let html = `
+        <div class="card" data-type="event" data-id="${event.id}">
+            <div class="card-main" onclick="window.location.href='events.html?id=${event.id}'">
+                <img src="${event.imageUrl || 'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                <div class="card-body">
+                    <span class="card-region">@ ${event.region || 'N/A'}</span>
+                    <span class="badge ${cls[event.type] || 'a'}">${labels[event.type] || 'TIMETABLE'}</span>
+                    <h3 class="card-title">${event.title}</h3>
+                    <p style="color:var(--text2);font-size:13px;">${formatTimeOnly(event.date)} ${event.location || ''}</p>
+                    ${event.description ? `<p class="card-desc">${escapeHtml(event.description)}</p>` : ''}
+                    <div class="card-organizer" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${event.organizerId}'">
+                        ${renderAvatar(organizerPhoto, organizerName, 28, false)}
+                        <span class="card-organizer-name">${organizerName}</span>
+                    </div>
+                </div>
+            </div>
+    `;
+    
+    // スロット表示（Type A, B のみ）
+    if ((event.type === 'A' || event.type === 'B') && event.slots && event.slots.length > 0) {
+        html += `<div class="card-slots">`;
+        event.slots.forEach((slot, i) => {
+            const price = slot.price || 0;
+            const capacity = slot.capacity || 1;
+            const applicants = slot.applicants || [];
+            const count = applicants.length;
+            const isFull = count >= capacity;
+            const isFree = price === 0;
+            
+            html += `
+                <div class="card-slot">
+                    <div class="card-slot-info">
+                        <span class="card-slot-time">${slot.time || 'TBD'}</span>
+                        <span class="card-slot-price ${isFree ? 'free' : ''}">${formatPrice(price, currency)}</span>
+                        <span class="card-slot-count ${isFull ? 'full' : ''}">${count}/${capacity}${isFull ? ' FULL' : ''}</span>
+                    </div>
+                    <div class="card-slot-avatars">${renderSlotAvatars(applicants, capacity, usersCache)}</div>
+                    <button class="card-slot-buy ${isFree ? 'free' : ''} ${isFull ? 'full' : ''}" 
+                            onclick="event.stopPropagation(); handleEventSlotClick('${event.id}', ${i})"
+                            ${isFull ? 'disabled' : ''}>
+                        ${isFull ? 'FULL' : (isFree ? 'FREE' : formatPriceShort(price, currency))}
+                    </button>
+                </div>
+            `;
+        });
+        html += `</div>`;
+    }
+    
+    // いいね・コメントボタン
+    html += `
+            <div class="card-interaction">
+                ${renderInteractionButtons('event', event.id, event.likesCount || 0, event.commentsCount || 0, isLiked)}
+            </div>
+        </div>
+    `;
+    
+    return html;
+}
+
+// Eventスロットクリックハンドラ
+function handleEventSlotClick(eventId, slotIndex) {
+    window.location.href = `events.html?id=${eventId}&slot=${slotIndex}`;
+}
+
+/**
+ * PRODUCTION カード
+ */
+function renderProductionCard(production, isLiked = false, userInfo = null) {
+    const typeLabels = { audio: 'DOWNLOAD', goods: 'ITEM', produce: 'PRODUCE' };
+    const user = userInfo || {};
+    const userName = user.name || production.artistName || 'User';
+    const userPhoto = user.photoURL || '';
+    const initial = (userName || '?')[0].toUpperCase();
+    
+    let html = `
+        <div class="card" data-type="production" data-id="${production.id}">
+            <div class="card-main" onclick="window.location.href='productions.html?id=${production.id}'">
+                <img src="${production.imageUrl || 'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                <div class="card-body">
+                    <span class="badge ${production.type || 'audio'}">${typeLabels[production.type] || 'PRODUCTION'}</span>
+                    <h3 class="card-title">${production.title}</h3>
+                    <p style="color:var(--text2);font-size:13px;">¥${(production.price || 0).toLocaleString()}</p>
+                    ${production.description ? `<p class="card-desc">${escapeHtml(production.description)}</p>` : ''}
+                    <div class="card-creator" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${production.userId}'">
+                        <div class="card-creator-avatar">
+                            ${userPhoto ? `<img src="${userPhoto}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
+                        </div>
+                        <span class="card-creator-name">${userName}</span>
+                    </div>
+    `;
+    
+    // SNSアイコン
+    if (user.sns) {
+        const snsHtml = renderSnsIcons(user.sns, 24);
+        if (snsHtml) {
+            html += `<div class="card-sns" onclick="event.stopPropagation()">${snsHtml}</div>`;
+        }
+    }
+    
+    html += `
+                </div>
+            </div>
+            <div class="card-buy-section">
+                <button class="card-buy-btn" onclick="event.stopPropagation(); window.location.href='productions.html?id=${production.id}&action=purchase'">
+                    Buy ¥${(production.price || 0).toLocaleString()}
+                </button>
+            </div>
+            <div class="card-interaction">
+                ${renderInteractionButtons('production', production.id, production.likesCount || 0, production.commentsCount || 0, isLiked)}
+            </div>
+        </div>
+    `;
+    
+    return html;
+}
+
+/**
+ * PLACE カード
+ */
+function renderPlaceCard(place, isLiked = false) {
+    const typeLabels = { place: 'PLACE', agency: 'AGENCY', shop: 'SHOP' };
+    const initial = (place.userName || '?')[0].toUpperCase();
+    
+    let html = `
+        <div class="card" data-type="place" data-id="${place.id}">
+            <div class="card-main" onclick="window.location.href='place.html?id=${place.id}'">
+                <img src="${place.imageUrl || 'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                <div class="card-body">
+                    <span class="badge ${place.type || 'place'}">${typeLabels[place.type] || 'PLACE'}</span>
+                    ${place.region ? `<span class="card-region">${place.region}</span>` : ''}
+                    <h3 class="card-title">${place.name || 'Untitled'}</h3>
+                    ${place.location ? `<div class="card-location">📍 ${place.location}</div>` : ''}
+                    ${place.url ? `<div class="card-url">🔗 <a href="${place.url}" target="_blank" onclick="event.stopPropagation()">${place.url}</a></div>` : ''}
+                    ${place.description ? `<p class="card-desc">${escapeHtml(place.description)}</p>` : ''}
+                    <div class="card-creator" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${place.userId}'">
+                        <div class="card-creator-avatar">
+                            ${place.userPhoto ? `<img src="${place.userPhoto}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
+                        </div>
+                        <span class="card-creator-name">${place.userName || 'User'}</span>
+                    </div>
+    `;
+    
+    // SNSアイコン
+    if (place.snsLinks) {
+        const snsHtml = renderSnsIcons(place.snsLinks, 24);
+        if (snsHtml) {
+            html += `<div class="card-sns" onclick="event.stopPropagation()">${snsHtml}</div>`;
+        }
+    }
+    
+    html += `
+                </div>
+            </div>
+            <div class="card-interaction">
+                ${renderInteractionButtons('place', place.id, place.likesCount || 0, place.commentsCount || 0, isLiked)}
+            </div>
+        </div>
+    `;
+    
+    return html;
+}
+
+/**
+ * ARTIST カード
+ */
+function renderArtistCard(artist, isLiked = false) {
+    const initial = (artist.name || '?')[0].toUpperCase();
+    const avatarHtml = artist.photoURL 
+        ? `<img src="${artist.photoURL}" onerror="this.style.display='none';this.parentElement.innerHTML='${initial}'">`
+        : initial;
+    
+    // 波形プレイヤー
+    const audioPlayer = (artist.audioUrl && typeof renderWaveformPlayer === 'function') 
+        ? renderWaveformPlayer(artist.audioUrl, artist.audioTitle, artist.audioDuration, `card_${artist.id}`) 
+        : '';
+    
+    let html = `
+        <div class="artist-card" data-type="user" data-id="${artist.id}" onclick="window.location.href='profile.html?uid=${artist.id}'">
+            <div class="artist-card-header">
+                <div class="artist-avatar">${avatarHtml}</div>
+                <div class="artist-info">
+                    <div class="artist-name">${artist.name || 'Artist'}</div>
+                    <div class="artist-region">${artist.region || ''}</div>
+                </div>
+            </div>
+            ${artist.bio ? `<div class="artist-bio">${escapeHtml(artist.bio)}</div>` : ''}
+            ${audioPlayer}
+            <div class="artist-footer" style="flex-wrap:wrap;gap:12px;">
+                ${renderSnsIcons(artist.sns || artist.snsLinks, 28)}
+                <button class="artist-dm-btn" onclick="event.stopPropagation(); openDM('${artist.id}', '${(artist.name || 'User').replace(/'/g, "\\'")}')">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                    DM
+                </button>
+            </div>
+            <div style="margin-top:12px;">
+                ${renderInteractionButtons('user', artist.id, artist.likesCount || 0, artist.commentsCount || 0, isLiked)}
+            </div>
+        </div>
+    `;
+    
+    return html;
+}
+
+/**
+ * TWEET カード
+ */
+function renderTweetCard(tweet, isLiked = false) {
+    const initial = (tweet.userName || '?')[0].toUpperCase();
+    const avatarHtml = tweet.userPhoto 
+        ? `<img src="${tweet.userPhoto}" onerror="this.style.display='none';this.parentElement.innerHTML='${initial}'">`
+        : initial;
+    
+    return `
+        <div class="tweet-card" data-type="tweet" data-id="${tweet.id}">
+            <div class="tweet-card-header">
+                <div class="tweet-card-avatar" onclick="window.location.href='profile.html?uid=${tweet.userId}'">${avatarHtml}</div>
+                <div class="tweet-card-info">
+                    <div class="tweet-card-name" onclick="window.location.href='profile.html?uid=${tweet.userId}'">${tweet.userName || 'User'}</div>
+                    <div class="tweet-card-badge"><span class="badge tweet">POST</span></div>
+                </div>
+            </div>
+            <div class="tweet-card-text">${linkifyText(tweet.text)}</div>
+            ${renderInteractionButtons('tweet', tweet.id, tweet.likesCount || 0, tweet.commentsCount || 0, isLiked)}
+        </div>
+    `;
+}

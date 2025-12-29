@@ -63,6 +63,7 @@
         .card-creator-name { font-size: 12px; color: var(--text2); cursor: pointer; }
         .card-creator-name:hover { color: var(--text); }
         .card-sns { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        .card-desc { font-size: 12px; color: var(--text2); line-height: 1.4; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         
         /* SNS Icons */
         .sns-icon { width: 24px; height: 24px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; color: var(--text2); transition: all 0.2s; }
@@ -332,36 +333,8 @@
             
             let html = '';
             filtered.forEach(place => {
-                const badgeClass = place.type || 'place';
-                const badgeText = LABELS.placeTypes[place.type] || 'PLACE';
                 const liked = isItemLiked('place', place.id);
-                const initial = (place.userName || '?')[0].toUpperCase();
-                const snsIconsHtml = renderSnsIcons(place.snsLinks, 24);
-                
-                html += `
-                    <div class="card" data-id="${place.id}">
-                        <div class="card-main" onclick="openPlaceModal('${place.id}')">
-                            <img class="card-img" src="${place.imageUrl || 'logo.png'}" onerror="this.src='logo.png'">
-                            <div class="card-body">
-                                <span class="badge ${badgeClass}">${badgeText}</span>
-                                ${place.region ? `<span class="card-region">${place.region}</span>` : ''}
-                                <div class="card-title">${place.name || 'Untitled'}</div>
-                                ${place.location ? `<div class="card-location">📍 ${place.location}</div>` : ''}
-                                ${place.url ? `<div class="card-url">🔗 <a href="${place.url}" target="_blank" onclick="event.stopPropagation()">${place.url}</a></div>` : ''}
-                                <div class="card-creator" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${place.userId}'">
-                                    <div class="card-creator-avatar">
-                                        ${place.userPhoto ? `<img src="${place.userPhoto}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
-                                    </div>
-                                    <span class="card-creator-name">${place.userName || 'User'}</span>
-                                </div>
-                                ${snsIconsHtml ? `<div class="card-sns" onclick="event.stopPropagation()">${snsIconsHtml}</div>` : ''}
-                            </div>
-                        </div>
-                        <div class="card-interaction">
-                            ${renderInteractionButtons('place', place.id, place.likesCount || 0, place.commentsCount || 0, liked)}
-                        </div>
-                    </div>
-                `;
+                html += renderPlaceCard(place, liked);
             });
             container.innerHTML = html;
         }
