@@ -52,7 +52,7 @@
         .interaction-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--text3); font-size: 14px; cursor: pointer; padding: 4px 0; transition: color 0.2s; }
         .interaction-btn:hover { color: var(--text2); }
         .interaction-btn.like-btn.liked { color: #FF4757; }
-        .card-interaction { padding: 0 12px 12px; }
+        .card-interaction { padding: 0 12px 12px; position: relative; z-index: 10; }
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 200; overflow-y: auto; }
         .modal.active { display: block; }
         .modal-content { max-width: 600px; margin: 0 auto; min-height: 100vh; background: var(--bg); }
@@ -89,10 +89,56 @@
         .card-buy-section { padding: 0 12px 12px; }
         .card-buy-btn { width: 100%; padding: 12px; background: var(--gradient); color: white; border: none; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer; }
         
+        /* 決済モーダル */
+        .payment-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 300; overflow-y: auto; }
+        .payment-modal.active { display: block; }
+        .payment-modal-content { max-width: 500px; margin: 40px auto; background: var(--card); border-radius: var(--r-xl); overflow: hidden; }
+        .payment-modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .payment-modal-header h2 { font-size: 18px; font-weight: 700; }
+        .payment-modal-close { background: none; border: none; color: var(--text); font-size: 28px; cursor: pointer; line-height: 1; }
+        .payment-modal-body { padding: 20px; }
+        .payment-item-info { text-align: center; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+        .payment-item-info h3 { font-size: 18px; margin-bottom: 8px; }
+        .payment-seller { color: var(--text2); font-size: 14px; margin-bottom: 8px; }
+        .payment-price { font-size: 28px; font-weight: 700; color: var(--primary); }
+        .payment-card-section { margin-bottom: 24px; }
+        .payment-card-section label { display: block; font-size: 14px; color: var(--text2); margin-bottom: 8px; }
+        #card-element { background: var(--surface); padding: 16px; border-radius: var(--r-md); border: 1px solid var(--border); }
+        .payment-error { color: #FF4757; font-size: 13px; margin-top: 8px; min-height: 20px; }
+        .payment-summary { background: var(--surface); border-radius: var(--r-md); padding: 16px; margin-bottom: 20px; }
+        .payment-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: var(--text2); }
+        .payment-row.total { font-size: 16px; font-weight: 700; color: var(--text); border-top: 1px solid var(--border); margin-top: 8px; padding-top: 16px; }
+        .payment-submit-btn { width: 100%; padding: 16px; background: var(--gradient); color: white; border: none; border-radius: var(--r-md); font-size: 16px; font-weight: 700; cursor: pointer; }
+        .payment-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .payment-note { text-align: center; font-size: 12px; color: var(--text3); margin-top: 16px; }
+        
+        /* カード選択UI */
+        .saved-cards-section { margin-bottom: 24px; }
+        .saved-cards-section label { display: block; font-size: 14px; color: var(--text2); margin-bottom: 12px; }
+        .saved-cards-list { }
+        .saved-card-item { background: var(--surface); border: 2px solid var(--border); border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: border-color 0.2s; }
+        .saved-card-item:hover { border-color: var(--text3); }
+        .saved-card-item.selected { border-color: var(--primary); background: rgba(255,107,0,0.1); }
+        .saved-card-item.new-card { border-style: dashed; }
+        .saved-card-radio { }
+        .saved-card-radio input { accent-color: var(--primary); }
+        .saved-card-info { flex: 1; display: flex; align-items: center; gap: 8px; }
+        .saved-card-brand { font-size: 14px; }
+        .saved-card-number { color: var(--text); font-weight: 500; }
+        .saved-card-exp { color: var(--text3); font-size: 12px; }
+        .new-card-section { margin-bottom: 24px; }
+        .new-card-section label { display: block; font-size: 14px; color: var(--text2); margin-bottom: 8px; }
+        .save-card-checkbox { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; color: var(--text2); cursor: pointer; }
+        .save-card-checkbox input { accent-color: var(--primary); }
+        
         /* URL折り返し */
         .modal-body { padding: 20px; word-break: break-word; overflow-wrap: break-word; }
         .modal-body a { word-break: break-all; }
+        
+        /* カード内波形プレイヤー */
+        .card-waveform-section { padding: 0 12px 12px; }
     </style>
+    <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
     <div class="container">
@@ -131,6 +177,7 @@
                 <span class="badge audio" id="modalBadge">DOWNLOAD SALES</span>
                 <h1 class="modal-title" id="modalTitle"></h1>
                 <p class="modal-price" id="modalPrice"></p>
+                <div id="modalWaveform" style="margin-bottom: 20px;"></div>
                 <div id="modalCreator" style="background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 20px;"></div>
                 <div id="modalSns" style="margin-bottom: 16px;"></div>
                 <p id="modalDesc" style="color: var(--text2); margin-bottom: 24px; white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word;"></p>
@@ -307,6 +354,22 @@
             document.getElementById('modalTitle').textContent = currentProduction.title;
             document.getElementById('modalPrice').textContent = '¥' + (currentProduction.price||0).toLocaleString();
             
+            // DOWNLOAD SALESの場合、波形プレイヤーを表示
+            const waveformContainer = document.getElementById('modalWaveform');
+            if (currentProduction.type === 'audio' && currentProduction.audioUrl && typeof renderWaveformPlayer === 'function') {
+                const waveformHtml = renderWaveformPlayer(
+                    currentProduction.audioUrl,
+                    currentProduction.title,
+                    currentProduction.audioDuration || 0,
+                    `modal_${currentProduction.id}`
+                );
+                waveformContainer.innerHTML = waveformHtml;
+                waveformContainer.style.display = 'block';
+            } else {
+                waveformContainer.innerHTML = '';
+                waveformContainer.style.display = 'none';
+            }
+            
             // 作成者情報
             const userInfo = usersCache[currentProduction.userId] || {};
             const userName = userInfo.name || currentProduction.artistName || 'User';
@@ -346,10 +409,43 @@
         
         function handlePurchase() {
             if (!requireLogin()) return;
-            toast(LABELS.comingSoon);
+            if (!currentProduction) return;
+            
+            // 販売者情報を取得
+            const sellerInfo = usersCache[currentProduction.userId] || {};
+            const sellerName = sellerInfo.name || currentProduction.artistName || 'User';
+            
+            // 決済用データ
+            const paymentData = {
+                type: currentProduction.type === 'audio' ? 'download' : (currentProduction.type || 'goods'),
+                itemId: currentProduction.id,
+                title: currentProduction.title,
+                price: currentProduction.price || 0,
+                sellerId: currentProduction.userId,
+                sellerName: sellerName
+            };
+            
+            // DOWNLOAD SALESの場合、audioUrlを追加
+            if (currentProduction.type === 'audio' && currentProduction.audioUrl) {
+                paymentData.audioUrl = currentProduction.audioUrl;
+            }
+            
+            // 決済モーダルを開く
+            openPaymentModal(paymentData);
         }
         
-        function onAuthReady() { loadAllProductions(); }
+        function onAuthReady() {
+            const params = new URLSearchParams(location.search);
+            const hasDeepLink = params.get('id');
+            
+            // ディープリンクなしで未ログインはウェルカム画面へリダイレクト
+            if (!user && !hasDeepLink) {
+                window.location.href = 'index.html';
+                return;
+            }
+            loadAllProductions();
+        }
     </script>
+    <script src="js/stripe.js"></script>
 </body>
 </html>

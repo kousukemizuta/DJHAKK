@@ -1,0 +1,17 @@
+[debug] [2025-12-29T15:41:01.691Z] ----------------------------------------------------------------------
+[debug] [2025-12-29T15:41:01.695Z] Command:       /usr/local/Cellar/node/25.2.1/bin/node /usr/local/bin/firebase functions:config:set stripe.secret=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
+[debug] [2025-12-29T15:41:01.695Z] CLI Version:   15.0.0
+[debug] [2025-12-29T15:41:01.695Z] Platform:      darwin
+[debug] [2025-12-29T15:41:01.695Z] Node Version:  v25.2.1
+[debug] [2025-12-29T15:41:01.695Z] Time:          Tue Dec 30 2025 00:41:01 GMT+0900 (日本標準時)
+[debug] [2025-12-29T15:41:01.696Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-12-29T15:41:01.698Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2025-12-29T15:41:01.911Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-29T15:41:01.912Z] > authorizing via signed-in user (kousuke.mizuta@gmail.com)
+[debug] [2025-12-29T15:41:01.912Z] [iam] checking project djhakk-app for permissions ["firebase.projects.get","runtimeconfig.configs.create","runtimeconfig.configs.delete","runtimeconfig.configs.get","runtimeconfig.configs.list","runtimeconfig.configs.update","runtimeconfig.variables.create","runtimeconfig.variables.delete","runtimeconfig.variables.get","runtimeconfig.variables.list","runtimeconfig.variables.update"]
+[debug] [2025-12-29T15:41:01.912Z] Checked if tokens are valid: false, expires at: 1767008110163
+[debug] [2025-12-29T15:41:01.912Z] Checked if tokens are valid: false, expires at: 1767008110163
+[debug] [2025-12-29T15:41:01.913Z] > refreshing access token with scopes: []
+[debug] [2025-12-29T15:41:01.913Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-12-29T15:41:01.914Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]

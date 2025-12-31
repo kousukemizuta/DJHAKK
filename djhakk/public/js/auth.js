@@ -69,8 +69,11 @@ async function loginWithGoogle() {
         const provider = new firebase.auth.GoogleAuthProvider();
         const result = await auth.signInWithPopup(provider);
         const u = result.user;
+        log('Google popup login successful: ' + u.email);
+        
         const doc = await db.collection('users').doc(u.uid).get();
         if (!doc.exists) {
+            // 新規ユーザー：Firestoreにドキュメント作成
             await db.collection('users').doc(u.uid).set({
                 name: u.displayName || 'User',
                 email: u.email,
@@ -81,17 +84,19 @@ async function loginWithGoogle() {
                 lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
                 lastInteractionAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+            log('New Google user created in Firestore: ' + u.email);
         } else {
-            // 既存ユーザーはlastLoginAtとlastInteractionAtを更新
+            // 既存ユーザー：lastLoginAtとlastInteractionAtを更新
             await db.collection('users').doc(u.uid).update({
                 lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
                 lastInteractionAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+            log('Existing Google user updated: ' + u.email);
         }
         toast('Log in');
         return true;
     } catch (e) {
-        log('Google login error: ' + e.message);
+        log('Google login error: ' + e.code + ' - ' + e.message);
         if (e.code !== 'auth/popup-closed-by-user') {
             toast(LABELS.googleLoginFailed, 'error');
         }
@@ -99,12 +104,45 @@ async function loginWithGoogle() {
     }
 }
 
-// handleGoogleLogin - モーダルから呼び出される
+// Googleリダイレクト認証後の処理（リダイレクト方式のフォールバック用）
+async function handleGoogleRedirectResult() {
+    try {
+        const result = await auth.getRedirectResult();
+        if (result.user) {
+            const u = result.user;
+            log('Google redirect user found: ' + u.email);
+            const doc = await db.collection('users').doc(u.uid).get();
+            if (!doc.exists) {
+                await db.collection('users').doc(u.uid).set({
+                    name: u.displayName || 'User',
+                    email: u.email,
+                    photoURL: 'https://djhakk-app.web.app/default-avatar.jpg',
+                    likesCount: 0,
+                    commentsCount: 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastInteractionAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                log('New Google user created in Firestore: ' + u.email);
+            } else {
+                await db.collection('users').doc(u.uid).update({
+                    lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastInteractionAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+            toast('Log in');
+        }
+    } catch (e) {
+        log('Google redirect check: ' + (e.message || 'no redirect'));
+    }
+}
+
+// handleGoogleLogin - モーダル・ウェルカム画面から呼び出される
 async function handleGoogleLogin() {
     const success = await loginWithGoogle();
     if (success) {
         closeLoginModal();
-        window.location.reload();
+        window.location.href = 'timeline.html';
     }
 }
 
@@ -180,13 +218,28 @@ async function loadUserData() {
         const doc = await db.collection('users').doc(user.uid).get();
         if (doc.exists) {
             userData = doc.data();
+            // 既存ユーザー：lastLoginAtとlastInteractionAtを更新
+            await db.collection('users').doc(user.uid).update({
+                lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastInteractionAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            log('Existing user data loaded: ' + user.email);
+        } else {
+            // ドキュメントが存在しない場合は新規作成（Google認証後のフォールバック）
+            const newUserData = {
+                name: user.displayName || 'User',
+                email: user.email,
+                photoURL: 'https://djhakk-app.web.app/default-avatar.jpg',
+                likesCount: 0,
+                commentsCount: 0,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastInteractionAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            await db.collection('users').doc(user.uid).set(newUserData);
+            userData = newUserData;
+            log('New user document created in loadUserData: ' + user.email);
         }
-        // ログイン時にlastLoginAtとlastInteractionAtを両方更新
-        // → ログインしたユーザーがアーティストページ・タイムラインで上に表示される
-        await db.collection('users').doc(user.uid).update({
-            lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastInteractionAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
     } catch (e) {
         log('Error loading user data: ' + e.message);
     }
@@ -302,6 +355,9 @@ function tryCallOnAuthReady() {
         onAuthReady();
     }
 }
+
+// Googleリダイレクト認証の結果を処理（ページ読み込み時に実行）
+handleGoogleRedirectResult();
 
 auth.onAuthStateChanged(async (u) => {
     user = u;

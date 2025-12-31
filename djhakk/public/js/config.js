@@ -232,3 +232,37 @@ const PAGINATION = {
     loadMoreLimit: 20,   // 追加読み込み件数
     triggerOffset: 10    // 残り何件でトリガーするか
 };
+
+// ========================================
+// Stripe Configuration
+// ========================================
+const STRIPE_CONFIG = {
+    // 公開キー（本番用）
+    publishableKey: 'pk_live_51SfuMBCX2UVsQygF3ckT02GcaH1bjUbuBbEX9pLE3gPpFhYAttaEZY9uExZl1Jv0gFj6fWEIG6VH5AmUlZwCRNfe00GfoYIEUn',
+    
+    // 手数料設定
+    platformFeePercent: 10,  // プラットフォーム手数料 10%
+    withdrawalFee: 200,      // 出金手数料 ¥200
+    minWithdrawalAmount: 1000, // 最低出金額 ¥1,000
+    
+    // Cloud Functions URL (asia-northeast1)
+    functionsUrl: 'https://asia-northeast1-djhakk-app.cloudfunctions.net'
+};
+
+// ========================================
+// Price Configuration
+// ========================================
+const PRICE_CONFIG = {
+    minPrice: 50,  // 最低販売価格（0円は無料として許可、1-49円は不可）
+    
+    // 価格バリデーション: 0円（無料）または50円以上のみ許可
+    isValidPrice: function(price) {
+        const p = parseInt(price) || 0;
+        return p === 0 || p >= this.minPrice;
+    },
+    
+    // エラーメッセージ
+    getErrorMessage: function() {
+        return `価格は無料(0円)または${this.minPrice}円以上で設定してください`;
+    }
+};

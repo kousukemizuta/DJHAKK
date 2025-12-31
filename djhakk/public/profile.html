@@ -79,6 +79,118 @@
         
         .empty-state { text-align: center; padding: 40px; color: var(--text2); }
         
+        /* Wallet Section */
+        .wallet-balance { background: var(--gradient); border-radius: var(--r-xl); padding: 24px; margin-bottom: 20px; text-align: center; }
+        .wallet-balance-label { font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 8px; }
+        .wallet-balance-amount { font-size: 36px; font-weight: 700; }
+        .wallet-pending { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 8px; }
+        .wallet-actions { display: flex; gap: 12px; margin-bottom: 24px; }
+        .wallet-btn { flex: 1; padding: 14px; border-radius: var(--r-md); font-weight: 600; cursor: pointer; border: none; font-size: 14px; }
+        .wallet-btn.withdraw { background: var(--card); color: var(--text); }
+        .wallet-btn.withdraw:disabled { opacity: 0.5; cursor: not-allowed; }
+        .wallet-section-title { font-size: 14px; color: var(--text2); margin-bottom: 0; font-weight: 600; }
+        .wallet-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .add-card-btn { background: none; border: 1px solid var(--primary); color: var(--primary); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600; }
+        .wallet-cards-section { margin-bottom: 24px; }
+        .wallet-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .wallet-tab { flex: 1; padding: 10px; background: var(--card); color: var(--text2); border: none; border-radius: var(--r-md); cursor: pointer; font-size: 13px; font-weight: 600; }
+        .wallet-tab.active { background: var(--surface); color: var(--text); border: 1px solid var(--primary); }
+        .transaction-item { background: var(--card); border-radius: var(--r-md); padding: 16px; margin-bottom: 12px; }
+        .transaction-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .transaction-title { font-weight: 600; font-size: 14px; }
+        .transaction-amount { font-weight: 700; }
+        .transaction-amount.plus { color: #2ECC71; }
+        .transaction-amount.minus { color: #FF4757; }
+        .transaction-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--text3); }
+        .transaction-status { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .transaction-status.paid { background: rgba(255,193,7,0.2); color: #FFC107; }
+        .transaction-status.completed { background: rgba(46,204,113,0.2); color: #2ECC71; }
+        .transaction-status.pending { background: rgba(160,160,184,0.2); color: var(--text2); }
+        .transaction-status.cancelled { background: rgba(255,71,87,0.2); color: #FF4757; }
+        .confirm-receipt-btn { margin-top: 12px; width: 100%; padding: 10px; background: var(--gradient); color: white; border: none; border-radius: var(--r-md); font-weight: 600; cursor: pointer; }
+        .cancel-purchase-btn { margin-top: 12px; width: 100%; padding: 10px; background: transparent; color: #FF4757; border: 1px solid #FF4757; border-radius: var(--r-md); font-weight: 600; cursor: pointer; font-size: 13px; }
+        .cancel-purchase-btn:hover { background: rgba(255,71,87,0.1); }
+        .refund-info { margin-top: 8px; font-size: 12px; color: var(--text2); text-align: right; }
+        .download-btn-history { display: block; margin-top: 12px; width: 100%; padding: 10px; background: #00D9FF; color: #0D0D1A; border: none; border-radius: var(--r-md); font-weight: 600; cursor: pointer; text-align: center; text-decoration: none; font-size: 14px; }
+        .download-btn-history:hover { background: #00C4E6; }
+        
+        /* 登録カード管理 */
+        .saved-cards-manage-list { }
+        .saved-card-manage-item { background: var(--card); border-radius: var(--r-md); padding: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+        .saved-card-manage-info { flex: 1; }
+        .saved-card-manage-brand { font-size: 14px; font-weight: 600; }
+        .saved-card-manage-number { color: var(--text2); font-size: 13px; }
+        .saved-card-manage-exp { color: var(--text3); font-size: 12px; }
+        .saved-card-default-badge { background: var(--primary); color: white; font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; margin-left: 8px; }
+        .saved-card-manage-actions { display: flex; gap: 8px; }
+        .saved-card-action-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text2); padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+        .saved-card-action-btn:hover { background: var(--card); color: var(--text); }
+        .saved-card-action-btn.delete { border-color: #FF4757; color: #FF4757; }
+        .saved-card-action-btn.delete:hover { background: rgba(255,71,87,0.1); }
+        
+        /* 出金モーダル */
+        .withdraw-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 300; overflow-y: auto; }
+        .withdraw-modal.active { display: block; }
+        .withdraw-modal-content { max-width: 500px; margin: 40px auto; background: var(--card); border-radius: var(--r-xl); overflow: hidden; }
+        .withdraw-modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .withdraw-modal-header h2 { font-size: 18px; font-weight: 700; }
+        .withdraw-modal-close { background: none; border: none; color: var(--text); font-size: 28px; cursor: pointer; }
+        .withdraw-modal-body { padding: 20px; }
+        .withdraw-info { background: var(--surface); border-radius: var(--r-md); padding: 16px; margin-bottom: 20px; }
+        .withdraw-info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        .withdraw-info-row:last-child { margin-bottom: 0; }
+        .withdraw-info-row.total { font-weight: 700; border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; }
+        .bank-form .input-group { margin-bottom: 16px; }
+        .bank-form .input-row { display: flex; gap: 12px; }
+        .bank-form .input-row .input-group { flex: 1; margin-bottom: 0; }
+        
+        /* カード登録モーダル */
+        .payment-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 300; overflow-y: auto; }
+        .payment-modal.active { display: block; }
+        .payment-modal-content { max-width: 500px; margin: 40px auto; background: var(--card); border-radius: var(--r-xl); overflow: hidden; }
+        .payment-modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .payment-modal-header h2 { font-size: 18px; font-weight: 700; }
+        .payment-modal-close { background: none; border: none; color: var(--text); font-size: 28px; cursor: pointer; line-height: 1; }
+        .payment-modal-body { padding: 20px; }
+        .payment-card-section { margin-bottom: 24px; }
+        .payment-card-section label { display: block; font-size: 14px; color: var(--text2); margin-bottom: 8px; }
+        #register-card-element { background: var(--surface); padding: 16px; border-radius: var(--r-md); border: 1px solid var(--border); }
+        .payment-error { color: #FF4757; font-size: 13px; margin-top: 8px; min-height: 20px; }
+        .payment-submit-btn { width: 100%; padding: 16px; background: var(--gradient); color: white; border: none; border-radius: var(--r-md); font-size: 16px; font-weight: 700; cursor: pointer; }
+        .payment-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* GUARANTEE管理 */
+        .guarantee-event { background: var(--card); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 16px; }
+        .guarantee-event-header { display: flex; padding: 12px; gap: 12px; cursor: pointer; }
+        .guarantee-event-img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; }
+        .guarantee-event-info { flex: 1; }
+        .guarantee-event-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+        .guarantee-event-meta { font-size: 12px; color: var(--text2); }
+        .guarantee-slots { padding: 0 12px 12px; }
+        .guarantee-slot { background: var(--surface); border-radius: var(--r-md); padding: 12px; margin-bottom: 8px; }
+        .guarantee-slot:last-child { margin-bottom: 0; }
+        .guarantee-slot-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .guarantee-slot-time { font-weight: 600; }
+        .guarantee-slot-price { color: var(--primary); font-weight: 700; }
+        .guarantee-slot-status { font-size: 12px; padding: 4px 8px; border-radius: 4px; font-weight: 600; }
+        .guarantee-slot-status.open { background: rgba(0,217,255,0.2); color: #00D9FF; }
+        .guarantee-slot-status.approved { background: rgba(255,193,7,0.2); color: #FFC107; }
+        .guarantee-slot-status.completed { background: rgba(46,204,113,0.2); color: #2ECC71; }
+        .guarantee-applicants { margin-top: 8px; }
+        .guarantee-applicants-label { font-size: 12px; color: var(--text3); margin-bottom: 8px; }
+        .guarantee-applicant { display: flex; align-items: center; gap: 10px; padding: 8px; background: var(--card); border-radius: 8px; margin-bottom: 6px; }
+        .guarantee-applicant-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 14px; overflow: hidden; }
+        .guarantee-applicant-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .guarantee-applicant-name { flex: 1; font-size: 13px; font-weight: 500; }
+        .guarantee-applicant-btn { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+        .guarantee-applicant-btn.approve { background: var(--gradient); color: white; }
+        .guarantee-applicant-btn.reject { background: transparent; color: #FF4757; border: 1px solid #FF4757; }
+        .guarantee-approved-user { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(46,204,113,0.1); border: 1px solid #2ECC71; border-radius: 8px; margin-top: 8px; }
+        .guarantee-approved-label { font-size: 11px; color: #2ECC71; font-weight: 600; }
+        .guarantee-complete-btn { margin-top: 10px; width: 100%; padding: 10px; background: var(--gradient); color: white; border: none; border-radius: var(--r-md); font-weight: 600; cursor: pointer; }
+        .guarantee-complete-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .guarantee-no-applicants { text-align: center; padding: 16px; color: var(--text3); font-size: 13px; }
+        
         .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; position: relative; }
         .nav-item.active { color: var(--primary); }
@@ -91,6 +203,7 @@
         .toast.show { opacity: 1; }
         .toast.error { background: #FF4757; }
     </style>
+    <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
     <div class="container">
@@ -117,7 +230,8 @@
         <div id="myProfileTabs" style="display:none;">
             <div class="tabs">
                 <div class="tab active" onclick="switchTab('edit')">EDIT</div>
-                <div class="tab" onclick="switchTab('events')">MY EVENT</div>
+                <div class="tab" onclick="switchTab('events')">EVENT</div>
+                <div class="tab" onclick="switchTab('wallet')">WALLET</div>
                 <div class="tab" onclick="switchTab('dm')">DM</div>
             </div>
             
@@ -187,6 +301,39 @@
                 <div id="dmPreviewList"></div>
                 <button class="btn btn-s btn-lg" onclick="location.href='messages.html'" style="margin-top:16px;">View all messages</button>
             </div>
+            
+            <div id="walletTab" class="tab-content">
+                <div class="wallet-balance">
+                    <div class="wallet-balance-label">残高</div>
+                    <div class="wallet-balance-amount" id="walletBalance">¥0</div>
+                    <div class="wallet-pending" id="walletPending"></div>
+                </div>
+                
+                <div class="wallet-actions">
+                    <button class="wallet-btn withdraw" id="withdrawBtn" onclick="openWithdrawModal()">出金申請</button>
+                </div>
+                
+                <!-- 登録カードセクション -->
+                <div class="wallet-cards-section">
+                    <div class="wallet-section-header">
+                        <h3 class="wallet-section-title">登録カード</h3>
+                        <button class="add-card-btn" onclick="openCardRegistrationModal()">+ カード追加</button>
+                    </div>
+                    <div id="savedCardsList" class="saved-cards-manage-list">
+                        <div class="empty-state">読み込み中...</div>
+                    </div>
+                </div>
+                
+                <div class="wallet-tabs">
+                    <button class="wallet-tab active" onclick="switchWalletTab('purchases')">購入履歴</button>
+                    <button class="wallet-tab" onclick="switchWalletTab('sales')">販売履歴</button>
+                    <button class="wallet-tab" onclick="switchWalletTab('withdrawals')">出金履歴</button>
+                </div>
+                
+                <div id="purchasesHistory" class="wallet-history active"></div>
+                <div id="salesHistory" class="wallet-history" style="display:none;"></div>
+                <div id="withdrawalsHistory" class="wallet-history" style="display:none;"></div>
+            </div>
         </div>
         
         <!-- 他のユーザーのプロフィール用 -->
@@ -209,7 +356,74 @@
     </nav>
     <div class="toast" id="toast"></div>
     
-        <!-- Common JS (順序重要: 依存関係順に読み込み) -->
+    <!-- 出金モーダル -->
+    <div class="withdraw-modal" id="withdrawModal">
+        <div class="withdraw-modal-content">
+            <div class="withdraw-modal-header">
+                <h2>出金申請</h2>
+                <button class="withdraw-modal-close" onclick="closeWithdrawModal()">×</button>
+            </div>
+            <div class="withdraw-modal-body">
+                <div class="withdraw-info">
+                    <div class="withdraw-info-row">
+                        <span>現在の残高</span>
+                        <span id="withdrawCurrentBalance">¥0</span>
+                    </div>
+                    <div class="withdraw-info-row">
+                        <span>出金額</span>
+                        <span id="withdrawAmountDisplay">¥0</span>
+                    </div>
+                    <div class="withdraw-info-row">
+                        <span>振込手数料</span>
+                        <span>-¥200</span>
+                    </div>
+                    <div class="withdraw-info-row total">
+                        <span>振込金額</span>
+                        <span id="withdrawNetAmount">¥0</span>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label class="label">出金額</label>
+                    <input type="number" id="withdrawAmountInput" class="input" placeholder="1000" min="1000" oninput="updateWithdrawCalculation()">
+                    <small style="color:var(--text3);font-size:12px;">最低出金額: ¥1,000</small>
+                </div>
+                
+                <div class="bank-form">
+                    <h3 class="wallet-section-title" style="margin-top:20px;">振込先口座情報</h3>
+                    <div class="input-group">
+                        <label class="label">銀行名</label>
+                        <input type="text" id="bankName" class="input" placeholder="○○銀行">
+                    </div>
+                    <div class="input-group">
+                        <label class="label">支店名</label>
+                        <input type="text" id="branchName" class="input" placeholder="○○支店">
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label class="label">口座種別</label>
+                            <select id="accountType" class="input">
+                                <option value="普通">普通</option>
+                                <option value="当座">当座</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label class="label">口座番号</label>
+                            <input type="text" id="accountNumber" class="input" placeholder="1234567">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label class="label">口座名義（カナ）</label>
+                        <input type="text" id="accountName" class="input" placeholder="ヤマダ タロウ">
+                    </div>
+                </div>
+                
+                <button class="btn btn-p btn-lg" onclick="submitWithdrawal()" style="margin-top:20px;">出金申請する</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Common JS (順序重要: 依存関係順に読み込み) -->
     <script src="js/config.js"></script>
     <script src="js/firebase-init.js"></script>
     <script src="js/ui.js"></script>
@@ -217,6 +431,7 @@
     <script src="js/data.js"></script>
     <script src="js/interactions.js"></script>
     <script src="js/audio-player.js"></script>
+    <script src="js/stripe.js"></script>
     <script>
         let isOwnProfile = true;
         let targetUserId = null;
@@ -228,14 +443,20 @@
         let pendingAudioFile = null;
         let pendingAudioDuration = 0;
         
+        // ウォレット関連
+        let currentBalance = 0;
+        let pendingAmount = 0;
+        
         function switchTab(tabId) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelector(`.tab:nth-child(${tabId === 'edit' ? 1 : tabId === 'events' ? 2 : 3})`).classList.add('active');
+            const tabIndex = { edit: 1, events: 2, wallet: 3, dm: 4 }[tabId] || 1;
+            document.querySelector(`.tab:nth-child(${tabIndex})`).classList.add('active');
             document.getElementById(tabId + 'Tab').classList.add('active');
             
             if (tabId === 'events') loadMyEvents();
             if (tabId === 'dm') loadDMPreview();
+            if (tabId === 'wallet') loadWalletData();
         }
         
         async function loadProfileData() {
@@ -587,6 +808,8 @@
         }
         
         // ========== マイイベント ==========
+        let guaranteeUsersCache = {};
+        
         async function loadMyEvents() {
             const container = document.getElementById('myEventsList');
             try {
@@ -599,7 +822,33 @@
                     return;
                 }
                 
-                container.innerHTML = myEvents.map(ev => `
+                // 応募者のユーザー情報を取得
+                const allUserIds = new Set();
+                myEvents.forEach(ev => {
+                    if (ev.slots) {
+                        ev.slots.forEach(slot => {
+                            if (slot.applicants) slot.applicants.forEach(uid => allUserIds.add(uid));
+                            if (slot.approvedUid) allUserIds.add(slot.approvedUid);
+                        });
+                    }
+                });
+                if (allUserIds.size > 0) {
+                    guaranteeUsersCache = await getUsersByIds([...allUserIds]);
+                }
+                
+                container.innerHTML = myEvents.map(ev => renderMyEventCard(ev)).join('');
+            } catch (e) { 
+                log('Error loading events: ' + e.message); 
+                container.innerHTML = '<div class="empty-state">読み込みに失敗しました</div>'; 
+            }
+        }
+        
+        function renderMyEventCard(ev) {
+            const currency = ev.currency || 'jpy';
+            
+            // Type A/C or no slots - simple card
+            if (ev.type !== 'B' || !ev.slots || ev.slots.length === 0) {
+                return `
                     <div class="card" onclick="location.href='events.html?id=${ev.id}'">
                         <img src="${ev.imageUrl||'logo.png'}" class="card-img" onerror="this.src='logo.png'">
                         <div class="card-body">
@@ -607,10 +856,159 @@
                             <div class="card-meta">${formatDate(ev.date)}</div>
                         </div>
                     </div>
-                `).join('');
-            } catch (e) { 
-                log('Error loading events: ' + e.message); 
-                container.innerHTML = '<div class="empty-state">読み込みに失敗しました</div>'; 
+                `;
+            }
+            
+            // Type B (GUARANTEE) - management UI
+            const slotsHtml = ev.slots.map((slot, i) => renderGuaranteeSlot(ev, slot, i, currency)).join('');
+            
+            return `
+                <div class="guarantee-event">
+                    <div class="guarantee-event-header" onclick="location.href='events.html?id=${ev.id}'">
+                        <img src="${ev.imageUrl||'logo.png'}" class="guarantee-event-img" onerror="this.src='logo.png'">
+                        <div class="guarantee-event-info">
+                            <div class="guarantee-event-title">${ev.title}</div>
+                            <div class="guarantee-event-meta">${formatDate(ev.date)}</div>
+                        </div>
+                    </div>
+                    <div class="guarantee-slots">
+                        ${slotsHtml}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderGuaranteeSlot(ev, slot, slotIndex, currency) {
+            const status = slot.status || 'open';
+            const applicants = slot.applicants || [];
+            const price = slot.price || 0;
+            
+            let statusLabel = '';
+            let statusClass = status;
+            if (status === 'open') statusLabel = '募集中';
+            else if (status === 'approved') statusLabel = '承認済';
+            else if (status === 'completed') statusLabel = '完了';
+            
+            let content = '';
+            
+            if (status === 'completed') {
+                // 完了済み
+                const approvedUser = guaranteeUsersCache[slot.approvedUid] || {};
+                content = `
+                    <div class="guarantee-approved-user">
+                        <div class="guarantee-applicant-avatar">
+                            ${approvedUser.photoURL ? `<img src="${approvedUser.photoURL}">` : (approvedUser.displayName || '?').charAt(0)}
+                        </div>
+                        <div style="flex:1;">
+                            <div class="guarantee-approved-label">✓ 出演完了</div>
+                            <div style="font-size:13px;font-weight:500;">${approvedUser.displayName || 'ユーザー'}</div>
+                        </div>
+                    </div>
+                `;
+            } else if (status === 'approved') {
+                // 承認済み - 完了報告待ち
+                const approvedUser = guaranteeUsersCache[slot.approvedUid] || {};
+                content = `
+                    <div class="guarantee-approved-user">
+                        <div class="guarantee-applicant-avatar">
+                            ${approvedUser.photoURL ? `<img src="${approvedUser.photoURL}">` : (approvedUser.displayName || '?').charAt(0)}
+                        </div>
+                        <div style="flex:1;">
+                            <div class="guarantee-approved-label">✓ 承認済み</div>
+                            <div style="font-size:13px;font-weight:500;">${approvedUser.displayName || 'ユーザー'}</div>
+                        </div>
+                    </div>
+                    <button class="guarantee-complete-btn" onclick="event.stopPropagation(); completeGuarantee('${ev.id}', ${slotIndex})">
+                        出演完了を報告
+                    </button>
+                `;
+            } else {
+                // 募集中 - 応募者一覧
+                if (applicants.length === 0) {
+                    content = '<div class="guarantee-no-applicants">応募者はまだいません</div>';
+                } else {
+                    content = `
+                        <div class="guarantee-applicants">
+                            <div class="guarantee-applicants-label">応募者 (${applicants.length}人)</div>
+                            ${applicants.map(uid => {
+                                const u = guaranteeUsersCache[uid] || {};
+                                return `
+                                    <div class="guarantee-applicant">
+                                        <div class="guarantee-applicant-avatar" onclick="event.stopPropagation(); location.href='profile.html?uid=${uid}'">
+                                            ${u.photoURL ? `<img src="${u.photoURL}">` : (u.displayName || '?').charAt(0)}
+                                        </div>
+                                        <div class="guarantee-applicant-name" onclick="event.stopPropagation(); location.href='profile.html?uid=${uid}'">${u.displayName || 'ユーザー'}</div>
+                                        <button class="guarantee-applicant-btn approve" onclick="event.stopPropagation(); approveGuarantee('${ev.id}', ${slotIndex}, '${uid}')">承認</button>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                }
+            }
+            
+            return `
+                <div class="guarantee-slot">
+                    <div class="guarantee-slot-header">
+                        <span class="guarantee-slot-time">${slot.time || 'TBD'}</span>
+                        <span class="guarantee-slot-status ${statusClass}">${statusLabel}</span>
+                    </div>
+                    <div style="font-size:13px;color:var(--text2);margin-bottom:8px;">
+                        ギャラ: <span class="guarantee-slot-price">${formatPrice(price, currency)}</span>
+                    </div>
+                    ${content}
+                </div>
+            `;
+        }
+        
+        // GUARANTEE承認
+        async function approveGuarantee(eventId, slotIndex, applicantUid) {
+            if (!confirm('この応募者を承認しますか？承認すると支払いが確定します。')) return;
+            
+            try {
+                const response = await fetch(`${STRIPE_CONFIG.functionsUrl}/approveGuarantee`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        eventId,
+                        slotIndex,
+                        applicantUid,
+                        organizerId: user.uid
+                    })
+                });
+                
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Failed to approve');
+                
+                toast('承認しました！');
+                await loadMyEvents();
+            } catch (e) {
+                toast(e.message, 'error');
+            }
+        }
+        
+        // GUARANTEE完了報告
+        async function completeGuarantee(eventId, slotIndex) {
+            if (!confirm('出演完了を報告しますか？報告すると出演者への支払いが実行されます。')) return;
+            
+            try {
+                const response = await fetch(`${STRIPE_CONFIG.functionsUrl}/completeGuarantee`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        eventId,
+                        slotIndex,
+                        organizerId: user.uid
+                    })
+                });
+                
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Failed to complete');
+                
+                toast('完了報告しました！出演者への支払いが処理されます。');
+                await loadMyEvents();
+            } catch (e) {
+                toast(e.message, 'error');
             }
         }
         
@@ -770,6 +1168,380 @@
             }
         }
         
+        // ========================================
+        // Wallet Functions
+        // ========================================
+        
+        async function loadWalletData() {
+            if (!user) return;
+            
+            try {
+                // 残高取得
+                const response = await fetch(`${STRIPE_CONFIG.functionsUrl}/getBalanceInfo`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.uid })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    currentBalance = data.balance || 0;
+                    pendingAmount = data.pendingAmount || 0;
+                    
+                    document.getElementById('walletBalance').textContent = `¥${currentBalance.toLocaleString()}`;
+                    
+                    if (pendingAmount > 0) {
+                        document.getElementById('walletPending').textContent = `保留中: ¥${pendingAmount.toLocaleString()}`;
+                    } else {
+                        document.getElementById('walletPending').textContent = '';
+                    }
+                    
+                    // 出金ボタンの有効/無効
+                    const withdrawBtn = document.getElementById('withdrawBtn');
+                    if (currentBalance < STRIPE_CONFIG.minWithdrawalAmount) {
+                        withdrawBtn.disabled = true;
+                    } else {
+                        withdrawBtn.disabled = false;
+                    }
+                }
+            } catch (error) {
+                console.error('Load wallet data error:', error);
+            }
+            
+            // カード一覧を読み込み
+            loadSavedCards();
+            
+            // 履歴を読み込み
+            loadPurchaseHistory();
+            loadSalesHistory();
+            loadWithdrawalHistory();
+        }
+        
+        async function loadSavedCards() {
+            if (!user) return;
+            
+            const container = document.getElementById('savedCardsList');
+            container.innerHTML = '<div class="empty-state">読み込み中...</div>';
+            
+            try {
+                const cards = await getSavedCards();
+                
+                if (cards.length === 0) {
+                    container.innerHTML = '<div class="empty-state">登録カードはありません<br><small style="color:var(--text3)">カードを登録するとワンクリックで購入できます</small></div>';
+                    return;
+                }
+                
+                let html = '';
+                for (const card of cards) {
+                    const brandIcon = getCardBrandIcon(card.brand);
+                    const defaultBadge = card.isDefault ? '<span class="saved-card-default-badge">メイン</span>' : '';
+                    const canDelete = cards.length > 1;
+                    
+                    html += `
+                        <div class="saved-card-manage-item">
+                            <div class="saved-card-manage-info">
+                                <div class="saved-card-manage-brand">${brandIcon} ${defaultBadge}</div>
+                                <div class="saved-card-manage-number">**** **** **** ${card.last4}</div>
+                                <div class="saved-card-manage-exp">有効期限: ${card.expMonth}/${card.expYear}</div>
+                            </div>
+                            <div class="saved-card-manage-actions">
+                                ${!card.isDefault ? `<button class="saved-card-action-btn" onclick="handleSetDefaultCard('${card.id}')">メインに設定</button>` : ''}
+                                ${canDelete ? `<button class="saved-card-action-btn delete" onclick="handleDeleteCard('${card.id}')">削除</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Load saved cards error:', error);
+                container.innerHTML = '<div class="empty-state">読み込みエラー</div>';
+            }
+        }
+        
+        async function handleSetDefaultCard(cardId) {
+            try {
+                await setDefaultCard(cardId);
+                toast('メインカードを設定しました');
+                loadSavedCards();
+            } catch (error) {
+                toast(error.message, 'error');
+            }
+        }
+        
+        async function handleDeleteCard(cardId) {
+            if (!confirm('このカードを削除しますか？')) return;
+            
+            try {
+                await deleteCard(cardId);
+                toast('カードを削除しました');
+                loadSavedCards();
+            } catch (error) {
+                toast(error.message, 'error');
+            }
+        }
+        
+        function switchWalletTab(tab) {
+            document.querySelectorAll('.wallet-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.wallet-history').forEach(h => h.style.display = 'none');
+            
+            event.target.classList.add('active');
+            document.getElementById(tab + 'History').style.display = 'block';
+        }
+        
+        async function loadPurchaseHistory() {
+            if (!user) return;
+            
+            const container = document.getElementById('purchasesHistory');
+            container.innerHTML = '<div class="empty-state">読み込み中...</div>';
+            
+            try {
+                const purchases = await getPurchaseHistory();
+                
+                if (purchases.length === 0) {
+                    container.innerHTML = '<div class="empty-state">購入履歴はありません</div>';
+                    return;
+                }
+                
+                let html = '';
+                for (const p of purchases) {
+                    const date = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString('ja-JP') : '';
+                    let statusLabel = { pending: '処理中', paid: '受取待ち', completed: '完了', cancelled: 'キャンセル済' }[p.status] || p.status;
+                    let statusClass = p.status;
+                    
+                    // event_slotの場合はステータスラベルを変更
+                    if (p.type === 'event_slot') {
+                        if (p.status === 'paid') {
+                            statusLabel = '予約済み';
+                        }
+                    }
+                    
+                    // downloadタイプの場合はステータスラベルを変更
+                    if (p.type === 'download' && p.status === 'completed') {
+                        statusLabel = 'ダウンロード可';
+                    }
+                    
+                    // キャンセル可否チェック
+                    const canCancelResult = canCancelPurchase(p);
+                    const showCancelBtn = canCancelResult.canCancel;
+                    
+                    // 受取確認ボタンの表示条件（productionタイプでpaidの場合）
+                    const showReceiptBtn = p.status === 'paid' && p.type !== 'event_slot' && p.type !== 'download' && getPurchaseConfig(p.type).needsReceipt;
+                    
+                    // ダウンロードボタンの表示条件（downloadタイプでaudioUrlがある場合）
+                    const showDownloadBtn = p.type === 'download' && p.audioUrl && p.status === 'completed';
+                    
+                    html += `
+                        <div class="transaction-item">
+                            <div class="transaction-header">
+                                <div class="transaction-title">${escapeHtml(p.itemTitle || '商品')}</div>
+                                <div class="transaction-amount minus">-¥${(p.amount || 0).toLocaleString()}</div>
+                            </div>
+                            <div class="transaction-meta">
+                                <span>${date}</span>
+                                <span class="transaction-status ${statusClass}">${statusLabel}</span>
+                            </div>
+                            ${showReceiptBtn ? `
+                                <button class="confirm-receipt-btn" onclick="handleConfirmReceipt('${p.id}')">受取確認</button>
+                            ` : ''}
+                            ${showDownloadBtn ? `
+                                <a href="${p.audioUrl}" download class="download-btn-history">ダウンロード</a>
+                            ` : ''}
+                            ${showCancelBtn ? `
+                                <button class="cancel-purchase-btn" onclick="handleCancelPurchase('${p.id}', ${JSON.stringify(p).replace(/"/g, '&quot;')})">キャンセル</button>
+                            ` : ''}
+                            ${p.status === 'cancelled' ? `
+                                <div class="refund-info">返金額: ¥${(p.refundAmount || 0).toLocaleString()}</div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Load purchase history error:', error);
+                container.innerHTML = '<div class="empty-state">読み込みエラー</div>';
+            }
+        }
+        
+        async function handleCancelPurchase(purchaseId, purchase) {
+            const success = await confirmCancelPurchase(purchaseId, purchase);
+            if (success) {
+                loadPurchaseHistory();
+                loadWalletData(); // 残高更新
+            }
+        }
+        
+        async function loadSalesHistory() {
+            if (!user) return;
+            
+            const container = document.getElementById('salesHistory');
+            container.innerHTML = '<div class="empty-state">読み込み中...</div>';
+            
+            try {
+                const sales = await getSalesHistory();
+                
+                if (sales.length === 0) {
+                    container.innerHTML = '<div class="empty-state">販売履歴はありません</div>';
+                    return;
+                }
+                
+                let html = '';
+                for (const s of sales) {
+                    const date = s.createdAt?.toDate ? s.createdAt.toDate().toLocaleDateString('ja-JP') : '';
+                    const statusLabel = { pending: '処理中', paid: '受取確認待ち', completed: '確定' }[s.status] || s.status;
+                    const statusClass = s.status;
+                    
+                    html += `
+                        <div class="transaction-item">
+                            <div class="transaction-header">
+                                <div class="transaction-title">${escapeHtml(s.itemTitle || '商品')}</div>
+                                <div class="transaction-amount plus">+¥${(s.sellerAmount || 0).toLocaleString()}</div>
+                            </div>
+                            <div class="transaction-meta">
+                                <span>${date}</span>
+                                <span class="transaction-status ${statusClass}">${statusLabel}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Load sales history error:', error);
+                container.innerHTML = '<div class="empty-state">読み込みエラー</div>';
+            }
+        }
+        
+        async function loadWithdrawalHistory() {
+            if (!user) return;
+            
+            const container = document.getElementById('withdrawalsHistory');
+            container.innerHTML = '<div class="empty-state">読み込み中...</div>';
+            
+            try {
+                const withdrawals = await getWithdrawalHistory();
+                
+                if (withdrawals.length === 0) {
+                    container.innerHTML = '<div class="empty-state">出金履歴はありません</div>';
+                    return;
+                }
+                
+                let html = '';
+                for (const w of withdrawals) {
+                    const date = w.createdAt?.toDate ? w.createdAt.toDate().toLocaleDateString('ja-JP') : '';
+                    const statusLabel = { pending: '処理中', completed: '完了', rejected: '却下' }[w.status] || w.status;
+                    const statusClass = w.status;
+                    
+                    html += `
+                        <div class="transaction-item">
+                            <div class="transaction-header">
+                                <div class="transaction-title">出金申請</div>
+                                <div class="transaction-amount minus">-¥${(w.amount || 0).toLocaleString()}</div>
+                            </div>
+                            <div class="transaction-meta">
+                                <span>${date}</span>
+                                <span class="transaction-status ${statusClass}">${statusLabel}</span>
+                            </div>
+                            <div style="font-size:12px;color:var(--text3);margin-top:8px;">
+                                振込額: ¥${(w.netAmount || 0).toLocaleString()}（手数料 ¥${w.fee || 200}）
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Load withdrawal history error:', error);
+                container.innerHTML = '<div class="empty-state">読み込みエラー</div>';
+            }
+        }
+        
+        async function handleConfirmReceipt(purchaseId) {
+            await confirmReceipt(purchaseId);
+            loadWalletData();
+        }
+        
+        function openWithdrawModal() {
+            if (currentBalance < STRIPE_CONFIG.minWithdrawalAmount) {
+                toast(`最低出金額は¥${STRIPE_CONFIG.minWithdrawalAmount.toLocaleString()}です`, 'error');
+                return;
+            }
+            
+            document.getElementById('withdrawCurrentBalance').textContent = `¥${currentBalance.toLocaleString()}`;
+            document.getElementById('withdrawAmountInput').value = currentBalance;
+            document.getElementById('withdrawAmountInput').max = currentBalance;
+            updateWithdrawCalculation();
+            
+            // 保存された銀行情報があれば読み込み
+            if (user) {
+                db.collection('users').doc(user.uid).get().then(doc => {
+                    if (doc.exists && doc.data().bankInfo) {
+                        const bank = doc.data().bankInfo;
+                        document.getElementById('bankName').value = bank.bankName || '';
+                        document.getElementById('branchName').value = bank.branchName || '';
+                        document.getElementById('accountType').value = bank.accountType || '普通';
+                        document.getElementById('accountNumber').value = bank.accountNumber || '';
+                        document.getElementById('accountName').value = bank.accountName || '';
+                    }
+                });
+            }
+            
+            document.getElementById('withdrawModal').classList.add('active');
+        }
+        
+        function closeWithdrawModal() {
+            document.getElementById('withdrawModal').classList.remove('active');
+        }
+        
+        function updateWithdrawCalculation() {
+            const amount = parseInt(document.getElementById('withdrawAmountInput').value) || 0;
+            const fee = STRIPE_CONFIG.withdrawalFee;
+            const net = Math.max(0, amount - fee);
+            
+            document.getElementById('withdrawAmountDisplay').textContent = `¥${amount.toLocaleString()}`;
+            document.getElementById('withdrawNetAmount').textContent = `¥${net.toLocaleString()}`;
+        }
+        
+        async function submitWithdrawal() {
+            const amount = parseInt(document.getElementById('withdrawAmountInput').value) || 0;
+            
+            if (amount < STRIPE_CONFIG.minWithdrawalAmount) {
+                toast(`最低出金額は¥${STRIPE_CONFIG.minWithdrawalAmount.toLocaleString()}です`, 'error');
+                return;
+            }
+            
+            if (amount > currentBalance) {
+                toast('残高が不足しています', 'error');
+                return;
+            }
+            
+            const bankInfo = {
+                bankName: document.getElementById('bankName').value.trim(),
+                branchName: document.getElementById('branchName').value.trim(),
+                accountType: document.getElementById('accountType').value,
+                accountNumber: document.getElementById('accountNumber').value.trim(),
+                accountName: document.getElementById('accountName').value.trim()
+            };
+            
+            // バリデーション
+            if (!bankInfo.bankName || !bankInfo.branchName || !bankInfo.accountNumber || !bankInfo.accountName) {
+                toast('銀行口座情報を入力してください', 'error');
+                return;
+            }
+            
+            // 銀行情報を保存
+            await db.collection('users').doc(user.uid).update({ bankInfo });
+            
+            // 出金申請
+            const success = await requestWithdrawal(amount, bankInfo);
+            
+            if (success) {
+                closeWithdrawModal();
+                loadWalletData();
+            }
+        }
+        
         function onAuthReady() {
             const params = new URLSearchParams(location.search);
             const uid = params.get('uid');
@@ -782,7 +1554,8 @@
             
             // 自分のプロフィールはログイン必須
             if (!user) { 
-                showLoginModal();
+                // ウェルカム画面へリダイレクト
+                window.location.href = 'index.html';
                 return; 
             }
             loadProfileData();

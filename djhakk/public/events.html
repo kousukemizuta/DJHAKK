@@ -86,7 +86,7 @@
         .interaction-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--text3); font-size: 14px; cursor: pointer; padding: 4px 0; transition: color 0.2s; }
         .interaction-btn:hover { color: var(--text2); }
         .interaction-btn.like-btn.liked { color: #FF4757; }
-        .card-interaction { padding: 0 12px 12px; }
+        .card-interaction { padding: 0 12px 12px; position: relative; z-index: 10; }
         
         /* モーダル */
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 200; overflow-y: auto; }
@@ -127,6 +127,9 @@
         .slot-buy-btn.primary { background: var(--gradient); color: white; }
         .slot-buy-btn.free { background: #00D9FF; color: #0D0D1A; }
         .slot-buy-btn.full { background: var(--border); color: var(--text3); cursor: not-allowed; }
+        .slot-buy-btn.applied { background: rgba(0,217,255,0.2); color: #00D9FF; cursor: not-allowed; }
+        .slot-buy-btn.approved { background: rgba(46,204,113,0.2); color: #2ECC71; cursor: not-allowed; }
+        .slot-buy-btn.completed { background: rgba(46,204,113,0.3); color: #2ECC71; cursor: not-allowed; }
         
         .btn { padding: 12px 24px; border-radius: var(--r-lg); font-weight: 600; cursor: pointer; border: none; font-size: 14px; }
         .btn-p { background: var(--gradient); color: white; }
@@ -168,7 +171,50 @@
         .load-more-btn:hover { background: var(--card); }
         .no-more-data { text-align: center; padding: 30px; }
         .no-more-data img { width: 48px; height: 48px; opacity: 0.4; }
+        
+        /* 決済モーダル */
+        .payment-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 300; overflow-y: auto; }
+        .payment-modal.active { display: block; }
+        .payment-modal-content { max-width: 500px; margin: 40px auto; background: var(--card); border-radius: var(--r-xl); overflow: hidden; }
+        .payment-modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .payment-modal-header h2 { font-size: 18px; font-weight: 700; }
+        .payment-modal-close { background: none; border: none; color: var(--text); font-size: 28px; cursor: pointer; line-height: 1; }
+        .payment-modal-body { padding: 20px; }
+        .payment-item-info { text-align: center; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+        .payment-item-info h3 { font-size: 18px; margin-bottom: 8px; }
+        .payment-seller { color: var(--text2); font-size: 14px; margin-bottom: 8px; }
+        .payment-price { font-size: 28px; font-weight: 700; color: var(--primary); }
+        .payment-card-section { margin-bottom: 24px; }
+        .payment-card-section label { display: block; font-size: 14px; color: var(--text2); margin-bottom: 8px; }
+        #card-element { background: var(--surface); padding: 16px; border-radius: var(--r-md); border: 1px solid var(--border); }
+        .payment-error { color: #FF4757; font-size: 13px; margin-top: 8px; min-height: 20px; }
+        .payment-summary { background: var(--surface); border-radius: var(--r-md); padding: 16px; margin-bottom: 20px; }
+        .payment-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: var(--text2); }
+        .payment-row.total { font-size: 16px; font-weight: 700; color: var(--text); border-top: 1px solid var(--border); margin-top: 8px; padding-top: 16px; }
+        .payment-submit-btn { width: 100%; padding: 16px; background: var(--gradient); color: white; border: none; border-radius: var(--r-md); font-size: 16px; font-weight: 700; cursor: pointer; }
+        .payment-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .payment-note { text-align: center; font-size: 12px; color: var(--text3); margin-top: 16px; }
+        
+        /* カード選択UI */
+        .saved-cards-section { margin-bottom: 24px; }
+        .saved-cards-section label { display: block; font-size: 14px; color: var(--text2); margin-bottom: 12px; }
+        .saved-cards-list { }
+        .saved-card-item { background: var(--surface); border: 2px solid var(--border); border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: border-color 0.2s; }
+        .saved-card-item:hover { border-color: var(--text3); }
+        .saved-card-item.selected { border-color: var(--primary); background: rgba(255,107,0,0.1); }
+        .saved-card-item.new-card { border-style: dashed; }
+        .saved-card-radio { }
+        .saved-card-radio input { accent-color: var(--primary); }
+        .saved-card-info { flex: 1; display: flex; align-items: center; gap: 8px; }
+        .saved-card-brand { font-size: 14px; }
+        .saved-card-number { color: var(--text); font-weight: 500; }
+        .saved-card-exp { color: var(--text3); font-size: 12px; }
+        .new-card-section { margin-bottom: 24px; }
+        .new-card-section label { display: block; font-size: 14px; color: var(--text2); margin-bottom: 8px; }
+        .save-card-checkbox { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; color: var(--text2); cursor: pointer; }
+        .save-card-checkbox input { accent-color: var(--primary); }
     </style>
+    <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
     <div class="container">
@@ -298,6 +344,7 @@
     <script src="js/data.js"></script>
     <script src="js/interactions.js"></script>
     <script src="js/audio-player.js"></script>
+    <script src="js/stripe.js"></script>
     <script>
         let allEvents = [];
         let currentTypeFilter = 'all';
@@ -531,34 +578,101 @@
                     const capacity = slot.capacity || 1;
                     const applicants = slot.applicants || [];
                     const count = applicants.length;
-                    const isFull = count >= capacity;
                     const isFree = price === 0;
+                    const status = slot.status || 'open';
+                    
+                    // GUARANTEE用のステータス判定
+                    const isApproved = currentEvent.type === 'B' && status === 'approved';
+                    const isCompleted = currentEvent.type === 'B' && status === 'completed';
+                    const alreadyApplied = user && applicants.includes(user.uid);
+                    const isApprovedUser = user && slot.approvedUid === user.uid;
+                    
+                    // FULL判定: Type A は応募数、Type B は承認済みかどうか
+                    let isFull;
+                    if (currentEvent.type === 'B') {
+                        isFull = isApproved || isCompleted;
+                    } else {
+                        isFull = count >= capacity;
+                    }
                     
                     let btnClass = 'primary';
                     let btnText = currentEvent.type === 'A' ? 'Buy' : 'Apply';
+                    let btnDisabled = false;
+                    
                     if (isFree) {
                         btnClass = 'free';
                         btnText = currentEvent.type === 'A' ? 'Reserve Free' : 'Apply Free';
                     }
-                    if (isFull) {
+                    
+                    // Type AのみFULL判定でボタン無効化
+                    if (currentEvent.type === 'A' && isFull) {
                         btnClass = 'full';
                         btnText = 'FULL';
+                        btnDisabled = true;
+                    }
+                    
+                    // GUARANTEE特有のステータス
+                    if (currentEvent.type === 'B') {
+                        if (isCompleted) {
+                            btnClass = 'completed';
+                            btnText = isApprovedUser ? '✓ 出演完了' : 'COMPLETED';
+                            btnDisabled = true;
+                        } else if (isApproved) {
+                            if (isApprovedUser) {
+                                btnClass = 'approved';
+                                btnText = '✓ 承認済み';
+                            } else {
+                                btnClass = 'full';
+                                btnText = 'CLOSED';
+                            }
+                            btnDisabled = true;
+                        } else if (alreadyApplied) {
+                            btnClass = 'applied';
+                            btnText = '応募済み';
+                            btnDisabled = true;
+                        }
+                    }
+                    
+                    // ステータスバッジ
+                    let statusBadge = '';
+                    if (currentEvent.type === 'B') {
+                        if (isCompleted) {
+                            statusBadge = '<span style="background:rgba(46,204,113,0.2);color:#2ECC71;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">完了</span>';
+                        } else if (isApproved) {
+                            statusBadge = '<span style="background:rgba(255,193,7,0.2);color:#FFC107;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">確定</span>';
+                        }
+                    }
+                    
+                    // 表示文字列
+                    let countDisplay;
+                    if (currentEvent.type === 'B') {
+                        countDisplay = isFull ? '確定' : `${count}人応募`;
+                    } else {
+                        countDisplay = `${count}/${capacity}${isFull ? ' FULL' : ''}`;
+                    }
+                    
+                    // アバター表示：GARANTEEで承認済みの場合は承認者のみ表示
+                    let avatarsHtml;
+                    if (currentEvent.type === 'B' && isFull && slot.approvedUid) {
+                        avatarsHtml = renderSlotAvatars([slot.approvedUid], 1);
+                    } else {
+                        avatarsHtml = renderSlotAvatars(applicants, capacity);
                     }
                     
                     slotsHtml += `
                         <div class="slot-card">
                             <div class="slot-header">
                                 <span class="slot-time">${slot.time || 'TBD'}</span>
-                                <span class="slot-price ${isFree ? 'free' : ''}">${formatPrice(price, currency)}</span>
+                                <span class="slot-price ${isFree ? 'free' : ''}">${formatPrice(price, currency)} ${statusBadge}</span>
                             </div>
                             <div class="slot-applicants">
-                                <div class="slot-applicants-label">Applicants</div>
+                                <div class="slot-applicants-label">${currentEvent.type === 'B' ? (isFull ? '出演者' : '応募者') : 'Buyers'}</div>
                                 <div class="slot-applicants-row">
-                                    ${renderSlotAvatars(applicants, capacity)}
-                                    <span class="slot-count ${isFull ? 'full' : ''}">${count}/${capacity}${isFull ? ' FULL' : ''}</span>
+                                    ${avatarsHtml}
+                                    <span class="slot-count ${isFull ? 'full' : ''}">${countDisplay}</span>
                                 </div>
                             </div>
-                            <button class="slot-buy-btn ${btnClass}" onclick="openPurchaseModal(${i})" ${isFull ? 'disabled' : ''}>${btnText}</button>
+                            <button class="slot-buy-btn ${btnClass}" onclick="openPurchaseModal(${i})" ${btnDisabled ? 'disabled' : ''}>${btnText}</button>
                         </div>
                     `;
                 });
@@ -651,23 +765,66 @@
             const slot = currentEvent.slots[selectedSlotIndex];
             const isFree = (slot.price || 0) === 0;
             
+            // closePurchaseModalで変数がリセットされるので先に保存
+            const eventToProcess = currentEvent;
+            const slotIndexToProcess = selectedSlotIndex;
+            
+            closePurchaseModal();
+            
+            // Type B（GUARANTEE）は常に応募のみ（課金は主催者承認時）
+            if (eventToProcess.type === 'B') {
+                const success = await applyToSlot(eventToProcess.id, slotIndexToProcess);
+                if (success) {
+                    toast(isFree ? 'Applied (Free)' : 'Applied! Waiting for approval');
+                    await reloadEventData();
+                }
+                return;
+            }
+            
+            // Type A（TIMETABLE）
             if (isFree) {
                 // 無料の場合は直接予約
-                const success = await applyToSlot(currentEvent.id, selectedSlotIndex);
+                const success = await applyToSlot(eventToProcess.id, slotIndexToProcess);
                 if (success) {
                     toast('Reserved (Free)');
-                    // データを再読み込み
-                    await loadAllEvents();
-                    // モーダルを更新
-                    if (document.getElementById('eventModal').classList.contains('active')) {
-                        showDetail(currentEvent.id);
-                    }
+                    await reloadEventData();
                 }
             } else {
-                // 有料の場合はStripe決済（TODO）
-                toast('Coming soon');
+                // 有料の場合はStripe決済モーダルを開く
+                openEventSlotPaymentModal(eventToProcess, slotIndexToProcess);
             }
-            closePurchaseModal();
+        }
+        
+        // イベントスロット決済モーダルを開く
+        function openEventSlotPaymentModal(event, slotIndex) {
+            const slot = event.slots[slotIndex];
+            const organizerName = usersCache[event.organizerId]?.displayName || 'Unknown';
+            
+            // 共通決済モーダルを使用
+            openPaymentModal({
+                type: 'event_slot',
+                itemId: event.id,
+                slotIndex: slotIndex,
+                title: `${event.title} - ${slot.time || 'TBD'}`,
+                price: slot.price,
+                currency: event.currency || 'jpy',
+                sellerId: event.organizerId,
+                sellerName: organizerName,
+                eventDate: event.date,
+                // 決済成功時のコールバック
+                onSuccess: async (purchaseId) => {
+                    toast('スロット購入が完了しました！');
+                    await reloadEventData();
+                }
+            });
+        }
+        
+        // イベントデータ再読み込み
+        async function reloadEventData() {
+            await loadAllEvents();
+            if (currentEvent && document.getElementById('eventModal').classList.contains('active')) {
+                showDetail(currentEvent.id);
+            }
         }
         
         function shareEvent() {
@@ -683,7 +840,17 @@
             }
         }
         
-        function onAuthReady() { loadAllEvents(); }
+        function onAuthReady() {
+            const params = new URLSearchParams(location.search);
+            const hasDeepLink = params.get('id');
+            
+            // ディープリンクなしで未ログインはウェルカム画面へリダイレクト
+            if (!user && !hasDeepLink) {
+                window.location.href = 'index.html';
+                return;
+            }
+            loadAllEvents();
+        }
     </script>
 </body>
 </html>

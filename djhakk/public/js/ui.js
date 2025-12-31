@@ -323,21 +323,35 @@ function renderEventCard(event, isLiked = false, usersCache = {}) {
             const capacity = slot.capacity || 1;
             const applicants = slot.applicants || [];
             const count = applicants.length;
-            const isFull = count >= capacity;
             const isFree = price === 0;
+            const status = slot.status || 'open';
+            
+            // FULL判定: Type A は応募数、Type B は承認済みかどうか
+            let isFull, countDisplay, btnText;
+            if (event.type === 'B') {
+                // GUARANTEE: 承認済み or 完了で確定
+                isFull = status === 'approved' || status === 'completed';
+                countDisplay = isFull ? '確定' : `${count}人応募`;
+                btnText = isFull ? 'CLOSED' : (isFree ? 'FREE' : formatPriceShort(price, currency));
+            } else {
+                // TIMETABLE: 応募数で判定
+                isFull = count >= capacity;
+                countDisplay = `${count}/${capacity}${isFull ? ' FULL' : ''}`;
+                btnText = isFull ? 'FULL' : (isFree ? 'FREE' : formatPriceShort(price, currency));
+            }
             
             html += `
                 <div class="card-slot">
                     <div class="card-slot-info">
                         <span class="card-slot-time">${slot.time || 'TBD'}</span>
                         <span class="card-slot-price ${isFree ? 'free' : ''}">${formatPrice(price, currency)}</span>
-                        <span class="card-slot-count ${isFull ? 'full' : ''}">${count}/${capacity}${isFull ? ' FULL' : ''}</span>
+                        <span class="card-slot-count ${isFull ? 'full' : ''}">${countDisplay}</span>
                     </div>
-                    <div class="card-slot-avatars">${renderSlotAvatars(applicants, capacity, usersCache)}</div>
+                    <div class="card-slot-avatars">${event.type === 'B' && isFull && slot.approvedUid ? renderSlotAvatars([slot.approvedUid], 1, usersCache) : renderSlotAvatars(applicants, capacity, usersCache)}</div>
                     <button class="card-slot-buy ${isFree ? 'free' : ''} ${isFull ? 'full' : ''}" 
                             onclick="event.stopPropagation(); handleEventSlotClick('${event.id}', ${i})"
                             ${isFull ? 'disabled' : ''}>
-                        ${isFull ? 'FULL' : (isFree ? 'FREE' : formatPriceShort(price, currency))}
+                        ${btnText}
                     </button>
                 </div>
             `;
@@ -400,6 +414,23 @@ function renderProductionCard(production, isLiked = false, userInfo = null) {
                     </div>
                 </div>
             </div>
+    `;
+    
+    // DOWNLOAD SALES（type='audio'）の場合、波形プレイヤーを追加
+    // audio-player.jsのrenderWaveformPlayerを使用（アーティストカードと同じ形式）
+    if (production.type === 'audio' && production.audioUrl && typeof renderWaveformPlayer === 'function') {
+        const waveformHtml = renderWaveformPlayer(
+            production.audioUrl, 
+            production.title, 
+            production.audioDuration || 0, 
+            `prod_${production.id}`
+        );
+        if (waveformHtml) {
+            html += `<div class="card-waveform-section" onclick="event.stopPropagation()">${waveformHtml}</div>`;
+        }
+    }
+    
+    html += `
             <div class="card-buy-section">
                 <button class="card-buy-btn" onclick="event.stopPropagation(); window.location.href='productions.html?id=${production.id}&action=purchase'">
                     Buy ¥${(production.price || 0).toLocaleString()}

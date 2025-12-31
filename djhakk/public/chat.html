@@ -295,7 +295,8 @@
         
         function onAuthReady() {
             if (!user) {
-                showLoginModal();
+                // ウェルカム画面へリダイレクト
+                window.location.href = 'index.html';
                 return;
             }
             initChat();
