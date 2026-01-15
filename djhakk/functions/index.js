@@ -12,8 +12,18 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
-// Stripe設定
-const stripe = require('stripe')(functions.config().stripe?.secret || process.env.STRIPE_SECRET_KEY);
+// Stripe設定（.env ファイルから読み込み - 2026年3月廃止対応）
+const stripe = require('stripe')(process.env.STRIPE_SECRET);
+
+// SendGrid設定
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'noreply@djhakk.com';
+const SENDGRID_FROM_NAME = 'DJHAKK';
+const SENDGRID_REPLY_TO = 'support@djhakk.com';
+
+// メール送信間隔（秒）
+const EMAIL_RATE_LIMIT_SECONDS = 60;
 
 // CORS設定
 const cors = require('cors')({ origin: true });
@@ -69,52 +79,80 @@ exports.sendMessageNotification = functions
             const recipient = recipientDoc.data();
             const fcmToken = recipient.fcmToken;
             
-            if (!fcmToken) {
-                console.log('Recipient has no FCM token');
-                return null;
-            }
-            
             // 送信者の名前を取得
             const senderName = chat.participantNames?.[senderId] || '誰か';
+            const messageBody = message.text ? message.text.substring(0, 100) : 'メッセージが届きました';
             
-            // 通知を送信
-            const notificationPayload = {
-                token: fcmToken,
-                notification: {
-                    title: `${senderName}からのメッセージ`,
-                    body: message.text ? message.text.substring(0, 100) : 'メッセージが届きました'
-                },
-                data: {
-                    chatId: chatId,
-                    senderId: senderId,
-                    type: 'message'
-                },
-                android: {
-                    priority: 'high',
-                    notification: {
-                        channelId: 'djhakk_messages',
-                        sound: 'default'
-                    }
-                },
-                apns: {
-                    payload: {
-                        aps: {
-                            sound: 'default',
-                            badge: 1
+            // プッシュ通知を送信（FCMトークンがある場合のみ）
+            if (fcmToken) {
+                try {
+                    const notificationPayload = {
+                        token: fcmToken,
+                        notification: {
+                            title: `${senderName}からのメッセージ`,
+                            body: messageBody
+                        },
+                        data: {
+                            chatId: chatId,
+                            senderId: senderId,
+                            type: 'message'
+                        },
+                        android: {
+                            priority: 'high',
+                            notification: {
+                                channelId: 'djhakk_messages',
+                                sound: 'default'
+                            }
+                        },
+                        apns: {
+                            payload: {
+                                aps: {
+                                    sound: 'default',
+                                    badge: 1
+                                }
+                            }
+                        },
+                        webpush: {
+                            fcmOptions: {
+                                link: `https://djhakk-app.web.app/chat.html?id=${chatId}`
+                            }
                         }
-                    }
-                },
-                webpush: {
-                    fcmOptions: {
-                        link: `https://djhakk-app.web.app/chat.html?id=${chatId}`
-                    }
+                    };
+                    
+                    const response = await admin.messaging().send(notificationPayload);
+                    console.log('Push notification sent successfully:', response);
+                } catch (pushError) {
+                    console.error('Push notification failed:', pushError);
                 }
-            };
+            } else {
+                console.log('Recipient has no FCM token, skipping push notification');
+            }
             
-            const response = await admin.messaging().send(notificationPayload);
-            console.log('Notification sent successfully:', response);
+            // メール通知を送信（メールアドレスがある場合）
+            if (recipient.email) {
+                // 通知設定と頻度制限をチェック
+                const canSendEmail = await shouldSendEmail(recipientId, 'dmEmail');
+                const rateOk = await checkEmailRateLimit(recipientId);
+                
+                if (canSendEmail && rateOk) {
+                    const emailSubject = `${senderName}からのメッセージ - DJHAKK`;
+                    const emailBody = message.text ? message.text.substring(0, 200) : 'メッセージが届きました';
+                    const emailHtml = generateEmailHtml(
+                        `${senderName}からのメッセージ`,
+                        emailBody,
+                        `https://djhakk.com/chat.html?id=${chatId}`,
+                        'メッセージを確認する'
+                    );
+                    await sendEmailNotification(recipient.email, emailSubject, emailBody, emailHtml);
+                    await updateLastEmailSent(recipientId);
+                } else {
+                    console.log(`Email skipped: canSend=${canSendEmail}, rateOk=${rateOk}`);
+                }
+            } else {
+                console.log('Recipient has no email, skipping email notification');
+            }
             
-            return response;
+            return null;
             
         } catch (error) {
             console.error('Error sending notification:', error);
@@ -163,33 +201,54 @@ exports.sendApplicationNotification = functions
                 
                 const organizer = organizerDoc.data();
                 const fcmToken = organizer.fcmToken;
-                if (!fcmToken) continue;
                 
                 // 新しい応募者の名前を取得
                 for (const applicantId of newApplicants) {
                     const applicantDoc = await db.collection('users').doc(applicantId).get();
                     const applicantName = applicantDoc.exists ? applicantDoc.data().name : 'ユーザー';
                     
-                    try {
-                        await admin.messaging().send({
-                            token: fcmToken,
-                            notification: {
-                                title: '新しい応募',
-                                body: `${applicantName}さんが「${afterData.title}」に応募しました`
-                            },
-                            data: {
-                                eventId: eventId,
-                                type: 'application'
-                            },
-                            webpush: {
-                                fcmOptions: {
-                                    link: `https://djhakk-app.web.app/events.html?id=${eventId}`
+                    // プッシュ通知
+                    if (fcmToken) {
+                        try {
+                            await admin.messaging().send({
+                                token: fcmToken,
+                                notification: {
+                                    title: '新しい応募',
+                                    body: `${applicantName}さんが「${afterData.title}」に応募しました`
+                                },
+                                data: {
+                                    eventId: eventId,
+                                    type: 'application'
+                                },
+                                webpush: {
+                                    fcmOptions: {
+                                        link: `https://djhakk-app.web.app/events.html?id=${eventId}`
+                                    }
                                 }
-                            }
-                        });
-                        console.log(`Application notification sent for event ${eventId}`);
-                    } catch (error) {
-                        console.error('Error sending application notification:', error);
+                            });
+                            console.log(`Application notification sent for event ${eventId}`);
+                        } catch (error) {
+                            console.error('Error sending application push notification:', error);
+                        }
+                    }
+                    
+                    // メール通知を送信
+                    if (organizer.email) {
+                        const canSendEmail = await shouldSendEmail(organizerId, 'applicationEmail');
+                        const rateOk = await checkEmailRateLimit(organizerId);
+                        
+                        if (canSendEmail && rateOk) {
+                            const emailSubject = `新しい応募がありました - DJHAKK`;
+                            const emailBody = `${applicantName}さんが「${afterData.title}」に応募しました。`;
+                            const emailHtml = generateEmailHtml(
+                                '新しい応募',
+                                emailBody,
+                                `https://djhakk.com/events.html?id=${eventId}`,
+                                '応募を確認する'
+                            );
+                            await sendEmailNotification(organizer.email, emailSubject, emailBody, emailHtml);
+                            await updateLastEmailSent(organizerId);
+                        }
                     }
                 }
             }
@@ -297,7 +356,7 @@ exports.stripeWebhook = functions
     .region('asia-northeast1')
     .https.onRequest(async (req, res) => {
         const sig = req.headers['stripe-signature'];
-        const endpointSecret = functions.config().stripe?.webhook_secret || process.env.STRIPE_WEBHOOK_SECRET;
+        const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
         
         let event;
         
@@ -344,6 +403,176 @@ exports.stripeWebhook = functions
         res.status(200).json({ received: true });
     });
 
+// ========================================
+// Email Notifications (SendGrid)
+// ========================================
+
+/**
+ * ユーザーの通知設定をチェック
+ * @param {string} userId - ユーザーID
+ * @param {string} notificationType - 通知タイプ (dmEmail, purchaseEmail, applicationEmail, guaranteeEmail)
+ * @returns {boolean} - メール送信可能かどうか
+ */
+async function shouldSendEmail(userId, notificationType) {
+    try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (!userDoc.exists) return false;
+        
+        const userData = userDoc.data();
+        const settings = userData.notificationSettings;
+        
+        // 設定がない場合はデフォルトでON
+        if (!settings) return true;
+        
+        // メール通知全体がOFFの場合
+        if (settings.emailEnabled === false) return false;
+        
+        // 個別の通知タイプがOFFの場合
+        if (settings[notificationType] === false) return false;
+        
+        return true;
+    } catch (error) {
+        console.error('shouldSendEmail error:', error);
+        return true; // エラー時はデフォルトで送信
+    }
+}
+
+/**
+ * 頻度制限をチェック
+ * @param {string} userId - ユーザーID
+ * @returns {boolean} - 送信可能かどうか
+ */
+async function checkEmailRateLimit(userId) {
+    try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (!userDoc.exists) return true;
+        
+        const userData = userDoc.data();
+        const lastSent = userData.lastEmailSentAt;
+        
+        if (!lastSent) return true;
+        
+        const elapsed = Date.now() - lastSent.toMillis();
+        return elapsed > EMAIL_RATE_LIMIT_SECONDS * 1000;
+    } catch (error) {
+        console.error('checkEmailRateLimit error:', error);
+        return true; // エラー時は送信許可
+    }
+}
+
+/**
+ * 最終メール送信時刻を更新
+ * @param {string} userId - ユーザーID
+ */
+async function updateLastEmailSent(userId) {
+    try {
+        await db.collection('users').doc(userId).update({
+            lastEmailSentAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (error) {
+        console.error('updateLastEmailSent error:', error);
+    }
+}
+
+/**
+ * メール通知を送信
+ * @param {string} toEmail - 送信先メールアドレス
+ * @param {string} subject - 件名
+ * @param {string} textContent - テキスト本文
+ * @param {string} htmlContent - HTML本文（オプション）
+ */
+async function sendEmailNotification(toEmail, subject, textContent, htmlContent = null) {
+    if (!toEmail || !process.env.SENDGRID_API_KEY) {
+        console.log('Email notification skipped: no email or API key');
+        return;
+    }
+    
+    try {
+        const msg = {
+            to: toEmail,
+            from: {
+                email: SENDGRID_FROM_EMAIL,
+                name: SENDGRID_FROM_NAME
+            },
+            replyTo: SENDGRID_REPLY_TO,
+            subject: subject,
+            text: textContent,
+            html: htmlContent || textContent.replace(/\n/g, '<br>')
+        };
+        
+        await sgMail.send(msg);
+        console.log(`Email sent to ${toEmail}: ${subject}`);
+    } catch (error) {
+        console.error('SendGrid email error:', error);
+        // メール送信失敗はログのみ、処理は継続
+    }
+}
+
+/**
+ * 通知用のHTMLテンプレートを生成
+ */
+function generateEmailHtml(title, body, actionUrl = null, actionText = 'アプリで確認する') {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="100%" max-width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 12px; overflow: hidden;">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: 2px;">DJHAKK</h1>
+                        </td>
+                    </tr>
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <h2 style="margin: 0 0 20px 0; color: #ffffff; font-size: 20px; font-weight: 600;">${title}</h2>
+                            <p style="margin: 0 0 30px 0; color: #b3b3b3; font-size: 16px; line-height: 1.6;">${body}</p>
+                            ${actionUrl ? `
+                            <a href="${actionUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 14px;">${actionText}</a>
+                            ` : ''}
+                        </td>
+                    </tr>
+                    <!-- LINE Add Friend -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px; text-align: center;">
+                            <p style="margin: 0 0 8px 0; color: #888; font-size: 13px;">LINE公式アカウントでも最新情報をお届け</p>
+                            <a href="https://lin.ee/iW1u6mW" target="_blank" style="color: #06C755; font-size: 14px; font-weight: 600; text-decoration: none;">
+                                ▶ 友だち追加はこちら
+                            </a>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 20px 30px; border-top: 1px solid #333; text-align: center;">
+                            <p style="margin: 0; color: #666; font-size: 12px;">
+                                このメールは DJHAKK から自動送信されています。<br>
+                                <a href="https://djhakk.com" style="color: #667eea;">djhakk.com</a>
+                            </p>
+                            <p style="margin: 10px 0 0 0; color: #555; font-size: 11px;">
+                                <a href="https://djhakk.com/profile.html#notifications" style="color: #888; text-decoration: underline;">
+                                    通知設定を変更する
+                                </a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+    `.trim();
+}
+
 /**
  * 購入通知を送信
  */
@@ -356,7 +585,6 @@ async function sendPurchaseNotification(purchaseData, target) {
         
         const user = userDoc.data();
         const fcmToken = user.fcmToken;
-        if (!fcmToken) return;
         
         const title = target === 'seller' 
             ? '商品が購入されました' 
@@ -365,21 +593,41 @@ async function sendPurchaseNotification(purchaseData, target) {
             ? `「${purchaseData.itemTitle}」が購入されました`
             : `「${purchaseData.itemTitle}」の購入が完了しました`;
         
-        await admin.messaging().send({
-            token: fcmToken,
-            notification: { title, body },
-            data: {
-                purchaseId: purchaseData.id || '',
-                type: 'purchase'
-            },
-            webpush: {
-                fcmOptions: {
-                    link: 'https://djhakk-app.web.app/profile.html'
+        // プッシュ通知
+        if (fcmToken) {
+            await admin.messaging().send({
+                token: fcmToken,
+                notification: { title, body },
+                data: {
+                    purchaseId: purchaseData.id || '',
+                    type: 'purchase'
+                },
+                webpush: {
+                    fcmOptions: {
+                        link: 'https://djhakk-app.web.app/profile.html'
+                    }
                 }
-            }
-        });
+            });
+            console.log(`Purchase notification sent to ${target}: ${userId}`);
+        }
         
-        console.log(`Purchase notification sent to ${target}: ${userId}`);
+        // メール通知
+        if (user.email) {
+            const canSendEmail = await shouldSendEmail(userId, 'purchaseEmail');
+            const rateOk = await checkEmailRateLimit(userId);
+            
+            if (canSendEmail && rateOk) {
+                const emailSubject = `${title} - DJHAKK`;
+                const emailHtml = generateEmailHtml(
+                    title,
+                    body,
+                    'https://djhakk.com/profile.html',
+                    'プロフィールで確認する'
+                );
+                await sendEmailNotification(user.email, emailSubject, body, emailHtml);
+                await updateLastEmailSent(userId);
+            }
+        }
     } catch (error) {
         console.error('Error sending purchase notification:', error);
     }
@@ -449,12 +697,16 @@ exports.confirmReceipt = functions
                     const sellerDoc = await db.collection('users').doc(purchase.sellerId).get();
                     if (sellerDoc.exists) {
                         const seller = sellerDoc.data();
+                        const notifTitle = '売上が確定しました';
+                        const notifBody = `「${purchase.itemTitle}」の売上 ¥${purchase.sellerAmount.toLocaleString()} が残高に追加されました`;
+                        
+                        // プッシュ通知
                         if (seller.fcmToken) {
                             await admin.messaging().send({
                                 token: seller.fcmToken,
                                 notification: {
-                                    title: '売上が確定しました',
-                                    body: `「${purchase.itemTitle}」の売上 ¥${purchase.sellerAmount.toLocaleString()} が残高に追加されました`
+                                    title: notifTitle,
+                                    body: notifBody
                                 },
                                 webpush: {
                                     fcmOptions: {
@@ -462,6 +714,24 @@ exports.confirmReceipt = functions
                                     }
                                 }
                             });
+                        }
+                        
+                        // メール通知
+                        if (seller.email) {
+                            const canSendEmail = await shouldSendEmail(purchase.sellerId, 'purchaseEmail');
+                            const rateOk = await checkEmailRateLimit(purchase.sellerId);
+                            
+                            if (canSendEmail && rateOk) {
+                                const emailSubject = `${notifTitle} - DJHAKK`;
+                                const emailHtml = generateEmailHtml(
+                                    notifTitle,
+                                    notifBody,
+                                    'https://djhakk.com/profile.html',
+                                    'ウォレットを確認する'
+                                );
+                                await sendEmailNotification(seller.email, emailSubject, notifBody, emailHtml);
+                                await updateLastEmailSent(purchase.sellerId);
+                            }
                         }
                     }
                 } catch (notifError) {
@@ -1567,14 +1837,18 @@ exports.approveGuarantee = functions.region('asia-northeast1').https.onRequest((
             // 出演者に通知
             const applicantDoc = await db.collection('users').doc(applicantUid).get();
             if (applicantDoc.exists) {
-                const fcmToken = applicantDoc.data().fcmToken;
-                if (fcmToken) {
+                const applicant = applicantDoc.data();
+                const notifTitle = 'GUARANTEE承認';
+                const notifBody = `「${event.title}」への出演が承認されました！`;
+                
+                // プッシュ通知
+                if (applicant.fcmToken) {
                     try {
                         await admin.messaging().send({
-                            token: fcmToken,
+                            token: applicant.fcmToken,
                             notification: {
-                                title: 'GUARANTEE承認',
-                                body: `「${event.title}」への出演が承認されました！`
+                                title: notifTitle,
+                                body: notifBody
                             },
                             data: {
                                 type: 'guarantee_approved',
@@ -1583,6 +1857,24 @@ exports.approveGuarantee = functions.region('asia-northeast1').https.onRequest((
                         });
                     } catch (e) {
                         console.error('Failed to send notification:', e);
+                    }
+                }
+                
+                // メール通知
+                if (applicant.email) {
+                    const canSendEmail = await shouldSendEmail(applicantUid, 'guaranteeEmail');
+                    const rateOk = await checkEmailRateLimit(applicantUid);
+                    
+                    if (canSendEmail && rateOk) {
+                        const emailSubject = `${notifTitle} - DJHAKK`;
+                        const emailHtml = generateEmailHtml(
+                            notifTitle,
+                            notifBody,
+                            `https://djhakk.com/events.html?id=${eventId}`,
+                            'イベントを確認する'
+                        );
+                        await sendEmailNotification(applicant.email, emailSubject, notifBody, emailHtml);
+                        await updateLastEmailSent(applicantUid);
                     }
                 }
             }
@@ -1679,14 +1971,18 @@ exports.completeGuarantee = functions.region('asia-northeast1').https.onRequest(
             // 出演者に通知
             const applicantDoc = await db.collection('users').doc(applicantUid).get();
             if (applicantDoc.exists) {
-                const fcmToken = applicantDoc.data().fcmToken;
-                if (fcmToken) {
+                const applicant = applicantDoc.data();
+                const notifTitle = '出演完了';
+                const notifBody = `「${event.title}」の出演完了が報告されました。ギャラがウォレットに反映されました！`;
+                
+                // プッシュ通知
+                if (applicant.fcmToken) {
                     try {
                         await admin.messaging().send({
-                            token: fcmToken,
+                            token: applicant.fcmToken,
                             notification: {
-                                title: '出演完了',
-                                body: `「${event.title}」の出演完了が報告されました。ギャラがウォレットに反映されました！`
+                                title: notifTitle,
+                                body: notifBody
                             },
                             data: {
                                 type: 'guarantee_completed',
@@ -1695,6 +1991,24 @@ exports.completeGuarantee = functions.region('asia-northeast1').https.onRequest(
                         });
                     } catch (e) {
                         console.error('Failed to send notification:', e);
+                    }
+                }
+                
+                // メール通知
+                if (applicant.email) {
+                    const canSendEmail = await shouldSendEmail(applicantUid, 'guaranteeEmail');
+                    const rateOk = await checkEmailRateLimit(applicantUid);
+                    
+                    if (canSendEmail && rateOk) {
+                        const emailSubject = `${notifTitle} - DJHAKK`;
+                        const emailHtml = generateEmailHtml(
+                            notifTitle,
+                            notifBody,
+                            'https://djhakk.com/profile.html',
+                            'ウォレットを確認する'
+                        );
+                        await sendEmailNotification(applicant.email, emailSubject, notifBody, emailHtml);
+                        await updateLastEmailSent(applicantUid);
                     }
                 }
             }
@@ -1710,3 +2024,4 @@ exports.completeGuarantee = functions.region('asia-northeast1').https.onRequest(
         }
     });
 });
+// Updated Tue Jan 13 14:57:24 UTC 2026

@@ -7,23 +7,16 @@
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+    
     <style>
-        :root {
-            --primary: #FF6B00; --primary-light: #FF8533; --bg: #0D0D1A; --surface: #1A1A2E;
-            --card: #252538; --text: #FFFFFF; --text2: #A0A0B8; --text3: #6B6B80; --border: #3A3A50;
-            --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
-            --shadow: 0 8px 32px rgba(0,0,0,0.4); --r-md: 12px; --r-lg: 16px; --r-xl: 24px;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Noto Sans JP', 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-        .container { max-width: 600px; margin: 0 auto; padding: 16px; padding-bottom: 100px; }
-        .header { display: flex; align-items: center; gap: 16px; padding: 16px 0; margin-bottom: 16px; }
-        .header-logo { height: 40px; width: 40px; object-fit: contain; cursor: pointer; border-radius: 8px; }
-        .header-title { font-size: 20px; font-weight: 700; flex: 1; }
+        /* Page-specific styles */
         .search-box { position: relative; margin-bottom: 16px; }
         .search-input { width: 100%; padding: 14px 16px 14px 44px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); color: var(--text); font-size: 16px; }
         .search-input:focus { outline: none; border-color: var(--primary); }
@@ -35,84 +28,13 @@
         .filter-btn { padding: 8px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; white-space: nowrap; }
         .filter-btn.active { background: var(--gradient); color: white; border-color: transparent; }
         
-        .region-select { padding: 8px 32px 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%23A0A0B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
-        .region-select:focus { outline: none; border-color: var(--primary); }
-        .region-select.active { background-color: rgba(255,107,0,0.2); border-color: var(--primary); color: var(--primary); }
-        
-        /* カード */
-        .card { background: var(--card); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 16px; }
-        .card-main { display: flex; cursor: pointer; }
-        .card-img { width: 120px; min-width: 120px; height: 140px; object-fit: cover; }
-        .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
-        .card-title { font-size: 15px; font-weight: 700; margin: 4px 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .card-region { font-size: 11px; color: var(--primary); background: rgba(255,107,0,0.15); padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 4px; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .badge.place { background: rgba(0,217,255,0.2); color: #00D9FF; }
-        .badge.agency { background: rgba(157,78,221,0.2); color: #9D4EDD; }
-        .badge.shop { background: rgba(0,200,83,0.2); color: #00C853; }
-        
-        .card-location { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); margin-top: 4px; }
-        .card-url { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--primary); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .card-url a { color: var(--primary); text-decoration: none; }
-        .card-url a:hover { text-decoration: underline; }
-        
-        /* 作成者セクション */
-        .card-creator { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
-        .card-creator-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; overflow: hidden; cursor: pointer; flex-shrink: 0; }
-        .card-creator-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .card-creator-name { font-size: 12px; color: var(--text2); cursor: pointer; }
-        .card-creator-name:hover { color: var(--text); }
-        .card-sns { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-        .card-desc { font-size: 12px; color: var(--text2); line-height: 1.4; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        
-        /* SNS Icons */
-        .sns-icon { width: 24px; height: 24px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; color: var(--text2); transition: all 0.2s; }
-        .sns-icon:hover { background: var(--primary); color: white; }
-        .sns-icon svg { width: 14px; height: 14px; }
-        
-        .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; position: relative; }
-        .nav-item.active { color: var(--primary); }
-        .nav-icon { font-size: 20px; }
-        .nav-unread-badge { position: absolute; top: -4px; right: 50%; transform: translateX(50%); margin-right: -15px; background: #FF4757; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: none; align-items: center; justify-content: center; padding: 0 4px; }
-        .fab { position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); cursor: pointer; z-index: 101; border: none; }
-        @media (min-width: 600px) { .fab { right: calc(50% - 280px); } }
-        
-        /* Interaction Buttons */
-        .interaction-buttons { display: flex; gap: 20px; padding: 12px 0; }
-        .interaction-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--text3); font-size: 14px; cursor: pointer; padding: 4px 0; transition: color 0.2s; }
-        .interaction-btn:hover { color: var(--text2); }
-        .interaction-btn.like-btn.liked { color: #FF4757; }
-        .card-interaction { padding: 0 12px 12px; position: relative; z-index: 10; }
-        
-        /* モーダル */
-        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 200; overflow-y: auto; }
-        .modal.active { display: block; }
-        .modal-content { max-width: 600px; margin: 0 auto; min-height: 100vh; background: var(--bg); }
-        .modal-header { position: sticky; top: 0; background: var(--bg); padding: 16px; display: flex; align-items: center; gap: 16px; z-index: 10; border-bottom: 1px solid var(--border); }
-        .modal-close { background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; }
+        /* Modal */
         .modal-img { width: 100%; aspect-ratio: 1; object-fit: cover; }
-        .modal-body { padding: 20px; }
         .modal-title { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
         .modal-info { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
-        .modal-info-item { display: flex; align-items: flex-start; gap: 8px; color: var(--text2); word-break: break-word; overflow-wrap: break-word; }
+        .modal-info-item { display: flex; align-items: flex-start; gap: 8px; color: var(--text2); word-break: break-word; }
         .modal-info-item a { color: var(--primary); text-decoration: none; word-break: break-all; }
         .modal-info-item a:hover { text-decoration: underline; }
-        
-        .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
-        
-        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 400; transition: opacity 0.3s; }
-        .toast.show { opacity: 1; }
-        
-        /* 無限スクロール用 */
-        .loading-spinner { display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 8px; }
-        .spinner-logo { width: 40px; height: 40px; animation: spinnerRotate 1s linear infinite; }
-        @keyframes spinnerRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .loading-spinner span { color: var(--text3); font-size: 12px; }
-        .load-more-btn { width: 100%; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); color: var(--text); font-weight: 600; cursor: pointer; margin: 16px 0; }
-        .load-more-btn:hover { background: var(--card); }
-        .no-more-data { text-align: center; padding: 30px; }
-        .no-more-data img { width: 48px; height: 48px; opacity: 0.4; }
     </style>
 </head>
 <body>
@@ -120,6 +42,7 @@
         <div class="header">
             <img src="logo.png" class="header-logo" onclick="window.location.href='timeline.html'">
             <span class="header-title">PLACE</span>
+            <div id="headerProfileArea"></div>
         </div>
         <div class="search-box">
             <span class="search-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></span>
@@ -174,7 +97,7 @@
         
         <div id="placesList"></div>
         
-        <!-- 無限スクロール用UI -->
+        <!-- Pagination UI -->
         <div id="loadingSpinner" class="loading-spinner" style="display:none;">
             <img src="logo.png" class="spinner-logo">
             <span>Loading...</span>
@@ -183,7 +106,7 @@
         <div id="noMoreData" class="no-more-data" style="display:none;"><img src="logo.png"></div>
     </div>
     
-    <!-- Place詳細モーダル -->
+    <!-- Place Detail Modal -->
     <div class="modal" id="placeModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -200,7 +123,7 @@
                 </div>
                 <div id="modalCreator" style="background: var(--card); border-radius: 12px; padding: 16px; margin-top: 20px;"></div>
                 <div id="modalSns" style="margin-top: 16px;"></div>
-                <p id="modalDesc" style="color: var(--text2); margin-top: 20px; white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word;"></p>
+                <p id="modalDesc" style="color: var(--text2); margin-top: 20px; white-space: pre-wrap; word-break: break-word;"></p>
             </div>
         </div>
     </div>
@@ -208,214 +131,26 @@
     <!-- Floating Action Button -->
     <button class="fab" onclick="handleCreateClick()">+</button>
     
+    <!-- Footer Navigation -->
     <nav class="nav">
         <div class="nav-item" onclick="window.location.href='index.html?tab=home'"><span>Home</span></div>
         <div class="nav-item" onclick="window.location.href='events.html'"><span>Event</span></div>
         <div class="nav-item" onclick="window.location.href='timeline.html'"><span>TimeLine</span></div>
         <div class="nav-item" onclick="window.location.href='productions.html'"><span>Production</span></div>
         <div class="nav-item active"><span>Place</span></div>
-        <div class="nav-item" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
     </nav>
     <div class="toast" id="toast"></div>
     
-    <!-- Common JS (順序重要: 依存関係順に読み込み) -->
-    <script src="js/config.js"></script>
-    <script src="js/firebase-init.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/data.js"></script>
-    <script src="js/interactions.js"></script>
-    <script>
-        let allPlaces = [];
-        let currentFilter = 'all';
-        let currentRegion = 'all';
-        let currentPlaceId = null;
-        
-        function handleCreateClick() {
-            if (!requireLogin()) return;
-            window.location.href = 'create.html';
-        }
-        
-        function handleProfileClick() {
-            if (!requireLogin()) return;
-            window.location.href = 'profile.html';
-        }
-        
-        async function loadPlacesData() {
-            const places = await loadPlacesInitial();
-            allPlaces = places;
-            await loadLikedStatusByType(places, 'place');
-            renderPlaces();
-            updatePaginationUI('places');
-            setupScrollObserver();
-        }
-        
-        async function loadMorePlacesData() {
-            showLoadingSpinner(true);
-            
-            const morePlaces = await loadPlacesMore();
-            if (morePlaces.length > 0) {
-                await loadLikedStatusByType(morePlaces, 'place');
-                allPlaces = [...allPlaces, ...morePlaces];
-                renderPlaces();
-                setupScrollObserver();
-            }
-            
-            showLoadingSpinner(false);
-            updatePaginationUI('places');
-        }
-        
-        function showLoadingSpinner(show) {
-            document.getElementById('loadingSpinner').style.display = show ? 'flex' : 'none';
-            document.getElementById('loadMoreBtn').style.display = show ? 'none' : (paginationState.places?.hasMore ? 'block' : 'none');
-        }
-        
-        function updatePaginationUI(type) {
-            const state = getPaginationState(type);
-            document.getElementById('loadMoreBtn').style.display = state.hasMore ? 'block' : 'none';
-            document.getElementById('noMoreData').style.display = (!state.hasMore && allPlaces.length > 0) ? 'block' : 'none';
-        }
-        
-        let scrollObserver;
-        function setupScrollObserver() {
-            if (scrollObserver) scrollObserver.disconnect();
-            
-            const cards = document.querySelectorAll('#placesList .card');
-            const triggerIndex = cards.length - PAGINATION.triggerOffset;
-            
-            if (triggerIndex > 0 && cards[triggerIndex] && paginationState.places?.hasMore) {
-                scrollObserver = new IntersectionObserver((entries) => {
-                    if (entries[0].isIntersecting && !paginationState.places?.loading) {
-                        loadMorePlacesData();
-                    }
-                }, { threshold: 0.1 });
-                scrollObserver.observe(cards[triggerIndex]);
-            }
-        }
-        
-        function setTypeFilter(filter) {
-            currentFilter = filter;
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.filter === filter);
-            });
-            renderPlaces();
-        }
-        
-        function setRegionFilter() {
-            const select = document.getElementById('regionFilter');
-            currentRegion = select.value;
-            select.classList.toggle('active', currentRegion !== 'all');
-            renderPlaces();
-        }
-        
-        function filterPlaces() {
-            renderPlaces();
-        }
-        
-        function renderPlaces() {
-            const container = document.getElementById('placesList');
-            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-            
-            let filtered = allPlaces.filter(place => {
-                if (currentFilter !== 'all' && place.type !== currentFilter) return false;
-                if (currentRegion !== 'all' && place.region !== currentRegion) return false;
-                if (searchQuery) {
-                    const searchText = `${place.name || ''} ${place.location || ''} ${place.description || ''}`.toLowerCase();
-                    if (!searchText.includes(searchQuery)) return false;
-                }
-                return true;
-            });
-            
-            if (filtered.length === 0) {
-                container.innerHTML = `<div class="empty-state">${LABELS.noPlaces}</div>`;
-                return;
-            }
-            
-            let html = '';
-            filtered.forEach(place => {
-                const liked = isItemLiked('place', place.id);
-                html += renderPlaceCard(place, liked);
-            });
-            container.innerHTML = html;
-        }
-        
-        function openPlaceModal(placeId) {
-            const place = allPlaces.find(p => p.id === placeId);
-            if (!place) return;
-            
-            currentPlaceId = placeId;
-            
-            document.getElementById('modalImg').src = place.imageUrl || 'logo.png';
-            document.getElementById('modalImg').onerror = function() { this.src = 'logo.png'; };
-            
-            const badge = document.getElementById('modalBadge');
-            badge.className = `badge ${place.type || 'place'}`;
-            badge.textContent = LABELS.placeTypes[place.type] || 'PLACE';
-            
-            document.getElementById('modalTitle').textContent = place.name || 'Untitled';
-            document.getElementById('modalLocation').innerHTML = `📍 ${place.location || 'N/A'}`;
-            document.getElementById('modalRegion').innerHTML = `🌏 ${place.region || 'N/A'}`;
-            
-            const urlEl = document.getElementById('modalUrl');
-            if (place.url) {
-                urlEl.innerHTML = `🔗 <a href="${place.url}" target="_blank">${place.url}</a>`;
-                urlEl.style.display = 'flex';
-            } else {
-                urlEl.style.display = 'none';
-            }
-            
-            // 作成者情報
-            const initial = (place.userName || '?')[0].toUpperCase();
-            document.getElementById('modalCreator').innerHTML = `
-                <div style="font-size: 12px; color: var(--text3); margin-bottom: 12px;">CREATED BY</div>
-                <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="window.location.href='profile.html?uid=${place.userId}'">
-                    <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; overflow: hidden;">
-                        ${place.userPhoto ? `<img src="${place.userPhoto}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
-                    </div>
-                    <div style="font-weight: 600;">${place.userName || 'User'}</div>
-                </div>
-            `;
-            
-            // SNSアイコン
-            const snsHtml = renderSnsIcons(place.snsLinks, 32);
-            const modalSnsEl = document.getElementById('modalSns');
-            if (snsHtml) {
-                modalSnsEl.innerHTML = `<div style="font-size: 12px; color: var(--text3); margin-bottom: 8px;">SNS</div><div style="display:flex;gap:12px;flex-wrap:wrap;">${snsHtml}</div>`;
-                modalSnsEl.style.display = 'block';
-            } else {
-                modalSnsEl.style.display = 'none';
-            }
-            
-            document.getElementById('modalDesc').innerHTML = linkifyText(place.description || '');
-            
-            document.getElementById('placeModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        
-        function closePlaceModal() {
-            document.getElementById('placeModal').classList.remove('active');
-            document.body.style.overflow = '';
-            currentPlaceId = null;
-        }
-        
-        function checkUrlParam() {
-            const id = new URLSearchParams(location.search).get('id');
-            if (id) openPlaceModal(id);
-        }
-        
-        function onAuthReady() {
-            const params = new URLSearchParams(location.search);
-            const hasDeepLink = params.get('id');
-            
-            // ディープリンクなしで未ログインはウェルカム画面へリダイレクト
-            if (!user && !hasDeepLink) {
-                window.location.href = 'index.html';
-                return;
-            }
-            loadPlacesData().then(() => {
-                checkUrlParam();
-            });
-        }
-    </script>
+    <!-- Common JS -->
+    <script defer src="js/config.js"></script>
+    <script defer src="js/firebase-init.js"></script>
+    <script defer src="js/ui.js"></script>
+    <script defer src="js/auth.js"></script>
+    <script defer src="js/data.js"></script>
+    <script defer src="js/interactions.js"></script>
+    
+    <!-- Page-specific JS -->
+    <script defer src="js/pages/place.js"></script>
+    <script defer src="js/lazy-load.js"></script>
 </body>
 </html>

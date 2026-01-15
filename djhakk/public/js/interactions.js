@@ -463,6 +463,7 @@ function startUnreadListener() {
 }
 
 function updateUnreadBadge() {
+    // フッターのバッジ（レガシー対応）
     const badges = document.querySelectorAll('.nav-unread-badge');
     badges.forEach(badge => {
         if (unreadCount > 0) {
@@ -472,4 +473,14 @@ function updateUnreadBadge() {
             badge.style.display = 'none';
         }
     });
+    
+    // ヘッダーのプロフィールアイコンバッジ
+    const headerBadge = document.querySelector('.header-unread-badge');
+    if (headerBadge) {
+        if (unreadCount > 0) {
+            headerBadge.classList.add('active');
+        } else {
+            headerBadge.classList.remove('active');
+        }
+    }
 }

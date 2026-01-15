@@ -8,200 +8,29 @@
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+    
     <style>
-        :root {
-            --primary: #FF6B00;
-            --primary-light: #FF8533;
-            --bg: #0D0D1A;
-            --surface: #1A1A2E;
-            --card: #252538;
-            --text: #FFFFFF;
-            --text2: #A0A0B8;
-            --text3: #6B6B80;
-            --border: #3A3A50;
-            --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
-            --shadow: 0 8px 32px rgba(0,0,0,0.4);
-            --r-md: 12px;
-            --r-lg: 16px;
-            --r-xl: 24px;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Noto Sans JP', 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-        
-        /* ========== スプラッシュスクリーン ========== */
-        .splash-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            overflow: hidden;
-        }
-        .splash-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s ease;
-        }
-        .splash-content {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .splash-logo {
-            width: 120px;
-            height: 120px;
-            animation: logoSpin 1.5s ease-out forwards, logoPulse 0.8s ease-in-out 0.5s;
-            filter: drop-shadow(0 0 30px rgba(255, 107, 0, 0.5));
-        }
-        .splash-ring {
-            position: absolute;
-            width: 200px;
-            height: 200px;
-            border: 3px solid transparent;
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: ringExpand 1.5s ease-out forwards;
-        }
-        .splash-ring:nth-child(2) {
-            width: 260px;
-            height: 260px;
-            animation-delay: 0.2s;
-            border-top-color: var(--primary-light);
-        }
-        .splash-ring:nth-child(3) {
-            width: 320px;
-            height: 320px;
-            animation-delay: 0.4s;
-            border-top-color: rgba(255, 107, 0, 0.3);
-        }
+        /* Page-specific: Splash Particles */
         .splash-particles {
             position: absolute;
             width: 100%;
             height: 100%;
         }
-        .splash-particle {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            background: var(--primary);
-            border-radius: 50%;
-            opacity: 0;
-            animation: particleBurst 1.5s ease-out forwards;
-        }
-        @keyframes logoSpin {
-            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
-            50% { transform: scale(1.2) rotate(0deg); opacity: 1; }
-            100% { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
-        @keyframes logoPulse {
-            0%, 100% { filter: drop-shadow(0 0 30px rgba(255, 107, 0, 0.5)); }
-            50% { filter: drop-shadow(0 0 60px rgba(255, 107, 0, 0.8)); }
-        }
-        @keyframes ringExpand {
-            0% { transform: scale(0.5) rotate(0deg); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: scale(1.5) rotate(360deg); opacity: 0; }
-        }
         @keyframes particleBurst {
             0% { transform: translate(0, 0) scale(0); opacity: 1; }
             100% { transform: translate(var(--tx), var(--ty)) scale(1); opacity: 0; }
         }
-        
-        .container { max-width: 600px; margin: 0 auto; min-height: 100vh; }
-        .screen { display: none; flex-direction: column; flex: 1; padding: 16px; padding-bottom: 80px; }
-        .screen.active { display: flex; }
-        .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; margin-bottom: 24px; }
-        .header-logo { height: 40px; width: 40px; object-fit: contain; cursor: pointer; border-radius: 8px; }
-        .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; position: relative; }
-        .nav-item.active, .nav-item:hover { color: var(--primary); }
-        .nav-icon { font-size: 20px; display: none; }
-        .nav-unread-badge { position: absolute; top: -4px; right: 50%; transform: translateX(50%); margin-right: -15px; background: #FF4757; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: none; align-items: center; justify-content: center; padding: 0 4px; }
-        .fab { position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); cursor: pointer; z-index: 101; border: none; }
-        @media (min-width: 600px) { .fab { right: calc(50% - 280px); } }
-        /* Interaction Buttons */
-        .interaction-buttons { display: flex; gap: 20px; padding: 12px 0; }
-        .interaction-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--text3); font-size: 14px; cursor: pointer; padding: 4px 0; transition: color 0.2s; }
-        .interaction-btn:hover { color: var(--text2); }
-        .interaction-btn.like-btn.liked { color: #FF4757; }
-        .card-interaction { padding: 0 12px 12px; position: relative; z-index: 10; }
-        .btn { padding: 12px 24px; border-radius: var(--r-lg); font-weight: 600; cursor: pointer; border: none; font-size: 14px; }
-        .btn-p { background: var(--gradient); color: white; }
-        .btn-s { background: var(--card); color: var(--text); }
-        .btn-lg { width: 100%; padding: 16px; font-size: 16px; }
-        .btn-google { background: white; color: #333; display: flex; align-items: center; justify-content: center; gap: 12px; }
-        .btn-guest { background: transparent; border: 1px solid var(--border); color: var(--text2); }
-        .input { width: 100%; padding: 14px 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text); font-size: 16px; }
-        .input:focus { outline: none; border-color: var(--primary); }
-        .input-group { margin-bottom: 16px; }
-        .label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text2); font-size: 14px; }
-        
-        /* アーティストカード */
-        .artist-card { background: var(--card); border-radius: var(--r-xl); padding: 16px; margin-bottom: 16px; cursor: pointer; }
-        .artist-card-header { display: flex; gap: 12px; margin-bottom: 12px; }
-        .artist-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 600; overflow: hidden; flex-shrink: 0; }
-        .artist-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .artist-info { flex: 1; min-width: 0; }
-        .artist-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-        .artist-region { font-size: 12px; color: var(--primary); }
-        .artist-bio { font-size: 13px; color: var(--text2); margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
-        .artist-footer { display: flex; justify-content: space-between; align-items: center; }
-        .artist-dm-btn { padding: 8px 16px; background: var(--gradient); color: white; border: none; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-        
-        .welcome-screen { align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
-        .welcome-logo { width: 120px; height: 120px; margin-bottom: 24px; }
-        .welcome-title { display: none; }
-        .welcome-subtitle { display: none; }
-        .welcome-buttons { width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 12px; }
-        .welcome-form { width: 100%; max-width: 300px; margin-top: 0; }
-        .welcome-form .input-group { margin-bottom: 12px; text-align: left; }
-        .welcome-divider { text-align: center; color: var(--text3); margin: 12px 0; font-size: 13px; }
-        .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-        .tab { flex: 1; padding: 12px; background: var(--card); border: 2px solid transparent; color: var(--text2); border-radius: var(--r-md); cursor: pointer; font-weight: 600; text-align: center; font-size: 13px; }
-        .tab.active { background: var(--gradient); color: white; }
-        .section-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--text2); }
-        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 300; }
-        .toast.show { opacity: 1; }
-        .toast.error { background: #FF4757; }
-        .link { color: var(--primary); cursor: pointer; text-decoration: underline; }
-        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
-        .modal.active { display: flex; }
-        .modal-content { background: var(--surface); border-radius: var(--r-xl); width: 100%; max-width: 400px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
-        .modal-close { background: none; border: none; color: var(--text2); font-size: 24px; cursor: pointer; }
-        .modal-body { padding: 20px; }
-        
-        .region-filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-        .region-filter-label { font-size: 12px; color: var(--text3); }
-        .region-select { flex: 1; padding: 8px 32px 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%23A0A0B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
-        .region-select:focus { outline: none; border-color: var(--primary); }
-        .region-select.active { background-color: rgba(255,107,0,0.2); border-color: var(--primary); color: var(--primary); }
-        
-        .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
-        
-        /* 無限スクロール用 */
-        .loading-spinner { display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 8px; }
-        .spinner-logo { width: 40px; height: 40px; animation: spinnerRotate 1s linear infinite; }
-        @keyframes spinnerRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .loading-spinner span { color: var(--text3); font-size: 12px; }
-        .load-more-btn { width: 100%; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); color: var(--text); font-weight: 600; cursor: pointer; margin: 16px 0; }
-        .load-more-btn:hover { background: var(--card); }
-        .no-more-data { text-align: center; padding: 30px; }
-        .no-more-data img { width: 48px; height: 48px; opacity: 0.4; }
     </style>
 </head>
 <body>
-    <!-- スプラッシュスクリーン -->
+    <!-- Splash Screen -->
     <div class="splash-screen" id="splashScreen">
         <div class="splash-content">
             <div class="splash-ring"></div>
@@ -213,7 +42,7 @@
     </div>
 
     <div class="container">
-        <!-- ウェルカム画面 -->
+        <!-- Welcome Screen -->
         <div class="screen welcome-screen active" id="welcomeScreen">
             <img src="logo.png" class="welcome-logo" id="welcomeLogo">
             <div class="welcome-buttons">
@@ -232,7 +61,7 @@
             </div>
         </div>
         
-        <!-- ログイン画面 -->
+        <!-- Login Screen -->
         <div class="screen" id="loginScreen">
             <div class="header"><img src="logo.png" class="header-logo" onclick="showScreen('welcomeScreen')"><h1 style="flex:1;font-size:20px;">Log in</h1></div>
             <button class="btn btn-google btn-lg" onclick="handleGoogleLogin()" style="margin-bottom:16px;">
@@ -246,13 +75,15 @@
             <p style="text-align:center;margin-top:20px;color:var(--text2)"><span class="link" onclick="showScreen('welcomeScreen')">New</span></p>
         </div>
         
-        <!-- メイン画面 -->
+        <!-- Main Screen (Home) -->
         <div class="screen" id="mainScreen">
             <div class="header">
                 <img src="logo.png" class="header-logo" onclick="location.reload()">
+                <span class="header-title" style="flex:1;"></span>
+                <div id="headerProfileArea"></div>
             </div>
             
-            <!-- タブ（アーティスト/イベント/プロダクション/プレイス） -->
+            <!-- Tabs -->
             <div class="tabs">
                 <div class="tab active" onclick="switchMainTab('artist')">ARTIST</div>
                 <div class="tab" onclick="switchMainTab('event')">EVENT</div>
@@ -260,16 +91,16 @@
                 <div class="tab" onclick="switchMainTab('place')">PLACE</div>
             </div>
             
-            <!-- 地域フィルター -->
+            <!-- Region Filter -->
             <div class="region-filter-row">
                 <span class="region-filter-label">AREA</span>
                 <select class="region-select" id="regionFilter" onchange="handleRegionFilter()"></select>
             </div>
             
-            <!-- アーティスト一覧 -->
+            <!-- Artist List -->
             <div id="artistList"></div>
             
-            <!-- 無限スクロール用UI -->
+            <!-- Pagination UI -->
             <div id="loadingSpinner" class="loading-spinner" style="display:none;">
                 <img src="logo.png" class="spinner-logo">
                 <span>Loading...</span>
@@ -282,17 +113,17 @@
     <!-- Floating Action Button -->
     <button class="fab" onclick="handleCreateClick()">+</button>
     
+    <!-- Footer Navigation -->
     <nav class="nav">
         <div class="nav-item active" onclick="location.href='index.html?tab=home'"><span>Home</span></div>
         <div class="nav-item" onclick="location.href='events.html'"><span>Event</span></div>
         <div class="nav-item" onclick="location.href='timeline.html'"><span>TimeLine</span></div>
         <div class="nav-item" onclick="location.href='productions.html'"><span>Production</span></div>
         <div class="nav-item" onclick="location.href='place.html'"><span>Place</span></div>
-        <div class="nav-item" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
     </nav>
     <div class="toast" id="toast"></div>
     
-    <!-- Common JS (順序重要: 依存関係順に読み込み) -->
+    <!-- Common JS -->
     <script src="js/config.js"></script>
     <script src="js/firebase-init.js"></script>
     <script src="js/ui.js"></script>
@@ -300,285 +131,11 @@
     <script src="js/data.js"></script>
     <script src="js/interactions.js"></script>
     <script src="js/audio-player.js"></script>
-    <script>
-        let allArtists = [];
-        let currentRegion = 'all';
-        let isRedirecting = false;
-        
-        // スプラッシュスクリーンのパーティクル生成
-        function createSplashParticles() {
-            const container = document.getElementById('splashParticles');
-            for (let i = 0; i < 20; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'splash-particle';
-                const angle = (i / 20) * Math.PI * 2;
-                const distance = 100 + Math.random() * 100;
-                particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
-                particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
-                particle.style.left = '50%';
-                particle.style.top = '50%';
-                particle.style.animationDelay = `${0.5 + Math.random() * 0.5}s`;
-                container.appendChild(particle);
-            }
-        }
-        
-        // スプラッシュスクリーンを非表示
-        function hideSplash() {
-            const splash = document.getElementById('splashScreen');
-            splash.classList.add('hidden');
-            setTimeout(() => {
-                splash.style.display = 'none';
-            }, 500);
-        }
-        
-        // ページ読み込み時にスプラッシュを表示
-        document.addEventListener('DOMContentLoaded', () => {
-            createSplashParticles();
-            setTimeout(hideSplash, 2000);
-        });
-        
-        // アプリ内ブラウザ検出
-        function isInAppBrowser() {
-            const ua = navigator.userAgent || navigator.vendor || window.opera;
-            // Threads(Barcelona), TikTok(BytedanceWebview), LINE等のアプリ内ブラウザを検出
-            // 注意: X(Twitter)は通常のSafariと同じUser-Agentのため検出不可
-            // Instagram/FacebookはGoogle認証可能なため除外
-            return /Barcelona|BytedanceWebview|Line\/|Snapchat|Pinterest|LinkedIn/i.test(ua);
-        }
-        
-        // ウェルカム画面のGoogleボタン表示制御
-        function updateWelcomeGoogleButton() {
-            const btn = document.getElementById('welcomeGoogleBtn');
-            const divider = document.querySelector('.welcome-divider');
-            if (btn && isInAppBrowser()) {
-                btn.style.display = 'none';
-                if (divider) divider.style.display = 'none';
-            }
-        }
-        
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            
-            // ウェルカム、ログイン画面ではフッターとFABを非表示
-            const hideNav = (id === 'welcomeScreen' || id === 'loginScreen');
-            document.querySelector('.nav').style.display = hideNav ? 'none' : 'flex';
-            document.querySelector('.fab').style.display = hideNav ? 'none' : 'flex';
-            
-            // ウェルカム画面表示時にGoogleボタン制御
-            if (id === 'welcomeScreen') {
-                updateWelcomeGoogleButton();
-            }
-        }
-        
-        async function handleLogin() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            if (!email || !password) { toast('Please enter', 'error'); return; }
-            if (await login(email, password)) {
-                isRedirecting = true;
-                window.location.href = 'timeline.html';
-            }
-        }
-        
-        async function handleWelcomeSignup() {
-            const name = document.getElementById('welcomeName').value;
-            const email = document.getElementById('welcomeEmail').value;
-            const password = document.getElementById('welcomePassword').value;
-            if (!name || !email || !password) { toast('Please enter', 'error'); return; }
-            if (password.length < 6) { toast('Password must be 6+ characters', 'error'); return; }
-            if (await signup(email, password, name)) {
-                isRedirecting = true;
-                window.location.href = 'timeline.html';
-            }
-        }
-        
-        // 旧handleSignupとの互換性のため残す
-        async function handleSignup() {
-            return handleWelcomeSignup();
-        }
-        
-        async function handleGoogleLogin() {
-            if (await loginWithGoogle()) {
-                isRedirecting = true;
-                window.location.href = 'timeline.html';
-            }
-        }
-        
-        function switchMainTab(tab) {
-            if (tab === 'event') {
-                window.location.href = 'events.html';
-                return;
-            }
-            if (tab === 'production') {
-                window.location.href = 'productions.html';
-                return;
-            }
-            if (tab === 'place') {
-                window.location.href = 'place.html';
-                return;
-            }
-            // ARTISTタブはそのまま表示
-            renderArtists();
-        }
-        
-        function handleRegionFilter() {
-            const select = document.getElementById('regionFilter');
-            currentRegion = select.value;
-            select.classList.toggle('active', currentRegion !== 'all');
-            renderArtists();
-        }
-        
-        async function loadHomeData() {
-            // 地域フィルターを初期化
-            document.getElementById('regionFilter').innerHTML = generateRegionOptions(true);
-            
-            // アーティスト初期読み込み（30件）
-            const artists = await loadUsersInitial();
-            allArtists = artists;
-            
-            // いいね状態を取得
-            await loadLikedStatusByType(artists, 'user');
-            
-            renderArtists();
-            updatePaginationUI('users');
-            setupScrollObserver();
-        }
-        
-        async function loadMoreArtists() {
-            showLoadingSpinner(true);
-            
-            const moreArtists = await loadUsersMore();
-            if (moreArtists.length > 0) {
-                // いいね状態を取得
-                await loadLikedStatusByType(moreArtists, 'user');
-                
-                allArtists = [...allArtists, ...moreArtists];
-                renderArtists();
-                setupScrollObserver();
-            }
-            
-            showLoadingSpinner(false);
-            updatePaginationUI('users');
-        }
-        
-        function showLoadingSpinner(show) {
-            document.getElementById('loadingSpinner').style.display = show ? 'flex' : 'none';
-            document.getElementById('loadMoreBtn').style.display = show ? 'none' : (paginationState.users?.hasMore ? 'block' : 'none');
-        }
-        
-        function updatePaginationUI(type) {
-            const state = getPaginationState(type);
-            document.getElementById('loadMoreBtn').style.display = state.hasMore ? 'block' : 'none';
-            document.getElementById('noMoreData').style.display = (!state.hasMore && allArtists.length > 0) ? 'block' : 'none';
-        }
-        
-        let scrollObserver;
-        function setupScrollObserver() {
-            if (scrollObserver) scrollObserver.disconnect();
-            
-            const cards = document.querySelectorAll('#artistList .artist-card');
-            const triggerIndex = cards.length - PAGINATION.triggerOffset;
-            
-            if (triggerIndex > 0 && cards[triggerIndex] && paginationState.users?.hasMore) {
-                scrollObserver = new IntersectionObserver((entries) => {
-                    if (entries[0].isIntersecting && !paginationState.users?.loading) {
-                        loadMoreArtists();
-                    }
-                }, { threshold: 0.1 });
-                scrollObserver.observe(cards[triggerIndex]);
-            }
-        }
-        
-        function renderArtists() {
-            const container = document.getElementById('artistList');
-            
-            let filtered = allArtists.filter(a => {
-                if (currentRegion !== 'all' && a.region !== currentRegion) return false;
-                return true;
-            });
-            
-            if (filtered.length === 0) {
-                container.innerHTML = '<div class="empty-state">No artists</div>';
-                return;
-            }
-            
-            let html = '';
-            filtered.forEach(artist => {
-                const initial = (artist.name || '?')[0].toUpperCase();
-                const bio = artist.bio || '';
-                const bioPreview = bio.length > 60 ? bio.substring(0, 60) + '...' : bio;
-                const isMe = user && artist.id === user.uid;
-                const liked = isItemLiked('user', artist.id);
-                
-                // 波形プレイヤー（関数が存在する場合のみ）
-                const audioPlayer = (artist.audioUrl && typeof renderWaveformPlayer === 'function') ? 
-                    renderWaveformPlayer(artist.audioUrl, artist.audioTitle, artist.audioDuration, `home_${artist.id}`) : '';
-                
-                html += `
-                    <div class="artist-card" onclick="window.location.href='profile.html?uid=${artist.id}'">
-                        <div class="artist-card-header">
-                            <div class="artist-avatar">
-                                ${artist.photoURL ? `<img src="${artist.photoURL}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
-                            </div>
-                            <div class="artist-info">
-                                <div class="artist-name">${artist.name}${isMe ? ' <span style="font-size:11px;color:var(--text3);">(You)</span>' : ''}</div>
-                                ${artist.region ? `<div class="artist-region">${artist.region}</div>` : ''}
-                            </div>
-                        </div>
-                        ${bioPreview ? `<div class="artist-bio">${bioPreview}</div>` : ''}
-                        ${audioPlayer}
-                        <div class="artist-footer">
-                            ${renderSnsIcons(artist.snsLinks, 28)}
-                            ${!isMe ? `<button class="artist-dm-btn" onclick="event.stopPropagation(); openDM('${artist.id}', '${artist.name}')">DM</button>` : '<div></div>'}
-                        </div>
-                        <div class="card-interaction">
-                            ${renderInteractionButtons('user', artist.id, artist.likesCount || 0, artist.commentsCount || 0, liked)}
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-        
-        function onAuthReady() {
-            const params = new URLSearchParams(location.search);
-            
-            if (isRedirecting) return;
-            
-            // ログイン画面への明示的アクセス
-            if (params.get('login')) {
-                showScreen('loginScreen');
-                return;
-            }
-            // signupパラメータはウェルカム画面へ
-            if (params.get('signup')) {
-                showScreen('welcomeScreen');
-                return;
-            }
-            
-            if (user) {
-                if (params.get('tab') === 'home') {
-                    // フッターから来た → mainScreen表示
-                    showScreen('mainScreen');
-                    loadHomeData();
-                } else {
-                    // それ以外（アプリ起動等）→ timelineへリダイレクト
-                    window.location.href = 'timeline.html';
-                }
-            } else {
-                // 未ログイン
-                if (params.get('tab') === 'home') {
-                    // フッターから来た（ディープリンク経由）→ mainScreen表示
-                    showScreen('mainScreen');
-                    loadHomeData();
-                } else {
-                    // 通常アクセス → ウェルカム画面表示
-                    showScreen('welcomeScreen');
-                }
-            }
-            setupLogo();
-        }
-    </script>
+    
+    <!-- Page-specific JS -->
+    <script src="js/pages/index.js"></script>
+    
+    <!-- Lazy Loading -->
+    <script src="js/lazy-load.js"></script>
 </body>
 </html>

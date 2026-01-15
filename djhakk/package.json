@@ -1,0 +1,22 @@
+{
+  "name": "djhakk",
+  "version": "2.0.0",
+  "description": "DJ/Artist and Event Organizer Matching Platform",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint public/js/**/*.js",
+    "optimize-images": "node scripts/optimize-images.js"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "terser": "^5.24.0",
+    "eslint": "^8.55.0",
+    "sharp": "^0.33.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

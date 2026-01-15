@@ -7,23 +7,17 @@
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    
     <style>
-        :root {
-            --primary: #FF6B00; --primary-light: #FF8533; --bg: #0D0D1A; --surface: #1A1A2E;
-            --card: #252538; --text: #FFFFFF; --text2: #A0A0B8; --text3: #6B6B80; --border: #3A3A50;
-            --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
-            --shadow: 0 8px 32px rgba(0,0,0,0.4); --r-md: 12px; --r-lg: 16px; --r-xl: 24px;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Noto Sans JP', 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-        .container { max-width: 600px; margin: 0 auto; padding: 16px; padding-bottom: 100px; }
-        .header { display: flex; align-items: center; gap: 16px; padding: 16px 0; margin-bottom: 16px; }
-        .header-logo { height: 40px; width: 40px; object-fit: contain; cursor: pointer; border-radius: 8px; }
-        .header-title { font-size: 20px; font-weight: 700; flex: 1; }
+        /* Page-specific styles */
         .search-box { position: relative; margin-bottom: 16px; }
         .search-input { width: 100%; padding: 14px 16px 14px 44px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); color: var(--text); font-size: 16px; }
         .search-input:focus { outline: none; border-color: var(--primary); }
@@ -35,72 +29,21 @@
         .filter-btn { padding: 8px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; white-space: nowrap; }
         .filter-btn.active { background: var(--gradient); color: white; border-color: transparent; }
         
-        .region-select { padding: 8px 32px 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%23A0A0B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
-        .region-select:focus { outline: none; border-color: var(--primary); }
-        .region-select.active { background-color: rgba(255,107,0,0.2); border-color: var(--primary); color: var(--primary); }
+        /* Date Separator */
+        .date-separator { display: flex; align-items: center; gap: 16px; margin: 28px 0 16px; }
+        .date-separator:first-child { margin-top: 0; }
+        .date-separator::before, .date-separator::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+        .date-separator-inner { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--surface); border-radius: 20px; border: 1px solid var(--border); }
+        .date-separator-date { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; color: var(--primary); letter-spacing: 1px; }
+        .date-separator-day { font-size: 12px; color: var(--text2); font-weight: 500; }
         
-        /* カード（高さ可変） */
-        .card { background: var(--card); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 16px; }
-        .card-main { display: flex; cursor: pointer; }
-        .card-img { width: 120px; min-width: 120px; height: 140px; object-fit: cover; }
-        .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
-        .card-title { font-size: 15px; font-weight: 700; margin: 4px 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .card-region { font-size: 11px; color: var(--primary); background: rgba(255,107,0,0.15); padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 4px; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .badge.a { background: rgba(255,107,0,0.2); color: #FF6B00; }
-        .badge.b { background: rgba(0,217,255,0.2); color: #00D9FF; }
-        .badge.c { background: rgba(157,78,221,0.2); color: #9D4EDD; }
-        
-        .card-organizer { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
-        .card-organizer-name { font-size: 12px; color: var(--text2); }
-        .card-desc { font-size: 12px; color: var(--text2); line-height: 1.4; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        
-        /* カード内スロット */
-        .card-slots { padding: 12px; border-top: 1px solid var(--border); }
-        .card-slot { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-        .card-slot:last-child { margin-bottom: 0; }
-        .card-slot-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 200px; }
-        .card-slot-time { font-size: 12px; color: var(--text2); }
-        .card-slot-price { font-size: 12px; font-weight: 600; color: var(--primary); }
-        .card-slot-price.free { color: #00D9FF; }
-        .card-slot-count { font-size: 11px; color: var(--text3); }
-        .card-slot-count.full { color: #FF4757; }
-        .card-slot-avatars { display: flex; gap: -8px; align-items: center; flex-wrap: wrap; }
-        .card-slot-avatars > * { margin-left: -6px; }
-        .card-slot-avatars > *:first-child { margin-left: 0; }
-        .card-slot-buy { padding: 6px 12px; background: var(--gradient); color: white; border: none; border-radius: 14px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-        .card-slot-buy.free { background: #00D9FF; color: #0D0D1A; }
-        .card-slot-buy.full { background: var(--border); color: var(--text3); cursor: not-allowed; }
-        
-        .avatar-empty { width: 24px; height: 24px; border-radius: 50%; background: var(--border); border: 2px solid var(--card); }
-        
-        .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; position: relative; }
-        .nav-item.active { color: var(--primary); }
-        .nav-icon { font-size: 20px; }
-        .nav-unread-badge { position: absolute; top: -4px; right: 50%; transform: translateX(50%); margin-right: -15px; background: #FF4757; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: none; align-items: center; justify-content: center; padding: 0 4px; }
-        .fab { position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); cursor: pointer; z-index: 101; border: none; }
-        @media (min-width: 600px) { .fab { right: calc(50% - 280px); } }
-        /* Interaction Buttons */
-        .interaction-buttons { display: flex; gap: 20px; padding: 12px 0; }
-        .interaction-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--text3); font-size: 14px; cursor: pointer; padding: 4px 0; transition: color 0.2s; }
-        .interaction-btn:hover { color: var(--text2); }
-        .interaction-btn.like-btn.liked { color: #FF4757; }
-        .card-interaction { padding: 0 12px 12px; position: relative; z-index: 10; }
-        
-        /* モーダル */
-        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 200; overflow-y: auto; }
-        .modal.active { display: block; }
-        .modal-content { max-width: 600px; margin: 0 auto; min-height: 100vh; background: var(--bg); }
-        .modal-header { position: sticky; top: 0; background: var(--bg); padding: 16px; display: flex; align-items: center; gap: 16px; z-index: 10; border-bottom: 1px solid var(--border); }
-        .modal-close { background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; }
+        /* Modal */
         .modal-img { width: 100%; aspect-ratio: 1; object-fit: cover; }
-        .modal-body { padding: 20px; }
         .modal-title { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
         .modal-info { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
         .modal-info-item { display: flex; align-items: center; gap: 8px; color: var(--text2); }
         
-        /* 主催者セクション */
+        /* Organizer Section */
         .organizer-section { background: var(--card); border-radius: var(--r-lg); padding: 16px; margin-bottom: 20px; }
         .organizer-header { font-size: 12px; color: var(--text3); margin-bottom: 12px; }
         .organizer-row { display: flex; align-items: center; gap: 12px; }
@@ -111,7 +54,7 @@
         .organizer-btn.profile { background: var(--surface); color: var(--text2); }
         .organizer-btn.dm { background: var(--gradient); color: white; }
         
-        /* スロットカード */
+        /* Slot Card */
         .section-title { font-size: 14px; font-weight: 600; color: var(--text3); margin: 20px 0 12px; }
         .slot-card { background: var(--card); border-radius: var(--r-lg); padding: 16px; margin-bottom: 12px; }
         .slot-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -131,19 +74,7 @@
         .slot-buy-btn.approved { background: rgba(46,204,113,0.2); color: #2ECC71; cursor: not-allowed; }
         .slot-buy-btn.completed { background: rgba(46,204,113,0.3); color: #2ECC71; cursor: not-allowed; }
         
-        .btn { padding: 12px 24px; border-radius: var(--r-lg); font-weight: 600; cursor: pointer; border: none; font-size: 14px; }
-        .btn-p { background: var(--gradient); color: white; }
-        .btn-s { background: var(--card); color: var(--text); }
-        .btn-lg { width: 100%; padding: 16px; font-size: 16px; }
-        
-        .date-separator { display: flex; align-items: center; gap: 16px; margin: 28px 0 16px; }
-        .date-separator:first-child { margin-top: 0; }
-        .date-separator::before, .date-separator::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
-        .date-separator-inner { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--surface); border-radius: 20px; border: 1px solid var(--border); }
-        .date-separator-date { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; color: var(--primary); letter-spacing: 1px; }
-        .date-separator-day { font-size: 12px; color: var(--text2); font-weight: 500; }
-        
-        /* 購入モーダル */
+        /* Purchase Modal */
         .purchase-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
         .purchase-modal.active { display: flex; }
         .purchase-box { background: var(--surface); border-radius: 20px; padding: 28px; max-width: 340px; width: 100%; text-align: center; }
@@ -158,69 +89,14 @@
         .purchase-btn.primary { background: var(--gradient); color: white; }
         .purchase-btn.free { background: #00D9FF; color: #0D0D1A; }
         .purchase-btn.cancel { background: var(--card); color: var(--text2); }
-        
-        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 400; transition: opacity 0.3s; }
-        .toast.show { opacity: 1; }
-        
-        /* 無限スクロール用 */
-        .loading-spinner { display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 8px; }
-        .spinner-logo { width: 40px; height: 40px; animation: spinnerRotate 1s linear infinite; }
-        @keyframes spinnerRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .loading-spinner span { color: var(--text3); font-size: 12px; }
-        .load-more-btn { width: 100%; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); color: var(--text); font-weight: 600; cursor: pointer; margin: 16px 0; }
-        .load-more-btn:hover { background: var(--card); }
-        .no-more-data { text-align: center; padding: 30px; }
-        .no-more-data img { width: 48px; height: 48px; opacity: 0.4; }
-        
-        /* 決済モーダル */
-        .payment-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 300; overflow-y: auto; }
-        .payment-modal.active { display: block; }
-        .payment-modal-content { max-width: 500px; margin: 40px auto; background: var(--card); border-radius: var(--r-xl); overflow: hidden; }
-        .payment-modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-        .payment-modal-header h2 { font-size: 18px; font-weight: 700; }
-        .payment-modal-close { background: none; border: none; color: var(--text); font-size: 28px; cursor: pointer; line-height: 1; }
-        .payment-modal-body { padding: 20px; }
-        .payment-item-info { text-align: center; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
-        .payment-item-info h3 { font-size: 18px; margin-bottom: 8px; }
-        .payment-seller { color: var(--text2); font-size: 14px; margin-bottom: 8px; }
-        .payment-price { font-size: 28px; font-weight: 700; color: var(--primary); }
-        .payment-card-section { margin-bottom: 24px; }
-        .payment-card-section label { display: block; font-size: 14px; color: var(--text2); margin-bottom: 8px; }
-        #card-element { background: var(--surface); padding: 16px; border-radius: var(--r-md); border: 1px solid var(--border); }
-        .payment-error { color: #FF4757; font-size: 13px; margin-top: 8px; min-height: 20px; }
-        .payment-summary { background: var(--surface); border-radius: var(--r-md); padding: 16px; margin-bottom: 20px; }
-        .payment-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: var(--text2); }
-        .payment-row.total { font-size: 16px; font-weight: 700; color: var(--text); border-top: 1px solid var(--border); margin-top: 8px; padding-top: 16px; }
-        .payment-submit-btn { width: 100%; padding: 16px; background: var(--gradient); color: white; border: none; border-radius: var(--r-md); font-size: 16px; font-weight: 700; cursor: pointer; }
-        .payment-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .payment-note { text-align: center; font-size: 12px; color: var(--text3); margin-top: 16px; }
-        
-        /* カード選択UI */
-        .saved-cards-section { margin-bottom: 24px; }
-        .saved-cards-section label { display: block; font-size: 14px; color: var(--text2); margin-bottom: 12px; }
-        .saved-cards-list { }
-        .saved-card-item { background: var(--surface); border: 2px solid var(--border); border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: border-color 0.2s; }
-        .saved-card-item:hover { border-color: var(--text3); }
-        .saved-card-item.selected { border-color: var(--primary); background: rgba(255,107,0,0.1); }
-        .saved-card-item.new-card { border-style: dashed; }
-        .saved-card-radio { }
-        .saved-card-radio input { accent-color: var(--primary); }
-        .saved-card-info { flex: 1; display: flex; align-items: center; gap: 8px; }
-        .saved-card-brand { font-size: 14px; }
-        .saved-card-number { color: var(--text); font-weight: 500; }
-        .saved-card-exp { color: var(--text3); font-size: 12px; }
-        .new-card-section { margin-bottom: 24px; }
-        .new-card-section label { display: block; font-size: 14px; color: var(--text2); margin-bottom: 8px; }
-        .save-card-checkbox { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; color: var(--text2); cursor: pointer; }
-        .save-card-checkbox input { accent-color: var(--primary); }
     </style>
-    <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <img src="logo.png" class="header-logo" onclick="window.location.href='timeline.html'">
             <span class="header-title">EVENT</span>
+            <div id="headerProfileArea"></div>
         </div>
         <div class="search-box">
             <span class="search-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></span>
@@ -275,7 +151,7 @@
         
         <div id="eventsList"></div>
         
-        <!-- 無限スクロール用UI -->
+        <!-- Pagination UI -->
         <div id="loadingSpinner" class="loading-spinner" style="display:none;">
             <img src="logo.png" class="spinner-logo">
             <span>Loading...</span>
@@ -284,7 +160,7 @@
         <div id="noMoreData" class="no-more-data" style="display:none;"><img src="logo.png"></div>
     </div>
     
-    <!-- イベント詳細モーダル -->
+    <!-- Event Detail Modal -->
     <div class="modal" id="eventModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -303,12 +179,12 @@
                 <div id="modalOrganizer" class="organizer-section"></div>
                 <div id="modalSlots"></div>
                 <div id="modalAction"></div>
-                <p id="modalDesc" style="color: var(--text2); margin-top: 20px; white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word;"></p>
+                <p id="modalDesc" style="color: var(--text2); margin-top: 20px; white-space: pre-wrap; word-break: break-word;"></p>
             </div>
         </div>
     </div>
     
-    <!-- 購入確認モーダル -->
+    <!-- Purchase Confirmation Modal -->
     <div class="purchase-modal" id="purchaseModal">
         <div class="purchase-box">
             <div class="purchase-icon" id="purchaseIcon"></div>
@@ -326,17 +202,17 @@
     <!-- Floating Action Button -->
     <button class="fab" onclick="handleCreateClick()">+</button>
     
+    <!-- Footer Navigation -->
     <nav class="nav">
         <div class="nav-item" onclick="window.location.href='index.html?tab=home'"><span>Home</span></div>
         <div class="nav-item active"><span>Event</span></div>
         <div class="nav-item" onclick="window.location.href='timeline.html'"><span>TimeLine</span></div>
         <div class="nav-item" onclick="window.location.href='productions.html'"><span>Production</span></div>
         <div class="nav-item" onclick="window.location.href='place.html'"><span>Place</span></div>
-        <div class="nav-item" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
     </nav>
     <div class="toast" id="toast"></div>
     
-        <!-- Common JS (順序重要: 依存関係順に読み込み) -->
+    <!-- Common JS -->
     <script src="js/config.js"></script>
     <script src="js/firebase-init.js"></script>
     <script src="js/ui.js"></script>
@@ -345,512 +221,9 @@
     <script src="js/interactions.js"></script>
     <script src="js/audio-player.js"></script>
     <script src="js/stripe.js"></script>
-    <script>
-        let allEvents = [];
-        let currentTypeFilter = 'all';
-        let currentRegionFilter = 'all';
-        let currentEvent = null;
-        let selectedSlotIndex = -1;
-        let usersCache = {};
-        const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-        
-        function setTypeFilter(f) {
-            currentTypeFilter = f;
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
-            renderEvents();
-        }
-        
-        function setRegionFilter() {
-            const select = document.getElementById('regionFilter');
-            currentRegionFilter = select.value;
-            select.classList.toggle('active', currentRegionFilter !== 'all');
-            renderEvents();
-        }
-        
-        function filterEvents() { renderEvents(); }
-        
-        async function loadAllEvents() {
-            allEvents = await loadEventsInitial();
-            
-            // 応募者のユーザー情報を一括取得
-            const allUserIds = new Set();
-            allEvents.forEach(ev => {
-                if (ev.organizerId) allUserIds.add(ev.organizerId);
-                if (ev.slots) {
-                    ev.slots.forEach(slot => {
-                        if (slot.applicants) {
-                            slot.applicants.forEach(uid => allUserIds.add(uid));
-                        }
-                    });
-                }
-            });
-            usersCache = await getUsersByIds([...allUserIds]);
-            
-            // いいね状態を取得
-            await loadLikedStatusByType(allEvents, 'event');
-            
-            renderEvents();
-            updatePaginationUI('events');
-            setupScrollObserver();
-            checkUrlParam();
-        }
-        
-        async function loadMoreEvents() {
-            showLoadingSpinner(true);
-            
-            const moreEvents = await loadEventsMore();
-            if (moreEvents.length > 0) {
-                // 応募者のユーザー情報を取得
-                const newUserIds = new Set();
-                moreEvents.forEach(ev => {
-                    if (ev.organizerId) newUserIds.add(ev.organizerId);
-                    if (ev.slots) {
-                        ev.slots.forEach(slot => {
-                            if (slot.applicants) {
-                                slot.applicants.forEach(uid => newUserIds.add(uid));
-                            }
-                        });
-                    }
-                });
-                const newUsers = await getUsersByIds([...newUserIds]);
-                usersCache = { ...usersCache, ...newUsers };
-                
-                // いいね状態を取得
-                await loadLikedStatusByType(moreEvents, 'event');
-                
-                allEvents = [...allEvents, ...moreEvents];
-                renderEvents();
-                setupScrollObserver();
-            }
-            
-            showLoadingSpinner(false);
-            updatePaginationUI('events');
-        }
-        
-        function showLoadingSpinner(show) {
-            document.getElementById('loadingSpinner').style.display = show ? 'flex' : 'none';
-            document.getElementById('loadMoreBtn').style.display = show ? 'none' : (paginationState.events?.hasMore ? 'block' : 'none');
-        }
-        
-        function updatePaginationUI(type) {
-            const state = getPaginationState(type);
-            document.getElementById('loadMoreBtn').style.display = state.hasMore ? 'block' : 'none';
-            document.getElementById('noMoreData').style.display = (!state.hasMore && allEvents.length > 0) ? 'block' : 'none';
-        }
-        
-        let scrollObserver;
-        function setupScrollObserver() {
-            if (scrollObserver) scrollObserver.disconnect();
-            
-            const cards = document.querySelectorAll('#eventsList .card');
-            const triggerIndex = cards.length - PAGINATION.triggerOffset;
-            
-            if (triggerIndex > 0 && cards[triggerIndex] && paginationState.events?.hasMore) {
-                scrollObserver = new IntersectionObserver((entries) => {
-                    if (entries[0].isIntersecting && !paginationState.events?.loading) {
-                        loadMoreEvents();
-                    }
-                }, { threshold: 0.1 });
-                scrollObserver.observe(cards[triggerIndex]);
-            }
-        }
-        
-        function getDateKey(date) {
-            const d = date.toDate ? date.toDate() : new Date(date);
-            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        }
-        
-        function createDateSeparator(dateKey) {
-            const d = new Date(dateKey);
-            const month = d.getMonth() + 1;
-            const day = d.getDate();
-            const dayName = dayNames[d.getDay()];
-            return `
-                <div class="date-separator">
-                    <div class="date-separator-inner">
-                        <span class="date-separator-date">${month}.${day}</span>
-                        <span class="date-separator-day">${dayName}</span>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderEvents() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const now = new Date();
-            now.setHours(0, 0, 0, 0);
-            
-            let filtered = allEvents.filter(ev => {
-                const evDate = ev.date?.toDate ? ev.date.toDate() : new Date(ev.date);
-                if (evDate < now) return false;
-                if (currentTypeFilter !== 'all' && ev.type !== currentTypeFilter) return false;
-                if (currentRegionFilter !== 'all' && ev.region !== currentRegionFilter) return false;
-                if (search && !ev.title.toLowerCase().includes(search)) return false;
-                return true;
-            });
-            
-            filtered.sort((a, b) => {
-                const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
-                const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
-                return dateA - dateB;
-            });
-            
-            const container = document.getElementById('eventsList');
-            if (filtered.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color: var(--text2); padding: 40px;">No events</p>';
-                return;
-            }
-            
-            const byDate = {};
-            filtered.forEach(ev => {
-                const key = getDateKey(ev.date);
-                if (!byDate[key]) byDate[key] = [];
-                byDate[key].push(ev);
-            });
-            
-            let html = '';
-            
-            for (const dateKey in byDate) {
-                html += createDateSeparator(dateKey);
-                
-                byDate[dateKey].forEach(ev => {
-                    const liked = isItemLiked('event', ev.id);
-                    html += renderEventCard(ev, liked, usersCache);
-                });
-            }
-            container.innerHTML = html;
-        }
-        
-        // events.html用：スロットクリック時に購入モーダルを開く
-        function handleEventSlotClick(eventId, slotIndex) {
-            openPurchaseFromCard(eventId, slotIndex);
-        }
-        
-        function checkUrlParam() {
-            const id = new URLSearchParams(location.search).get('id');
-            if (id) showDetail(id);
-        }
-        
-        function showDetail(id) {
-            currentEvent = allEvents.find(e => e.id === id);
-            if (!currentEvent) return;
-            
-            const labels = {A:'TIMETABLE', B:'GUARANTEE(ｷﾞｬﾗ)', C:'FLYER'};
-            const cls = {A:'a', B:'b', C:'c'};
-            const currency = currentEvent.currency || 'jpy';
-            
-            document.getElementById('modalImg').src = currentEvent.imageUrl || 'logo.png';
-            document.getElementById('modalBadge').textContent = labels[currentEvent.type] || 'TIMETABLE';
-            document.getElementById('modalBadge').className = 'badge ' + (cls[currentEvent.type] || 'a');
-            document.getElementById('modalTitle').textContent = currentEvent.title;
-            document.getElementById('modalDate').textContent = 'DATE ' + formatDateFull(currentEvent.date);
-            document.getElementById('modalLocation').textContent = '@ ' + (currentEvent.location || 'N/A');
-            document.getElementById('modalRegion').textContent = 'AREA ' + (currentEvent.region || 'N/A');
-            document.getElementById('modalDesc').innerHTML = linkifyText(currentEvent.description || '');
-            
-            // 主催者セクション
-            const organizer = usersCache[currentEvent.organizerId] || {};
-            const organizerName = organizer.name || currentEvent.organizerName || '主催者';
-            const organizerPhoto = organizer.photoURL || currentEvent.organizerPhoto || '';
-            
-            document.getElementById('modalOrganizer').innerHTML = `
-                <div class="organizer-header">ORGANIZER</div>
-                <div class="organizer-row">
-                    ${renderAvatar(organizerPhoto, organizerName, 48, true, currentEvent.organizerId)}
-                    <div class="organizer-info">
-                        <div class="organizer-name">${organizerName}</div>
-                    </div>
-                    <div class="organizer-actions">
-                        <button class="organizer-btn profile" onclick="window.location.href='profile.html?uid=${currentEvent.organizerId}'">PROFILE</button>
-                        <button class="organizer-btn dm" onclick="openDM('${currentEvent.organizerId}', '${organizerName}')">DM</button>
-                    </div>
-                </div>
-            `;
-            
-            // スロット
-            let slotsHtml = '';
-            if ((currentEvent.type === 'A' || currentEvent.type === 'B') && currentEvent.slots && currentEvent.slots.length > 0) {
-                const title = currentEvent.type === 'A' ? 'TIMETABLE' : 'GUARANTEE(ｷﾞｬﾗ)';
-                slotsHtml = `<div class="section-title">${title}</div>`;
-                
-                currentEvent.slots.forEach((slot, i) => {
-                    const price = slot.price || 0;
-                    const capacity = slot.capacity || 1;
-                    const applicants = slot.applicants || [];
-                    const count = applicants.length;
-                    const isFree = price === 0;
-                    const status = slot.status || 'open';
-                    
-                    // GUARANTEE用のステータス判定
-                    const isApproved = currentEvent.type === 'B' && status === 'approved';
-                    const isCompleted = currentEvent.type === 'B' && status === 'completed';
-                    const alreadyApplied = user && applicants.includes(user.uid);
-                    const isApprovedUser = user && slot.approvedUid === user.uid;
-                    
-                    // FULL判定: Type A は応募数、Type B は承認済みかどうか
-                    let isFull;
-                    if (currentEvent.type === 'B') {
-                        isFull = isApproved || isCompleted;
-                    } else {
-                        isFull = count >= capacity;
-                    }
-                    
-                    let btnClass = 'primary';
-                    let btnText = currentEvent.type === 'A' ? 'Buy' : 'Apply';
-                    let btnDisabled = false;
-                    
-                    if (isFree) {
-                        btnClass = 'free';
-                        btnText = currentEvent.type === 'A' ? 'Reserve Free' : 'Apply Free';
-                    }
-                    
-                    // Type AのみFULL判定でボタン無効化
-                    if (currentEvent.type === 'A' && isFull) {
-                        btnClass = 'full';
-                        btnText = 'FULL';
-                        btnDisabled = true;
-                    }
-                    
-                    // GUARANTEE特有のステータス
-                    if (currentEvent.type === 'B') {
-                        if (isCompleted) {
-                            btnClass = 'completed';
-                            btnText = isApprovedUser ? '✓ 出演完了' : 'COMPLETED';
-                            btnDisabled = true;
-                        } else if (isApproved) {
-                            if (isApprovedUser) {
-                                btnClass = 'approved';
-                                btnText = '✓ 承認済み';
-                            } else {
-                                btnClass = 'full';
-                                btnText = 'CLOSED';
-                            }
-                            btnDisabled = true;
-                        } else if (alreadyApplied) {
-                            btnClass = 'applied';
-                            btnText = '応募済み';
-                            btnDisabled = true;
-                        }
-                    }
-                    
-                    // ステータスバッジ
-                    let statusBadge = '';
-                    if (currentEvent.type === 'B') {
-                        if (isCompleted) {
-                            statusBadge = '<span style="background:rgba(46,204,113,0.2);color:#2ECC71;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">完了</span>';
-                        } else if (isApproved) {
-                            statusBadge = '<span style="background:rgba(255,193,7,0.2);color:#FFC107;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">確定</span>';
-                        }
-                    }
-                    
-                    // 表示文字列
-                    let countDisplay;
-                    if (currentEvent.type === 'B') {
-                        countDisplay = isFull ? '確定' : `${count}人応募`;
-                    } else {
-                        countDisplay = `${count}/${capacity}${isFull ? ' FULL' : ''}`;
-                    }
-                    
-                    // アバター表示：GARANTEEで承認済みの場合は承認者のみ表示
-                    let avatarsHtml;
-                    if (currentEvent.type === 'B' && isFull && slot.approvedUid) {
-                        avatarsHtml = renderSlotAvatars([slot.approvedUid], 1);
-                    } else {
-                        avatarsHtml = renderSlotAvatars(applicants, capacity);
-                    }
-                    
-                    slotsHtml += `
-                        <div class="slot-card">
-                            <div class="slot-header">
-                                <span class="slot-time">${slot.time || 'TBD'}</span>
-                                <span class="slot-price ${isFree ? 'free' : ''}">${formatPrice(price, currency)} ${statusBadge}</span>
-                            </div>
-                            <div class="slot-applicants">
-                                <div class="slot-applicants-label">${currentEvent.type === 'B' ? (isFull ? '出演者' : '応募者') : 'Buyers'}</div>
-                                <div class="slot-applicants-row">
-                                    ${avatarsHtml}
-                                    <span class="slot-count ${isFull ? 'full' : ''}">${countDisplay}</span>
-                                </div>
-                            </div>
-                            <button class="slot-buy-btn ${btnClass}" onclick="openPurchaseModal(${i})" ${btnDisabled ? 'disabled' : ''}>${btnText}</button>
-                        </div>
-                    `;
-                });
-            }
-            document.getElementById('modalSlots').innerHTML = slotsHtml;
-            
-            // アクションボタン
-            let actionHtml = '';
-            if (currentEvent.type === 'C') {
-                actionHtml = `<button class="btn btn-s btn-lg" onclick="shareEvent()">📤 Share</button>`;
-            }
-            document.getElementById('modalAction').innerHTML = actionHtml;
-            
-            document.getElementById('eventModal').classList.add('active');
-            history.replaceState(null, '', `events.html?id=${id}`);
-        }
-        
-        function closeEventModal() {
-            document.getElementById('eventModal').classList.remove('active');
-            history.replaceState(null, '', 'events.html');
-        }
-        
-        // カードから直接購入
-        function openPurchaseFromCard(eventId, slotIndex) {
-            currentEvent = allEvents.find(e => e.id === eventId);
-            if (!currentEvent) return;
-            openPurchaseModal(slotIndex);
-        }
-        
-        function openPurchaseModal(index) {
-            if (!requireLogin()) return;
-            
-            selectedSlotIndex = index;
-            const slot = currentEvent.slots[index];
-            const currency = currentEvent.currency || 'jpy';
-            const price = slot.price || 0;
-            const isFree = price === 0;
-            const capacity = slot.capacity || 1;
-            const count = (slot.applicants || []).length;
-            
-            if (count >= capacity) {
-                toast('This slot is full', 'error');
-                return;
-            }
-            
-            // 既に応募済みかチェック
-            if (user && slot.applicants && slot.applicants.includes(user.uid)) {
-                toast('Already applied', 'error');
-                return;
-            }
-            
-            if (currentEvent.type === 'A') {
-                document.getElementById('purchaseIcon').textContent = '';
-                document.getElementById('purchaseTitle').textContent = 'Buy Timetable';
-                document.getElementById('purchaseNote').textContent = isFree 
-                    ? 'Reserve this slot for free?' 
-                    : 'Buy this slot to perform at the event?';
-            } else {
-                document.getElementById('purchaseIcon').textContent = '';
-                document.getElementById('purchaseTitle').textContent = 'Apply for GUARANTEE';
-                document.getElementById('purchaseNote').textContent = isFree 
-                    ? 'Apply for this slot for free?' 
-                    : 'Apply for this slot? (You will be paid)';
-            }
-            
-            document.getElementById('purchaseTime').textContent = '' + (slot.time || 'TBD');
-            document.getElementById('purchasePrice').textContent = formatPrice(price, currency);
-            document.getElementById('purchasePrice').className = 'purchase-price' + (isFree ? ' free' : '');
-            
-            const confirmBtn = document.getElementById('purchaseConfirmBtn');
-            if (isFree) {
-                confirmBtn.textContent = currentEvent.type === 'A' ? 'Reserve Free' : 'Apply Free';
-                confirmBtn.className = 'purchase-btn free';
-            } else {
-                confirmBtn.textContent = currentEvent.type === 'A' ? 'Confirm Purchase' : 'Apply';
-                confirmBtn.className = 'purchase-btn primary';
-            }
-            
-            document.getElementById('purchaseModal').classList.add('active');
-        }
-        
-        function closePurchaseModal() {
-            document.getElementById('purchaseModal').classList.remove('active');
-            selectedSlotIndex = -1;
-        }
-        
-        async function confirmPurchase() {
-            if (!currentEvent || selectedSlotIndex < 0) return;
-            
-            const slot = currentEvent.slots[selectedSlotIndex];
-            const isFree = (slot.price || 0) === 0;
-            
-            // closePurchaseModalで変数がリセットされるので先に保存
-            const eventToProcess = currentEvent;
-            const slotIndexToProcess = selectedSlotIndex;
-            
-            closePurchaseModal();
-            
-            // Type B（GUARANTEE）は常に応募のみ（課金は主催者承認時）
-            if (eventToProcess.type === 'B') {
-                const success = await applyToSlot(eventToProcess.id, slotIndexToProcess);
-                if (success) {
-                    toast(isFree ? 'Applied (Free)' : 'Applied! Waiting for approval');
-                    await reloadEventData();
-                }
-                return;
-            }
-            
-            // Type A（TIMETABLE）
-            if (isFree) {
-                // 無料の場合は直接予約
-                const success = await applyToSlot(eventToProcess.id, slotIndexToProcess);
-                if (success) {
-                    toast('Reserved (Free)');
-                    await reloadEventData();
-                }
-            } else {
-                // 有料の場合はStripe決済モーダルを開く
-                openEventSlotPaymentModal(eventToProcess, slotIndexToProcess);
-            }
-        }
-        
-        // イベントスロット決済モーダルを開く
-        function openEventSlotPaymentModal(event, slotIndex) {
-            const slot = event.slots[slotIndex];
-            const organizerName = usersCache[event.organizerId]?.displayName || 'Unknown';
-            
-            // 共通決済モーダルを使用
-            openPaymentModal({
-                type: 'event_slot',
-                itemId: event.id,
-                slotIndex: slotIndex,
-                title: `${event.title} - ${slot.time || 'TBD'}`,
-                price: slot.price,
-                currency: event.currency || 'jpy',
-                sellerId: event.organizerId,
-                sellerName: organizerName,
-                eventDate: event.date,
-                // 決済成功時のコールバック
-                onSuccess: async (purchaseId) => {
-                    toast('スロット購入が完了しました！');
-                    await reloadEventData();
-                }
-            });
-        }
-        
-        // イベントデータ再読み込み
-        async function reloadEventData() {
-            await loadAllEvents();
-            if (currentEvent && document.getElementById('eventModal').classList.contains('active')) {
-                showDetail(currentEvent.id);
-            }
-        }
-        
-        function shareEvent() {
-            if (navigator.share) {
-                navigator.share({
-                    title: currentEvent.title,
-                    text: `${currentEvent.title} - ${currentEvent.location}`,
-                    url: window.location.href
-                });
-            } else {
-                navigator.clipboard.writeText(window.location.href);
-                toast('URL copied');
-            }
-        }
-        
-        function onAuthReady() {
-            const params = new URLSearchParams(location.search);
-            const hasDeepLink = params.get('id');
-            
-            // ディープリンクなしで未ログインはウェルカム画面へリダイレクト
-            if (!user && !hasDeepLink) {
-                window.location.href = 'index.html';
-                return;
-            }
-            loadAllEvents();
-        }
-    </script>
+    
+    <!-- Page-specific JS -->
+    <script src="js/pages/events.js"></script>
+    <script src="js/lazy-load.js"></script>
 </body>
 </html>

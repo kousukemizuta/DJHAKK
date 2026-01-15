@@ -3,6 +3,18 @@
 // ========================================
 
 // ========================================
+// URL Normalization (for SNS links)
+// ========================================
+function normalizeUrl(url) {
+    if (!url) return '';
+    url = url.trim();
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+        return 'https://' + url;
+    }
+    return url;
+}
+
+// ========================================
 // DOM Helpers
 // ========================================
 const $ = id => document.getElementById(id);
@@ -134,8 +146,10 @@ function renderAvatar(photoURL, name, size = 32, clickable = false, uid = null) 
     const cursorStyle = clickable ? 'cursor:pointer;' : '';
     
     if (photoURL) {
-        return `<div class="avatar" style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;${cursorStyle}" ${clickAttr}>
-            <img src="${photoURL}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<span style=\\'display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:var(--gradient);color:white;font-weight:600;\\'>${initial}</span>'">
+        // Lazy Loading対応：data-srcを使用し、初期はgradient背景で初期文字を表示
+        return `<div class="avatar" style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;background:var(--gradient);display:flex;align-items:center;justify-content:center;${cursorStyle}" ${clickAttr}>
+            <img class="lazy" data-src="${photoURL}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <span style="display:none;align-items:center;justify-content:center;width:100%;height:100%;color:white;font-weight:600;font-size:${size/2.5}px;">${initial}</span>
         </div>`;
     }
     return `<div class="avatar" style="width:${size}px;height:${size}px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:${size/2.5}px;${cursorStyle}" ${clickAttr}>${initial}</div>`;
@@ -143,6 +157,41 @@ function renderAvatar(photoURL, name, size = 32, clickable = false, uid = null) 
 
 function renderEmptyAvatar(size = 32) {
     return `<div class="avatar-empty" style="width:${size}px;height:${size}px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;"></div>`;
+}
+
+// ========================================
+// Header Profile Icon
+// ========================================
+function renderHeaderProfile() {
+    const container = document.getElementById('headerProfileArea');
+    if (!container) return;
+    
+    if (!user) {
+        // ログアウト状態：Loginボタン
+        container.innerHTML = `
+            <a href="profile.html" class="header-login-btn">Login</a>
+        `;
+        return;
+    }
+    
+    // ログイン状態：アバター + 未読バッジ
+    const initial = (userData?.name || user.email || '?')[0].toUpperCase();
+    const photoURL = userData?.photoURL || '';
+    
+    let avatarContent;
+    if (photoURL) {
+        avatarContent = `<img src="${photoURL}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <span class="header-profile-initial" style="display:none;">${initial}</span>`;
+    } else {
+        avatarContent = `<span class="header-profile-initial">${initial}</span>`;
+    }
+    
+    container.innerHTML = `
+        <a href="profile.html" class="header-profile">
+            ${avatarContent}
+            <span class="header-unread-badge" id="headerUnreadBadge"></span>
+        </a>
+    `;
 }
 
 // ========================================
@@ -170,7 +219,7 @@ function renderSnsIcons(snsLinks, size = 28) {
                 iconHtml = `<svg viewBox="0 0 24 24" width="${iconSize}" height="${iconSize}" style="fill:#A0A0B8;flex-shrink:0;min-width:${iconSize}px;min-height:${iconSize}px;">${svgIcon.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '')}</svg>`;
             }
             
-            html += `<a href="${link.url}" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="display:inline-flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;background:#1A1A2E;border-radius:50%;text-decoration:none;flex-shrink:0;" title="${platformName}">${iconHtml}</a>`;
+            html += `<a href="${normalizeUrl(link.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="display:inline-flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;background:#1A1A2E;border-radius:50%;text-decoration:none;flex-shrink:0;" title="${platformName}">${iconHtml}</a>`;
         }
     });
     html += '</div>';
@@ -300,7 +349,7 @@ function renderEventCard(event, isLiked = false, usersCache = {}) {
     let html = `
         <div class="card" data-type="event" data-id="${event.id}">
             <div class="card-main" onclick="window.location.href='events.html?id=${event.id}'">
-                <img src="${event.imageUrl || 'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                <img class="lazy card-img" data-src="${event.imageUrl || 'logo.png'}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect fill='%231a1a2e' width='16' height='9'/%3E%3C/svg%3E" onerror="this.src='logo.png'">
                 <div class="card-body">
                     <span class="card-region">@ ${event.region || 'N/A'}</span>
                     <span class="badge ${cls[event.type] || 'a'}">${labels[event.type] || 'TIMETABLE'}</span>
@@ -388,7 +437,7 @@ function renderProductionCard(production, isLiked = false, userInfo = null) {
     let html = `
         <div class="card" data-type="production" data-id="${production.id}">
             <div class="card-main" onclick="window.location.href='productions.html?id=${production.id}'">
-                <img src="${production.imageUrl || 'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                <img class="lazy card-img" data-src="${production.imageUrl || 'logo.png'}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect fill='%231a1a2e' width='16' height='9'/%3E%3C/svg%3E" onerror="this.src='logo.png'">
                 <div class="card-body">
                     <span class="badge ${production.type || 'audio'}">${typeLabels[production.type] || 'PRODUCTION'}</span>
                     <h3 class="card-title">${production.title}</h3>
@@ -408,7 +457,7 @@ function renderProductionCard(production, isLiked = false, userInfo = null) {
     html += `
                     <div class="card-creator" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${production.userId}'">
                         <div class="card-creator-avatar">
-                            ${userPhoto ? `<img src="${userPhoto}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
+                            ${userPhoto ? `<img class="lazy" data-src="${userPhoto}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span style="display:none;align-items:center;justify-content:center;width:100%;height:100%;color:white;font-weight:600;">${initial}</span>` : initial}
                         </div>
                         <span class="card-creator-name">${userName}</span>
                     </div>
@@ -455,7 +504,7 @@ function renderPlaceCard(place, isLiked = false) {
     let html = `
         <div class="card" data-type="place" data-id="${place.id}">
             <div class="card-main" onclick="window.location.href='place.html?id=${place.id}'">
-                <img src="${place.imageUrl || 'logo.png'}" class="card-img" onerror="this.src='logo.png'">
+                <img class="lazy card-img" data-src="${place.imageUrl || 'logo.png'}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect fill='%231a1a2e' width='16' height='9'/%3E%3C/svg%3E" onerror="this.src='logo.png'">
                 <div class="card-body">
                     <span class="badge ${place.type || 'place'}">${typeLabels[place.type] || 'PLACE'}</span>
                     ${place.region ? `<span class="card-region">${place.region}</span>` : ''}
@@ -477,7 +526,7 @@ function renderPlaceCard(place, isLiked = false) {
     html += `
                     <div class="card-creator" onclick="event.stopPropagation(); window.location.href='profile.html?uid=${place.userId}'">
                         <div class="card-creator-avatar">
-                            ${place.userPhoto ? `<img src="${place.userPhoto}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">` : initial}
+                            ${place.userPhoto ? `<img class="lazy" data-src="${place.userPhoto}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span style="display:none;align-items:center;justify-content:center;width:100%;height:100%;color:white;font-weight:600;">${initial}</span>` : initial}
                         </div>
                         <span class="card-creator-name">${place.userName || 'User'}</span>
                     </div>
@@ -498,7 +547,7 @@ function renderPlaceCard(place, isLiked = false) {
 function renderArtistCard(artist, isLiked = false) {
     const initial = (artist.name || '?')[0].toUpperCase();
     const avatarHtml = artist.photoURL 
-        ? `<img src="${artist.photoURL}" onerror="this.style.display='none';this.parentElement.innerHTML='${initial}'">`
+        ? `<img class="lazy" data-src="${artist.photoURL}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span style="display:none;align-items:center;justify-content:center;width:100%;height:100%;color:white;font-weight:600;">${initial}</span>`
         : initial;
     
     // 波形プレイヤー
@@ -539,7 +588,7 @@ function renderArtistCard(artist, isLiked = false) {
 function renderTweetCard(tweet, isLiked = false) {
     const initial = (tweet.userName || '?')[0].toUpperCase();
     const avatarHtml = tweet.userPhoto 
-        ? `<img src="${tweet.userPhoto}" onerror="this.style.display='none';this.parentElement.innerHTML='${initial}'">`
+        ? `<img class="lazy" data-src="${tweet.userPhoto}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span style="display:none;align-items:center;justify-content:center;width:100%;height:100%;color:white;font-weight:600;">${initial}</span>`
         : initial;
     
     return `

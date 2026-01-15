@@ -7,184 +7,20 @@
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
-    <style>
-        :root {
-            --primary: #FF6B00;
-            --primary-light: #FF8533;
-            --bg: #0D0D1A;
-            --surface: #1A1A2E;
-            --card: #252538;
-            --text: #FFFFFF;
-            --text2: #A0A0B8;
-            --text3: #6B6B80;
-            --border: #3A3A50;
-            --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
-            --shadow: 0 8px 32px rgba(0,0,0,0.4);
-            --r-md: 12px;
-            --r-lg: 16px;
-            --r-xl: 24px;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Noto Sans JP', 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-        .container { max-width: 600px; margin: 0 auto; padding: 16px; padding-bottom: 100px; }
-        
-        .header { display: flex; align-items: center; gap: 16px; padding: 16px 0; margin-bottom: 16px; }
-        .header-logo { height: 40px; width: 40px; object-fit: contain; cursor: pointer; border-radius: 8px; }
-        .header-title { font-size: 20px; font-weight: 700; flex: 1; }
-        
-        /* Tweet Input Area */
-        .tweet-input-area { background: var(--card); border-radius: var(--r-xl); padding: 16px; margin-bottom: 20px; }
-        .tweet-input-header { display: flex; gap: 12px; }
-        .tweet-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; overflow: hidden; flex-shrink: 0; }
-        .tweet-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .tweet-input-wrapper { flex: 1; }
-        .tweet-input { width: 100%; background: transparent; border: none; color: var(--text); font-size: 16px; resize: none; outline: none; min-height: 60px; line-height: 1.5; }
-        .tweet-input::placeholder { color: var(--text3); }
-        .tweet-input-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
-        .tweet-char-count { font-size: 13px; color: var(--text3); }
-        .tweet-char-count.warning { color: #FF4757; }
-        .tweet-submit-btn { padding: 10px 24px; background: var(--gradient); color: white; border: none; border-radius: 20px; font-weight: 600; font-size: 14px; cursor: pointer; transition: opacity 0.2s; }
-        .tweet-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        /* Cards */
-        .card { background: var(--card); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 16px; }
-        .card-main { display: flex; cursor: pointer; }
-        .card-img { width: 120px; min-width: 120px; height: 140px; object-fit: cover; }
-        .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
-        .card-title { font-size: 15px; font-weight: 700; margin: 4px 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .card-region { font-size: 11px; color: var(--primary); background: rgba(255,107,0,0.15); padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 4px; }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; }
-        .badge.a { background: rgba(255,107,0,0.2); color: #FF6B00; }
-        .badge.b { background: rgba(0,217,255,0.2); color: #00D9FF; }
-        .badge.c { background: rgba(157,78,221,0.2); color: #9D4EDD; }
-        .badge.tweet { background: rgba(29,161,242,0.2); color: #1DA1F2; }
-        .badge.user { background: rgba(0,200,83,0.2); color: #00C853; }
-        .badge.audio { background: rgba(255,107,0,0.2); color: #FF6B00; }
-        .badge.goods { background: rgba(0,217,255,0.2); color: #00D9FF; }
-        .badge.produce { background: rgba(157,78,221,0.2); color: #9D4EDD; }
-        .badge.place { background: rgba(0,217,255,0.2); color: #00D9FF; }
-        .badge.agency { background: rgba(157,78,221,0.2); color: #9D4EDD; }
-        .badge.shop { background: rgba(0,200,83,0.2); color: #00C853; }
-        
-        /* Event Card - Organizer & Slots */
-        .card-organizer { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
-        .card-organizer-name { font-size: 12px; color: var(--text2); }
-        .card-slots { padding: 12px; border-top: 1px solid var(--border); }
-        .card-slot { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-        .card-slot:last-child { margin-bottom: 0; }
-        .card-slot-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 200px; }
-        .card-slot-time { font-size: 12px; color: var(--text2); }
-        .card-slot-price { font-size: 12px; font-weight: 600; color: var(--primary); }
-        .card-slot-price.free { color: #00D9FF; }
-        .card-slot-count { font-size: 11px; color: var(--text3); }
-        .card-slot-count.full { color: #FF4757; }
-        .card-slot-avatars { display: flex; gap: -8px; align-items: center; flex-wrap: wrap; }
-        .card-slot-avatars > * { margin-left: -6px; }
-        .card-slot-avatars > *:first-child { margin-left: 0; }
-        .card-slot-buy { padding: 6px 12px; background: var(--gradient); color: white; border: none; border-radius: 14px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-        .card-slot-buy.free { background: #00D9FF; color: #0D0D1A; }
-        .card-slot-buy.full { background: var(--border); color: var(--text3); cursor: not-allowed; }
-        .avatar-empty { width: 24px; height: 24px; border-radius: 50%; background: var(--border); border: 2px solid var(--card); }
-        
-        /* Production/Place Card - Creator & SNS */
-        .card-creator { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
-        .card-creator-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; overflow: hidden; cursor: pointer; }
-        .card-creator-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .card-creator-name { font-size: 12px; color: var(--text2); cursor: pointer; }
-        .card-sns { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-        .card-location { color: var(--text2); font-size: 12px; }
-        .card-url { color: var(--primary); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .card-url a { color: var(--primary); text-decoration: none; }
-        .card-desc { font-size: 12px; color: var(--text2); line-height: 1.4; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .card-waveform-section { padding: 0 12px 12px; }
-        .card-buy-section { padding: 0 12px 12px; }
-        .card-buy-btn { width: 100%; padding: 12px; background: var(--gradient); color: white; border: none; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer; }
-        
-        /* Tweet Card */
-        .tweet-card { background: var(--card); border-radius: var(--r-xl); padding: 16px; margin-bottom: 16px; }
-        .tweet-card-header { display: flex; gap: 12px; margin-bottom: 12px; }
-        .tweet-card-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 600; overflow: hidden; flex-shrink: 0; cursor: pointer; }
-        .tweet-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .tweet-card-info { flex: 1; }
-        .tweet-card-name { font-weight: 600; font-size: 15px; cursor: pointer; }
-        .tweet-card-name:hover { text-decoration: underline; }
-        .tweet-card-badge { margin-top: 4px; }
-        .tweet-card-text { font-size: 15px; line-height: 1.6; margin-bottom: 12px; word-wrap: break-word; }
-        
-        /* Artist Card */
-        .artist-card { background: var(--card); border-radius: var(--r-xl); padding: 16px; margin-bottom: 16px; cursor: pointer; }
-        .artist-card-header { display: flex; gap: 12px; margin-bottom: 12px; }
-        .artist-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600; overflow: hidden; flex-shrink: 0; }
-        .artist-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .artist-info { flex: 1; min-width: 0; }
-        .artist-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-        .artist-region { font-size: 12px; color: var(--primary); }
-        .artist-bio { font-size: 13px; color: var(--text2); margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
-        .artist-footer { display: flex; justify-content: space-between; align-items: center; }
-        .artist-dm-btn { padding: 8px 16px; background: var(--gradient); color: white; border: none; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-        
-        /* Interaction Buttons */
-        .interaction-buttons { display: flex; gap: 20px; padding-top: 12px; border-top: 1px solid var(--border); }
-        .interaction-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--text3); font-size: 14px; cursor: pointer; padding: 4px 0; transition: color 0.2s; }
-        .interaction-btn:hover { color: var(--text2); }
-        .interaction-btn.like-btn.liked { color: #FF4757; }
-        .interaction-btn svg { flex-shrink: 0; }
-        
-        .card-interaction { padding: 12px 16px; position: relative; z-index: 10; }
-        
-        /* Footer Nav */
-        .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: var(--surface); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text3); cursor: pointer; font-size: 11px; position: relative; }
-        .nav-item.active { color: var(--primary); }
-        .nav-unread-badge { position: absolute; top: -4px; right: 50%; transform: translateX(50%); margin-right: -15px; background: #FF4757; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: none; align-items: center; justify-content: center; padding: 0 4px; }
-        
-        /* Floating Create Button */
-        .fab { position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: var(--shadow); cursor: pointer; z-index: 101; border: none; }
-        @media (min-width: 600px) {
-            .fab { right: calc(50% - 280px); }
-        }
-        
-        .empty-state { text-align: center; padding: 60px 20px; color: var(--text2); }
-        .empty-state-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
-        
-        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: var(--r-lg); opacity: 0; z-index: 300; transition: opacity 0.3s; }
-        .toast.show { opacity: 1; }
-        .toast.error { background: #FF4757; }
-        
-        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 200; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
-        .modal.active { display: flex; }
-        .modal-content { background: var(--surface); border-radius: var(--r-xl); width: 100%; max-width: 500px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
-        .modal-close { background: none; border: none; color: var(--text2); font-size: 24px; cursor: pointer; }
-        .modal-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
-        
-        .input { width: 100%; padding: 14px 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text); font-size: 16px; }
-        .input:focus { outline: none; border-color: var(--primary); }
-        .btn { padding: 12px 24px; border-radius: var(--r-lg); font-weight: 600; cursor: pointer; border: none; font-size: 14px; }
-        .btn-p { background: var(--gradient); color: white; }
-        
-        .loading { text-align: center; padding: 40px; color: var(--text2); }
-        
-        /* 無限スクロール用 */
-        .loading-spinner { display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 8px; }
-        .spinner-logo { width: 40px; height: 40px; animation: spinnerRotate 1s linear infinite; }
-        @keyframes spinnerRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .loading-spinner span { color: var(--text3); font-size: 12px; }
-        .load-more-btn { width: 100%; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); color: var(--text); font-weight: 600; cursor: pointer; margin: 16px 0; }
-        .load-more-btn:hover { background: var(--card); }
-        .no-more-data { text-align: center; padding: 30px; }
-        .no-more-data img { width: 48px; height: 48px; opacity: 0.4; }
-    </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <img src="logo.png" class="header-logo" onclick="window.location.href='timeline.html'">
             <span class="header-title">TIMELINE</span>
+            <div id="headerProfileArea"></div>
         </div>
         
         <!-- Tweet Input Area -->
@@ -197,7 +33,10 @@
             </div>
             <div class="tweet-input-footer">
                 <span class="tweet-char-count" id="charCount">0/140</span>
-                <button class="tweet-submit-btn" id="tweetSubmitBtn" onclick="submitTweet()" disabled>Post</button>
+                <div class="tweet-actions">
+                    <button class="tweet-create-btn" onclick="location.href='create.html'" title="Create Event/Production">+</button>
+                    <button class="tweet-submit-btn" id="tweetSubmitBtn" onclick="submitTweet()" disabled>Post</button>
+                </div>
             </div>
         </div>
         
@@ -206,7 +45,7 @@
             <div class="loading">Loading...</div>
         </div>
         
-        <!-- 無限スクロール用UI -->
+        <!-- Pagination UI -->
         <div id="loadingSpinner" class="loading-spinner" style="display:none;">
             <img src="logo.png" class="spinner-logo">
             <span>Loading...</span>
@@ -218,17 +57,17 @@
     <!-- Floating Action Button -->
     <button class="fab" onclick="handleCreateClick()">+</button>
     
+    <!-- Footer Navigation -->
     <nav class="nav">
         <div class="nav-item" onclick="location.href='index.html?tab=home'"><span>Home</span></div>
         <div class="nav-item" onclick="location.href='events.html'"><span>Event</span></div>
         <div class="nav-item active"><span>TimeLine</span></div>
         <div class="nav-item" onclick="location.href='productions.html'"><span>Production</span></div>
         <div class="nav-item" onclick="location.href='place.html'"><span>Place</span></div>
-        <div class="nav-item" onclick="handleProfileClick()"><span>Profile</span><span class="nav-unread-badge"></span></div>
     </nav>
     <div class="toast" id="toast"></div>
     
-        <!-- Common JS (順序重要: 依存関係順に読み込み) -->
+    <!-- Common JS (順序重要) -->
     <script src="js/config.js"></script>
     <script src="js/firebase-init.js"></script>
     <script src="js/ui.js"></script>
@@ -236,216 +75,9 @@
     <script src="js/data.js"></script>
     <script src="js/interactions.js"></script>
     <script src="js/audio-player.js"></script>
-    <script>
-        let timelineData = [];
-        let likedMap = {};
-        let usersCache = {};
-        
-        function updateCharCount() {
-            const input = $('tweetInput');
-            const count = $('charCount');
-            const btn = $('tweetSubmitBtn');
-            const len = input.value.length;
-            
-            count.textContent = `${len}/140`;
-            count.classList.toggle('warning', len > 120);
-            btn.disabled = len === 0 || len > 140;
-        }
-        
-        async function submitTweet() {
-            // ゲストはログインを促す
-            if (!requireLogin()) return;
-            
-            const input = $('tweetInput');
-            const text = input.value.trim();
-            if (!text || text.length > 140) return;
-            
-            const btn = $('tweetSubmitBtn');
-            btn.disabled = true;
-            btn.textContent = 'Posting...';
-            
-            const result = await postTweet(text);
-            
-            if (result) {
-                input.value = '';
-                updateCharCount();
-                toast('Posted!');
-                loadTimeline(); // リロード
-            } else {
-                toast('Failed to post', 'error');
-            }
-            
-            btn.disabled = false;
-            btn.textContent = 'Post';
-        }
-        
-        async function loadTimeline() {
-            const container = $('timelineFeed');
-            
-            try {
-                timelineData = await loadTimelineInitial();
-                
-                if (timelineData.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-title">No posts yet</div>
-                            <p>Be the first to post something!</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                // ユーザー情報を取得（event, production用）
-                const userIds = new Set();
-                timelineData.forEach(item => {
-                    if (item._type === 'event' && item.organizerId) userIds.add(item.organizerId);
-                    if (item._type === 'production' && item.userId) userIds.add(item.userId);
-                    // スロット応募者
-                    if (item.slots) {
-                        item.slots.forEach(slot => {
-                            (slot.applicants || []).forEach(uid => userIds.add(uid));
-                        });
-                    }
-                });
-                if (userIds.size > 0) {
-                    usersCache = await getUsersByIds([...userIds]);
-                }
-                
-                // いいね状態を取得
-                likedMap = await getLikedStatus(timelineData);
-                
-                renderTimeline();
-                updatePaginationUI('timeline');
-                setupScrollObserver();
-            } catch (e) {
-                log('Error loading timeline: ' + e.message);
-                container.innerHTML = '<div class="empty-state">Failed to load</div>';
-            }
-        }
-        
-        async function loadMoreTimeline() {
-            showLoadingSpinner(true);
-            
-            try {
-                const moreData = await loadTimelineMore();
-                if (moreData.length > 0) {
-                    // ユーザー情報を取得
-                    const userIds = new Set();
-                    moreData.forEach(item => {
-                        if (item._type === 'event' && item.organizerId) userIds.add(item.organizerId);
-                        if (item._type === 'production' && item.userId) userIds.add(item.userId);
-                        if (item.slots) {
-                            item.slots.forEach(slot => {
-                                (slot.applicants || []).forEach(uid => userIds.add(uid));
-                            });
-                        }
-                    });
-                    if (userIds.size > 0) {
-                        const moreUsers = await getUsersByIds([...userIds]);
-                        usersCache = { ...usersCache, ...moreUsers };
-                    }
-                    
-                    // いいね状態を取得
-                    const moreLikedMap = await getLikedStatus(moreData);
-                    likedMap = { ...likedMap, ...moreLikedMap };
-                    
-                    timelineData = [...timelineData, ...moreData];
-                    renderTimeline();
-                    setupScrollObserver();
-                }
-            } catch (e) {
-                log('Error loading more timeline: ' + e.message);
-            }
-            
-            showLoadingSpinner(false);
-            updatePaginationUI('timeline');
-        }
-        
-        function showLoadingSpinner(show) {
-            document.getElementById('loadingSpinner').style.display = show ? 'flex' : 'none';
-            document.getElementById('loadMoreBtn').style.display = show ? 'none' : (paginationState.timeline?.hasMore ? 'block' : 'none');
-        }
-        
-        function updatePaginationUI(type) {
-            const state = getPaginationState(type);
-            document.getElementById('loadMoreBtn').style.display = state.hasMore ? 'block' : 'none';
-            document.getElementById('noMoreData').style.display = (!state.hasMore && timelineData.length > 0) ? 'block' : 'none';
-        }
-        
-        let scrollObserver;
-        function setupScrollObserver() {
-            if (scrollObserver) scrollObserver.disconnect();
-            
-            const cards = document.querySelectorAll('#timelineFeed .tweet-card, #timelineFeed .card, #timelineFeed .artist-card');
-            const triggerIndex = cards.length - PAGINATION.triggerOffset;
-            
-            if (triggerIndex > 0 && cards[triggerIndex] && paginationState.timeline?.hasMore) {
-                scrollObserver = new IntersectionObserver((entries) => {
-                    if (entries[0].isIntersecting && !paginationState.timeline?.loading) {
-                        loadMoreTimeline();
-                    }
-                }, { threshold: 0.1 });
-                scrollObserver.observe(cards[triggerIndex]);
-            }
-        }
-        
-        function renderTimeline() {
-            const container = $('timelineFeed');
-            let html = '';
-            
-            timelineData.forEach(item => {
-                const isLiked = likedMap[`${item._type}_${item.id}`] || false;
-                
-                switch (item._type) {
-                    case 'tweet':
-                        html += renderTweetCard(item, isLiked);
-                        break;
-                    case 'event':
-                        html += renderEventCard(item, isLiked, usersCache);
-                        break;
-                    case 'production':
-                        html += renderProductionCard(item, isLiked, usersCache[item.userId]);
-                        break;
-                    case 'place':
-                        html += renderPlaceCard(item, isLiked);
-                        break;
-                    case 'user':
-                        html += renderArtistCard(item, isLiked);
-                        break;
-                }
-            });
-            
-            container.innerHTML = html;
-        }
-        
-        function setupTweetInput() {
-            // ゲストでもツイート入力エリアを表示
-            $('tweetInputArea').style.display = 'block';
-            const avatar = $('tweetAvatar');
-            
-            if (user) {
-                // ログインユーザーはユーザーアバター
-                const initial = (userData.name || '?')[0].toUpperCase();
-                if (userData.photoURL) {
-                    avatar.innerHTML = `<img src="${userData.photoURL}" onerror="this.style.display='none';this.parentElement.innerHTML='${initial}'">`;
-                } else {
-                    avatar.textContent = initial;
-                }
-            } else {
-                // ゲストはゲスト用アバター画像を表示
-                avatar.innerHTML = `<img src="guest-avatar.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-            }
-        }
-        
-        function onAuthReady() {
-            // 未ログインはウェルカム画面へリダイレクト
-            if (!user) {
-                window.location.href = 'index.html';
-                return;
-            }
-            setupTweetInput();
-            loadTimeline();
-        }
-    </script>
+    
+    <!-- Page-specific JS -->
+    <script src="js/pages/timeline.js"></script>
+    <script src="js/lazy-load.js"></script>
 </body>
 </html>

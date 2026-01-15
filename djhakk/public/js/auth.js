@@ -376,6 +376,11 @@ auth.onAuthStateChanged(async (u) => {
         log('User logged out');
     }
     
+    // ヘッダープロフィールを描画
+    if (typeof renderHeaderProfile === 'function') {
+        renderHeaderProfile();
+    }
+    
     authReady = true;
     tryCallOnAuthReady();
 });

@@ -228,7 +228,7 @@ const SLIDE_UP_CONTAINERS = {
 // Pagination Configuration
 // ========================================
 const PAGINATION = {
-    initialLimit: 30,    // 初期表示件数
+    initialLimit: 10,    // 初期表示件数
     loadMoreLimit: 20,   // 追加読み込み件数
     triggerOffset: 10    // 残り何件でトリガーするか
 };
